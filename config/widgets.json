@@ -1,0 +1,103 @@
+{
+  "widgets": [
+    {
+      "id": "1",
+      "name": "blackout",
+      "path": "/vc/blackout",
+      "type": "button",
+      "description": "Emergency blackout button",
+      "minValue": 0,
+      "maxValue": 1
+    },
+    {
+      "id": "2",
+      "name": "scene_intro",
+      "path": "/vc/scene/intro",
+      "type": "button",
+      "description": "Launch intro scene"
+    },
+    {
+      "id": "3",
+      "name": "scene_verse",
+      "path": "/vc/scene/verse",
+      "type": "button",
+      "description": "Launch verse scene"
+    },
+    {
+      "id": "4",
+      "name": "scene_chorus",
+      "path": "/vc/scene/chorus",
+      "type": "button",
+      "description": "Launch chorus scene"
+    },
+    {
+      "id": "5",
+      "name": "scene_bridge",
+      "path": "/vc/scene/bridge",
+      "type": "button",
+      "description": "Launch bridge scene"
+    },
+    {
+      "id": "6",
+      "name": "scene_outro",
+      "path": "/vc/scene/outro",
+      "type": "button",
+      "description": "Launch outro scene"
+    },
+    {
+      "id": "7",
+      "name": "master_dimmer",
+      "path": "/vc/master",
+      "type": "slider",
+      "description": "Master dimmer / Grand Master",
+      "minValue": 0,
+      "maxValue": 1
+    },
+    {
+      "id": "8",
+      "name": "wash_intensity",
+      "path": "/vc/slider/wash_intensity",
+      "type": "slider",
+      "description": "General wash intensity",
+      "minValue": 0,
+      "maxValue": 1
+    },
+    {
+      "id": "9",
+      "name": "strobe_speed",
+      "path": "/vc/speed/strobe",
+      "type": "speed",
+      "description": "Strobe speed control"
+    },
+    {
+      "id": "10",
+      "name": "chase_speed",
+      "path": "/vc/speed/chase",
+      "type": "speed",
+      "description": "Chase sequence speed"
+    },
+    {
+      "id": "11",
+      "name": "cues_main",
+      "path": "/vc/cuelist/main",
+      "type": "cuelist",
+      "description": "Main cue list"
+    },
+    {
+      "id": "12",
+      "name": "button_go",
+      "path": "/vc/button/go",
+      "type": "button",
+      "description": "Go button for cues"
+    },
+    {
+      "id": "13",
+      "name": "button_stop",
+      "path": "/vc/button/stop",
+      "type": "button",
+      "description": "Stop all chasers"
+    }
+  ],
+  "generated": false,
+  "generatedAt": "2024-01-01T00:00:00.000Z"
+}
