@@ -1,4 +1,4 @@
-import { Tool } from "mcp-use";
+import { error, text, type ToolDefinition } from "mcp-use/server";
 import { sendOsc, sendOscBatch } from "../osc/oscClient.js";
 import { getLogger } from "../logger.js";
 import { Config } from "../config.js";
@@ -18,24 +18,21 @@ const COLORS: Record<string, { r: number; g: number; b: number }> = {
   yellow: { r: 255, g: 255, b: 0 },
 };
 
-export function createSetMasterTool(config: Config): Tool {
+export function createSetMasterTool(config: Config): ToolDefinition {
   const logger = getLogger();
 
   return {
     name: "qlc_set_master",
     description:
       "Set the QLC+ master dimmer (grand master) value. Range is 0-1 (normalized), where 1 is full brightness.",
-    inputSchema: SetMasterInputSchema,
-    handler: async (input: any) => {
+    schema: SetMasterInputSchema,
+    cb: async (input: any) => {
       logger.debug("Tool: qlc_set_master", input);
 
       const { value } = input;
 
       if (value < 0 || value > 1) {
-        return {
-          success: false,
-          error: `Invalid master value: ${value}. Expected 0-1 (normalized).`,
-        };
+        return error(`Invalid master value: ${value}. Expected 0-1 (normalized).`);
       }
 
       try {
@@ -46,33 +43,25 @@ export function createSetMasterTool(config: Config): Tool {
           config
         );
 
-        return {
-          success: result.success,
-          message: `Master dimmer set to ${(value * 100).toFixed(1)}%`,
-          value: value,
-          percentage: value * 100,
-        };
-      } catch (error) {
-        const err = error instanceof Error ? error.message : String(error);
-        logger.error(`Failed to set master: ${err}`);
-        return {
-          success: false,
-          error: `Failed to set master: ${err}`,
-        };
+        return text(`Master dimmer set to ${(value * 100).toFixed(1)}%`);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        logger.error(`Failed to set master: ${message}`);
+        return error(`Failed to set master: ${message}`);
       }
     },
   };
 }
 
-export function createBlackoutTool(config: Config): Tool {
+export function createBlackoutTool(config: Config): ToolDefinition {
   const logger = getLogger();
 
   return {
     name: "qlc_blackout",
     description:
       "Trigger QLC+ blackout (fade all lights to 0). This is a safe, emergency-grade tool for immediate darkness.",
-    inputSchema: z.object({}),
-    handler: async () => {
+    schema: z.object({}),
+    cb: async () => {
       logger.debug("Tool: qlc_blackout");
 
       try {
@@ -83,32 +72,25 @@ export function createBlackoutTool(config: Config): Tool {
           config
         );
 
-        return {
-          success: result.success,
-          message: "Blackout triggered",
-          status: config.qlcDryRun ? "dry_run" : "active",
-        };
-      } catch (error) {
-        const err = error instanceof Error ? error.message : String(error);
-        logger.error(`Failed to trigger blackout: ${err}`);
-        return {
-          success: false,
-          error: `Failed to trigger blackout: ${err}`,
-        };
+        return text("Blackout triggered");
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        logger.error(`Failed to trigger blackout: ${message}`);
+        return error(`Failed to trigger blackout: ${message}`);
       }
     },
   };
 }
 
-export function createPanicTool(config: Config): Tool {
+export function createPanicTool(config: Config): ToolDefinition {
   const logger = getLogger();
 
   return {
     name: "qlc_panic",
     description:
       "Trigger QLC+ panic mode (emergency stop - instantly kills all lighting). Use only in emergencies.",
-    inputSchema: z.object({}),
-    handler: async () => {
+    schema: z.object({}),
+    cb: async () => {
       logger.debug("Tool: qlc_panic");
 
       try {
@@ -119,34 +101,25 @@ export function createPanicTool(config: Config): Tool {
           config
         );
 
-        return {
-          success: result.success,
-          message: "PANIC triggered - all lights off immediately",
-          status: config.qlcDryRun ? "dry_run" : "active",
-          warning:
-            "This is an emergency stop. All lighting has been killed immediately.",
-        };
-      } catch (error) {
-        const err = error instanceof Error ? error.message : String(error);
-        logger.error(`Failed to trigger panic: ${err}`);
-        return {
-          success: false,
-          error: `Failed to trigger panic: ${err}`,
-        };
+        return text("PANIC triggered - all lights off immediately");
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        logger.error(`Failed to trigger panic: ${message}`);
+        return error(`Failed to trigger panic: ${message}`);
       }
     },
   };
 }
 
-export function createSetColorWashTool(config: Config): Tool {
+export function createSetColorWashTool(config: Config): ToolDefinition {
   const logger = getLogger();
 
   return {
     name: "qlc_set_color_wash",
     description:
       "Set a color wash using predefined colors (red, green, blue, amber, white, purple, cyan, magenta, yellow). Optionally specify DMX channels.",
-    inputSchema: SetColorWashInputSchema,
-    handler: async (input: any) => {
+    schema: SetColorWashInputSchema,
+    cb: async (input: any) => {
       logger.debug("Tool: qlc_set_color_wash", input);
 
       const { color, universe = 1, redChannel, greenChannel, blueChannel } =
@@ -155,11 +128,7 @@ export function createSetColorWashTool(config: Config): Tool {
       // Check if color is valid
       if (!(color in COLORS)) {
         const availableColors = Object.keys(COLORS);
-        return {
-          success: false,
-          error: `Unknown color: "${color}"`,
-          availableColors: availableColors,
-        };
+        return error(`Unknown color: "${color}"`);
       }
 
       const { r, g, b } = COLORS[color];
@@ -173,19 +142,12 @@ export function createSetColorWashTool(config: Config): Tool {
             config
           );
 
-          return {
-            success: result.success,
-            message: `Color wash applied (mode: master). For RGB control, specify redChannel, greenChannel, blueChannel.`,
-            color: color,
-            rgb: { r, g, b },
-            hint: "Provide universe, redChannel, greenChannel, blueChannel for DMX RGB control",
-          };
-        } catch (error) {
-          const err = error instanceof Error ? error.message : String(error);
-          return {
-            success: false,
-            error: `Failed to apply color wash: ${err}`,
-          };
+          return text(
+            `Color wash applied (mode: master). For RGB control, specify redChannel, greenChannel, blueChannel.`
+          );
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          return error(`Failed to apply color wash: ${message}`);
         }
       }
 
@@ -215,25 +177,11 @@ export function createSetColorWashTool(config: Config): Tool {
 
         const allSuccess = results.every((r) => r.success);
 
-        return {
-          success: allSuccess,
-          message: `Color wash applied: ${color} (R=${r}, G=${g}, B=${b})`,
-          color: color,
-          rgb: { r, g, b },
-          channels: {
-            red: redChannel,
-            green: greenChannel,
-            blue: blueChannel,
-          },
-          universe: universe,
-        };
-      } catch (error) {
-        const err = error instanceof Error ? error.message : String(error);
-        logger.error(`Failed to set color wash: ${err}`);
-        return {
-          success: false,
-          error: `Failed to set color wash: ${err}`,
-        };
+        return text(`Color wash applied: ${color} (R=${r}, G=${g}, B=${b})`);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        logger.error(`Failed to set color wash: ${message}`);
+        return error(`Failed to set color wash: ${message}`);
       }
     },
   };

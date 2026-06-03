@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
-import { generateWidgetsJson } from "./qlc/qxwParser.js";
-import { initLogger } from "./logger.js";
-import { loadConfig } from "./config.js";
+import { generateWidgetsJson } from "./qxwParser.js";
+import { initLogger } from "../logger.js";
+import { loadConfig } from "../config.js";
 import path from "path";
 
 async function main() {

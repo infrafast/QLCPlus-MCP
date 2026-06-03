@@ -1,9 +1,9 @@
 import fs from "fs/promises";
-import { promisify } from "util";
-import { unzip } from "unzipper";
+import { Readable } from "stream";
 import xml2js from "xml2js";
-import { getLogger } from "./logger.js";
-import { WidgetConfig, WidgetMapping } from "./types.js";
+import * as unzipper from "unzipper";
+import { getLogger } from "../logger.js";
+import { WidgetConfig, WidgetMapping } from "../types.js";
 import path from "path";
 
 const xmlParser = new xml2js.Parser();
@@ -34,11 +34,11 @@ async function extractQxwZip(
     const buffer = await fs.readFile(qxwPath);
 
     return new Promise((resolve, reject) => {
-      const parser = unzip.Parse();
+      const parser = unzipper.Parse();
       let xmlContent = "";
       let hasWorkspace = false;
 
-      parser.on("entry", (entry) => {
+      parser.on("entry", (entry: any) => {
         if (entry.path === "workspace.xml") {
           hasWorkspace = true;
           let data = "";
@@ -59,8 +59,7 @@ async function extractQxwZip(
 
       parser.on("error", reject);
 
-      const readable = buffer as any;
-      readable.pipe(parser);
+      Readable.from(buffer).pipe(parser);
     });
   } catch (error) {
     const err = error instanceof Error ? error.message : String(error);

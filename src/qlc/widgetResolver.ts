@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
-import { getLogger } from "./logger.js";
-import { WidgetConfig, WidgetMapping } from "./types.js";
+import { getLogger } from "../logger.js";
+import { WidgetConfig, WidgetMapping } from "../types.js";
 import { z } from "zod";
 
 let widgetCache: Map<string, WidgetMapping> = new Map();
@@ -42,8 +42,8 @@ export function getWidgetByName(name: string): WidgetMapping | null {
   return widgetCache.get(name.toLowerCase()) || null;
 }
 
-export function getWidgetByPath(oscPath: string): WidgetMapping | null {
-  return oscPathCache.get(oscPath) || null;
+export function getWidgetByPath(oscPath: string): WidgetMapping | undefined {
+  return oscPathCache.get(oscPath);
 }
 
 export function listWidgets(): WidgetMapping[] {

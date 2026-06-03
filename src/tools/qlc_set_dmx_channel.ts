@@ -1,18 +1,18 @@
-import { Tool } from "mcp-use";
+import { error, text, type ToolDefinition } from "mcp-use/server";
 import { sendOsc, validateDmxPath, normalizeDmxValue } from "../osc/oscClient.js";
 import { getLogger } from "../logger.js";
 import { Config } from "../config.js";
 import { SetDmxChannelInputSchema } from "../types.js";
 
-export function createSetDmxChannelTool(config: Config): Tool {
+export function createSetDmxChannelTool(config: Config): ToolDefinition {
   const logger = getLogger();
 
   return {
     name: "qlc_set_dmx_channel",
     description:
       "Set a specific DMX channel value in QLC+ through OSC. Supports both 0-255 and 0-1 normalized ranges.",
-    inputSchema: SetDmxChannelInputSchema,
-    handler: async (input: any) => {
+    schema: SetDmxChannelInputSchema,
+    cb: async (input: any) => {
       logger.debug("Tool: qlc_set_dmx_channel", input);
 
       const { universe, channel, value } = input;
@@ -20,10 +20,7 @@ export function createSetDmxChannelTool(config: Config): Tool {
       // Validate DMX path
       const { valid, path } = validateDmxPath(universe, channel);
       if (!valid) {
-        return {
-          success: false,
-          error: `Invalid DMX coordinates: universe=${universe}, channel=${channel}. Both must be >= 1.`,
-        };
+        return error(`Invalid DMX coordinates: universe=${universe}, channel=${channel}. Both must be >= 1.`);
       }
 
       try {
@@ -40,20 +37,11 @@ export function createSetDmxChannelTool(config: Config): Tool {
           config
         );
 
-        return {
-          success: result.success,
-          message: `DMX set: Universe ${universe}, Channel ${channel} = ${normalizedValue}`,
-          oscPath: path,
-          value: normalizedValue,
-          dryRun: result.dryRun,
-        };
-      } catch (error) {
-        const err = error instanceof Error ? error.message : String(error);
-        logger.error(`Failed to set DMX channel: ${err}`);
-        return {
-          success: false,
-          error: `Failed to set DMX channel: ${err}`,
-        };
+        return text(`DMX set: Universe ${universe}, Channel ${channel} = ${normalizedValue}`);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        logger.error(`Failed to set DMX channel: ${message}`);
+        return error(`Failed to set DMX channel: ${message}`);
       }
     },
   };

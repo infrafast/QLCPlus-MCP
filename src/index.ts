@@ -29,7 +29,7 @@ import {
   createPanicTool,
   createSetColorWashTool,
 } from "./tools/qlc_special.js";
-import { Tool } from "mcp-use";
+import type { ToolDefinition } from "mcp-use/server";
 
 async function main() {
   try {
@@ -54,7 +54,7 @@ async function main() {
 
     // Create tools
     logger.info("Registering MCP tools...");
-    const tools: Tool[] = [
+    const tools: ToolDefinition[] = [
       // DMX/OSC tools
       createSetDmxChannelTool(config),
       createSetDmxRgbTool(config),

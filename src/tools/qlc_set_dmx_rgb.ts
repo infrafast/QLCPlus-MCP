@@ -1,18 +1,18 @@
-import { Tool } from "mcp-use";
+import { error, text, type ToolDefinition } from "mcp-use/server";
 import { sendOscBatch, validateDmxPath, normalizeDmxValue } from "../osc/oscClient.js";
 import { getLogger } from "../logger.js";
 import { Config } from "../config.js";
 import { SetDmxRgbInputSchema } from "../types.js";
 
-export function createSetDmxRgbTool(config: Config): Tool {
+export function createSetDmxRgbTool(config: Config): ToolDefinition {
   const logger = getLogger();
 
   return {
     name: "qlc_set_dmx_rgb",
     description:
       "Set RGB color values on DMX channels. Sends three consecutive OSC messages to set red, green, and blue channels.",
-    inputSchema: SetDmxRgbInputSchema,
-    handler: async (input: any) => {
+    schema: SetDmxRgbInputSchema,
+    cb: async (input: any) => {
       logger.debug("Tool: qlc_set_dmx_rgb", input);
 
       const {
@@ -32,10 +32,7 @@ export function createSetDmxRgbTool(config: Config): Tool {
         const bPath = validateDmxPath(universe, blueChannel);
 
         if (!rPath.valid || !gPath.valid || !bPath.valid) {
-          return {
-            success: false,
-            error: `Invalid DMX coordinates. Universe must be >= 1, channels must be >= 1.`,
-          };
+          return error(`Invalid DMX coordinates. Universe must be >= 1, channels must be >= 1.`);
         }
 
         // Create OSC messages
@@ -54,23 +51,11 @@ export function createSetDmxRgbTool(config: Config): Tool {
 
         const allSuccess = results.every((r) => r.success);
 
-        return {
-          success: allSuccess,
-          message: `RGB color set: R=${r}, G=${g}, B=${b}`,
-          channels: {
-            red: { channel: redChannel, value: r, path: rPath.path },
-            green: { channel: greenChannel, value: g, path: gPath.path },
-            blue: { channel: blueChannel, value: b, path: bPath.path },
-          },
-          dryRun: config.qlcDryRun,
-        };
-      } catch (error) {
-        const err = error instanceof Error ? error.message : String(error);
-        logger.error(`Failed to set RGB color: ${err}`);
-        return {
-          success: false,
-          error: `Failed to set RGB color: ${err}`,
-        };
+        return text(`RGB color set: R=${r}, G=${g}, B=${b}`);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        logger.error(`Failed to set RGB color: ${message}`);
+        return error(`Failed to set RGB color: ${message}`);
       }
     },
   };

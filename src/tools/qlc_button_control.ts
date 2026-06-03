@@ -1,19 +1,19 @@
-import { Tool } from "mcp-use";
+import { error, text, type ToolDefinition } from "mcp-use/server";
 import { sendOsc } from "../osc/oscClient.js";
 import { resolveWidgetOrPath, findClosestMatches } from "../qlc/widgetResolver.js";
 import { getLogger } from "../logger.js";
 import { Config } from "../config.js";
 import { ButtonPressInputSchema } from "../types.js";
 
-export function createButtonPressTool(config: Config): Tool {
+export function createButtonPressTool(config: Config): ToolDefinition {
   const logger = getLogger();
 
   return {
     name: "qlc_button_press",
     description:
       "Send a momentary button press to a QLC+ button widget. Specify either the logical widget name or direct OSC path.",
-    inputSchema: ButtonPressInputSchema,
-    handler: async (input: any) => {
+    schema: ButtonPressInputSchema,
+    cb: async (input: any) => {
       logger.debug("Tool: qlc_button_press", input);
 
       const { widgetName, oscPath, duration = 100 } = input;
@@ -25,15 +25,9 @@ export function createButtonPressTool(config: Config): Tool {
           ? findClosestMatches(widgetName, 3)
           : [];
 
-        return {
-          success: false,
-          error: `Could not resolve widget. Name: "${widgetName}", Path: "${oscPath}"`,
-          availableWidgets: suggestions.map((w) => ({
-            name: w.name,
-            path: w.path,
-            type: w.type,
-          })),
-        };
+        return error(
+          `Could not resolve widget. Name: "${widgetName}", Path: "${oscPath}"`
+        );
       }
 
       try {
@@ -54,34 +48,25 @@ export function createButtonPressTool(config: Config): Tool {
           config
         );
 
-        return {
-          success: true,
-          message: `Button pressed for ${duration}ms`,
-          widget: widgetName || "direct path",
-          oscPath: resolution.path,
-          duration,
-        };
-      } catch (error) {
-        const err = error instanceof Error ? error.message : String(error);
-        logger.error(`Failed to press button: ${err}`);
-        return {
-          success: false,
-          error: `Failed to press button: ${err}`,
-        };
+        return text(`Button pressed for ${duration}ms`);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        logger.error(`Failed to press button: ${message}`);
+        return error(`Failed to press button: ${message}`);
       }
     },
   };
 }
 
-export function createButtonToggleTool(config: Config): Tool {
+export function createButtonToggleTool(config: Config): ToolDefinition {
   const logger = getLogger();
 
   return {
     name: "qlc_button_toggle",
     description:
       "Toggle a QLC+ button widget between pressed and released states. Specify either the logical widget name or direct OSC path.",
-    inputSchema: ButtonPressInputSchema,
-    handler: async (input: any) => {
+    schema: ButtonPressInputSchema,
+    cb: async (input: any) => {
       logger.debug("Tool: qlc_button_toggle", input);
 
       const { widgetName, oscPath } = input;
@@ -92,15 +77,9 @@ export function createButtonToggleTool(config: Config): Tool {
           ? findClosestMatches(widgetName, 3)
           : [];
 
-        return {
-          success: false,
-          error: `Could not resolve widget. Name: "${widgetName}", Path: "${oscPath}"`,
-          availableWidgets: suggestions.map((w) => ({
-            name: w.name,
-            path: w.path,
-            type: w.type,
-          })),
-        };
+        return error(
+          `Could not resolve widget. Name: "${widgetName}", Path: "${oscPath}"`
+        );
       }
 
       try {
@@ -111,19 +90,11 @@ export function createButtonToggleTool(config: Config): Tool {
           config
         );
 
-        return {
-          success: result.success,
-          message: "Button state toggled",
-          widget: widgetName || "direct path",
-          oscPath: resolution.path,
-        };
-      } catch (error) {
-        const err = error instanceof Error ? error.message : String(error);
-        logger.error(`Failed to toggle button: ${err}`);
-        return {
-          success: false,
-          error: `Failed to toggle button: ${err}`,
-        };
+        return text("Button state toggled");
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        logger.error(`Failed to toggle button: ${message}`);
+        return error(`Failed to toggle button: ${message}`);
       }
     },
   };

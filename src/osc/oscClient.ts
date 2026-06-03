@@ -1,9 +1,13 @@
-import OSC from "osc-js";
-import { getLogger } from "./logger.js";
-import { Config } from "./config.js";
-import { OscMessage, OscSendOptions } from "./types.js";
+import * as OSC from "osc-js";
+import { getLogger } from "../logger.js";
+import { Config } from "../config.js";
+import { OscMessage, OscSendOptions } from "../types.js";
 
-let oscInstance: OSC | null = null;
+let oscInstance: {
+  open(options?: object): Promise<any> | any;
+  close(): Promise<any> | any;
+  send(packet: any, options?: object): Promise<any> | any;
+} | null = null;
 
 export interface OscSendResult {
   success: boolean;
@@ -12,29 +16,23 @@ export interface OscSendResult {
   dryRun: boolean;
 }
 
-export async function initOsc(config: Config): Promise<OSC> {
+export async function initOsc(config: Config): Promise<void> {
   const logger = getLogger();
 
-  oscInstance = new OSC({
-    udpServer: {
-      host: config.qlcHost,
-      port: config.qlcOscInputPort,
-    },
-    udpClient: {
-      host: config.qlcHost,
-      port: config.qlcOscOutputPort,
-    },
+  const plugin = new (OSC as any).DatagramPlugin();
+  oscInstance = new (OSC as any)({ plugin });
+
+  await oscInstance!.open({
+    host: config.qlcHost,
+    port: config.qlcOscInputPort,
   });
 
-  await oscInstance.open();
   logger.info(
     `OSC initialized - Server: ${config.qlcHost}:${config.qlcOscInputPort}, Client: ${config.qlcHost}:${config.qlcOscOutputPort}`
   );
-
-  return oscInstance;
 }
 
-export function getOsc(): OSC {
+export function getOsc() {
   if (!oscInstance) {
     throw new Error("OSC not initialized. Call initOsc() first.");
   }
@@ -71,9 +69,13 @@ export async function sendOsc(
 
   try {
     const osc = getOsc();
-    const oscMsg = new OSC.Message(message.path, ...message.args);
+    const MessageClass = (OSC as any).Message;
+    const oscMsg = new MessageClass(message.path, ...message.args);
 
-    await osc.send(oscMsg);
+    await osc.send(oscMsg, {
+      host: config?.qlcHost,
+      port: config?.qlcOscOutputPort,
+    });
 
     logger.info(`OSC sent: ${message.path}`);
 
@@ -103,12 +105,10 @@ export async function sendOscBatch(
 }
 
 export function validateOscPath(path: string): boolean {
-  // OSC paths must start with /
   if (!path.startsWith("/")) {
     return false;
   }
 
-  // OSC paths must contain only valid characters
   const validPattern = /^\/[\w\-\.\/]*$/;
   return validPattern.test(path);
 }
@@ -132,12 +132,10 @@ export function validateDmxPath(
 }
 
 export function normalizeDmxValue(value: number): number {
-  // If value is 0-1 (normalized), convert to 0-255
   if (value > 0 && value <= 1) {
     return Math.round(value * 255);
   }
 
-  // Otherwise expect 0-255
   if (value < 0 || value > 255) {
     throw new Error(
       `Invalid DMX value: ${value}. Expected 0-255 or 0-1 normalized.`
