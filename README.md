@@ -163,7 +163,7 @@ Use logical names in tools: `qlc_button_press(widgetName="scene_intro")`
 
 ### Agent Prompt
 
-The server exposes the repository `PROMPT.md` as MCP prompt `qlcplus_lighting_assistant`, MCP resource `qlcplus://prompt/system`, and fallback tool `qlc_get_agent_prompt`. MCP hosts such as LiveStageAssistant can fetch this prompt at startup and append it to the LLM instructions so lighting-specific safety rules, QLC+ widget guidance, and DMX/OSC constraints are available to the model.
+The server exposes the repository `PROMPT.md` as MCP prompt `qlcplus_lighting_assistant`, MCP resource `qlcplus://prompt/system`, and standard fallback tool `get_agent_prompt`. MCP hosts such as LiveStageAssistant can fetch this prompt at startup and append it to the LLM instructions so lighting-specific safety rules, QLC+ widget guidance, and DMX/OSC constraints are available to the model.
 
 Set `MCP_PROMPT_FILE=/absolute/path/to/PROMPT.md` to expose a custom prompt file. If omitted, the server reads `PROMPT.md` from the current working directory.
 
@@ -403,8 +403,7 @@ Add to LiveStageAssistant MCP configuration:
       "assistantPrompt": {
         "promptName": "qlcplus_lighting_assistant",
         "resourceUri": "qlcplus://prompt/system",
-        "tool": "qlc_get_agent_prompt",
-        "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,wash,couleur,blackout,panic"
+        "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,couleur"
       }
     }
   }
@@ -429,8 +428,7 @@ Add to LiveStageAssistant MCP configuration:
       "assistantPrompt": {
         "promptName": "qlcplus_lighting_assistant",
         "resourceUri": "qlcplus://prompt/system",
-        "tool": "qlc_get_agent_prompt",
-        "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,wash,couleur,blackout,panic"
+        "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,couleur"
       }
     }
   }

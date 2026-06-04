@@ -4,7 +4,7 @@ import { text } from "mcp-use/server";
 import { z } from "zod";
 export const PROMPT_RESOURCE_URI = "qlcplus://prompt/system";
 export const PROMPT_NAME = "qlcplus_lighting_assistant";
-export const PROMPT_TOOL_NAME = "qlc_get_agent_prompt";
+export const PROMPT_TOOL_NAME = "get_agent_prompt";
 export const PROMPT_FILE = process.env.MCP_PROMPT_FILE
     ? path.resolve(process.env.MCP_PROMPT_FILE)
     : path.resolve(process.cwd(), "PROMPT.md");

@@ -74,8 +74,7 @@ Add to LiveStageAssistant's MCP server configuration file:
       "assistantPrompt": {
         "promptName": "qlcplus_lighting_assistant",
         "resourceUri": "qlcplus://prompt/system",
-        "tool": "qlc_get_agent_prompt",
-        "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,wash,couleur,blackout,panic"
+        "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,couleur"
       }
     }
   }
@@ -92,8 +91,7 @@ Add to LiveStageAssistant's MCP server configuration file:
       "assistantPrompt": {
         "promptName": "qlcplus_lighting_assistant",
         "resourceUri": "qlcplus://prompt/system",
-        "tool": "qlc_get_agent_prompt",
-        "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,wash,couleur,blackout,panic"
+        "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,couleur"
       }
     }
   }
