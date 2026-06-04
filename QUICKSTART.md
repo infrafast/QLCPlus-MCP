@@ -53,16 +53,28 @@ npm run start:stdio
 
 **Terminal 3: Your client**
 
-Configure your MCP client (e.g., Claude Desktop) to use:
+For LiveStageAssistant, configure the active MCP config to use:
 
 ```json
 {
   "qlcplus": {
     "command": "node",
-    "args": ["/full/path/to/QLCPlus-MCP/dist/src/index.js"]
+    "args": ["/full/path/to/QLCPlus-MCP/dist/src/index.js"],
+    "env": {
+      "MCP_TRANSPORT": "stdio",
+      "MCP_PROMPT_FILE": "/full/path/to/QLCPlus-MCP/PROMPT.md"
+    },
+    "assistantPrompt": {
+      "promptName": "qlcplus_lighting_assistant",
+      "resourceUri": "qlcplus://prompt/system",
+      "tool": "qlc_get_agent_prompt",
+      "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,wash,couleur,blackout,panic"
+    }
   }
 }
 ```
+
+If LiveStageAssistant also loads a large MCP server such as XMSeries-MCP, set `MCP_TOOL_ROUTING_ENABLED=true` in the active LiveStageAssistant `.env`. The routing keywords keep QLC+ lighting turns on the QLCplus tool subset and avoid exceeding OpenAI's 128-tool request limit.
 
 ## Test
 

@@ -68,7 +68,14 @@ Add to LiveStageAssistant's MCP server configuration file:
       "command": "node",
       "args": ["/path/to/QLCPlus-MCP/dist/src/index.js"],
       "env": {
-        "MCP_TRANSPORT": "stdio"
+        "MCP_TRANSPORT": "stdio",
+        "MCP_PROMPT_FILE": "/path/to/QLCPlus-MCP/PROMPT.md"
+      },
+      "assistantPrompt": {
+        "promptName": "qlcplus_lighting_assistant",
+        "resourceUri": "qlcplus://prompt/system",
+        "tool": "qlc_get_agent_prompt",
+        "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,wash,couleur,blackout,panic"
       }
     }
   }
@@ -81,11 +88,19 @@ Add to LiveStageAssistant's MCP server configuration file:
 {
   "mcpServers": {
     "qlcplus": {
-      "url": "http://localhost:8788/mcp"
+      "url": "http://localhost:8788/mcp",
+      "assistantPrompt": {
+        "promptName": "qlcplus_lighting_assistant",
+        "resourceUri": "qlcplus://prompt/system",
+        "tool": "qlc_get_agent_prompt",
+        "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,wash,couleur,blackout,panic"
+      }
     }
   }
 }
 ```
+
+If LiveStageAssistant also loads another large MCP server such as XMSeries-MCP, enable `MCP_TOOL_ROUTING_ENABLED=true` in the active LiveStageAssistant `.env`. The `assistantPrompt.routing` keywords let LiveStageAssistant expose only the relevant server tools on each routed turn and avoid OpenAI's 128-tool request limit.
 
 ### 3. Start Services
 
