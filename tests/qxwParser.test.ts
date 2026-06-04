@@ -31,11 +31,28 @@ describe("QXW Parser", () => {
   <VirtualConsole>
     <Frame Caption="">
       <SoloFrame Caption="AUTOMATIC SETLIST" ID="0">
-        <Button Caption="Rainbow" ID="28" Icon="">
+        <Button Caption="Ambient blue-yellow" ID="28" Icon="">
           <Action>Toggle</Action>
+          <Input Universe="0" Channel="17393"/>
+        </Button>
+        <Button Caption="Été chaud" ID="31" Icon="">
+          <Action>Toggle</Action>
+          <Input Universe="0" Channel="17394"/>
+        </Button>
+        <Button Caption="Ignored" ID="29" Icon="">
+          <Action>Toggle</Action>
+        </Button>
+        <Button Caption="Other universe" ID="30" Icon="">
+          <Action>Toggle</Action>
+          <Input Universe="1" Channel="126"/>
+        </Button>
+        <Button Caption="" ID="32" Icon="">
+          <Action>Toggle</Action>
+          <Input Universe="0" Channel="127"/>
         </Button>
         <Slider Caption="MOVE" ID="3" WidgetStyle="Slider">
           <Level LowLimit="0" HighLimit="255" Value="204"/>
+          <Input Universe="0" Channel="1"/>
         </Slider>
       </SoloFrame>
     </Frame>
@@ -48,17 +65,24 @@ describe("QXW Parser", () => {
     expect(result.widgets).toEqual([
       {
         id: "28",
-        name: "Rainbow",
-        path: "/vc/button/28",
+        name: "Ambient blue-yellow",
+        path: "/ambient_blue-yellow",
         type: "button",
-        description: "Button: Rainbow",
+        description: "Button: Ambient blue-yellow (Input Universe 0, Channel 17393)",
+      },
+      {
+        id: "31",
+        name: "Été chaud",
+        path: "/ete_chaud",
+        type: "button",
+        description: "Button: Été chaud (Input Universe 0, Channel 17394)",
       },
       {
         id: "3",
         name: "MOVE",
-        path: "/vc/slider/3",
+        path: "/move",
         type: "slider",
-        description: "Slider: MOVE",
+        description: "Slider: MOVE (Input Universe 0, Channel 1)",
         minValue: 0,
         maxValue: 255,
       },

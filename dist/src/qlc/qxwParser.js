@@ -122,24 +122,32 @@ function collectElements(element, tagName) {
     }
     return matches;
 }
-function getWidgetName(element, fallback) {
-    const id = element.$?.ID || "";
+function getWidgetName(element) {
     const name = element.$?.Name || element.$?.Caption || "";
     const trimmed = name.trim();
-    return trimmed || (id ? `${fallback}_${id}` : fallback);
+    return trimmed || null;
+}
+function getWidgetPath(name) {
+    return `/${name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/ /g, "_")}`;
 }
 function parseButton(button) {
     try {
         const id = button.$?.ID || "";
-        const name = getWidgetName(button, "button");
-        // Try to extract OSC path from button properties
-        const oscPath = extractOscPath(button) || `/vc/button/${id}`;
+        const name = getWidgetName(button);
+        const inputMapping = extractInputMapping(button);
+        if (!name || !inputMapping) {
+            return null;
+        }
         return {
             id,
             name,
-            path: oscPath,
+            path: getWidgetPath(name),
             type: "button",
-            description: `Button: ${name}`,
+            description: `Button: ${name} (Input Universe ${inputMapping.universe}, Channel ${inputMapping.channel})`,
         };
     }
     catch {
@@ -149,8 +157,11 @@ function parseButton(button) {
 function parseSlider(slider) {
     try {
         const id = slider.$?.ID || "";
-        const name = getWidgetName(slider, "slider");
-        const oscPath = extractOscPath(slider) || `/vc/slider/${id}`;
+        const name = getWidgetName(slider);
+        const inputMapping = extractInputMapping(slider);
+        if (!name || !inputMapping) {
+            return null;
+        }
         const minValue = slider.MinValue?.[0]
             ? parseInt(slider.MinValue[0], 10)
             : slider.Level?.[0]?.$?.LowLimit
@@ -164,9 +175,9 @@ function parseSlider(slider) {
         return {
             id,
             name,
-            path: oscPath,
+            path: getWidgetPath(name),
             type: "slider",
-            description: `Slider: ${name}`,
+            description: `Slider: ${name} (Input Universe ${inputMapping.universe}, Channel ${inputMapping.channel})`,
             minValue,
             maxValue,
         };
@@ -178,14 +189,17 @@ function parseSlider(slider) {
 function parseSpeedDial(speedDial) {
     try {
         const id = speedDial.$?.ID || "";
-        const name = getWidgetName(speedDial, "speed");
-        const oscPath = extractOscPath(speedDial) || `/vc/speed/${id}`;
+        const name = getWidgetName(speedDial);
+        const inputMapping = extractInputMapping(speedDial);
+        if (!name || !inputMapping) {
+            return null;
+        }
         return {
             id,
             name,
-            path: oscPath,
+            path: getWidgetPath(name),
             type: "speed",
-            description: `Speed Dial: ${name}`,
+            description: `Speed Dial: ${name} (Input Universe ${inputMapping.universe}, Channel ${inputMapping.channel})`,
         };
     }
     catch {
@@ -195,33 +209,40 @@ function parseSpeedDial(speedDial) {
 function parseCueList(cueList) {
     try {
         const id = cueList.$?.ID || "";
-        const name = getWidgetName(cueList, "cuelist");
-        const oscPath = extractOscPath(cueList) || `/vc/cuelist/${id}`;
+        const name = getWidgetName(cueList);
+        const inputMapping = extractInputMapping(cueList);
+        if (!name || !inputMapping) {
+            return null;
+        }
         return {
             id,
             name,
-            path: oscPath,
+            path: getWidgetPath(name),
             type: "cuelist",
-            description: `Cue List: ${name}`,
+            description: `Cue List: ${name} (Input Universe ${inputMapping.universe}, Channel ${inputMapping.channel})`,
         };
     }
     catch {
         return null;
     }
 }
-function extractOscPath(element) {
-    // Try to find OSC feedback or monitoring configuration
-    // This is a simplified extraction - QLC+ stores OSC paths in various ways
-    if (element.FeedbackAddress?.[0]) {
-        return element.FeedbackAddress[0];
+function extractInputMapping(element) {
+    const input = element.Input?.[0]?.$;
+    if (!input?.Universe || input.Channel === undefined) {
+        return null;
     }
-    if (element.ControlAddress?.[0]) {
-        return element.ControlAddress[0];
+    const universe = parseInt(input.Universe, 10);
+    const channel = parseInt(input.Channel, 10);
+    if (!Number.isInteger(universe) ||
+        !Number.isInteger(channel) ||
+        universe !== 0 ||
+        channel < 0) {
+        return null;
     }
-    if (element.MonitorAddress?.[0]) {
-        return element.MonitorAddress[0];
-    }
-    return null;
+    return {
+        universe,
+        channel,
+    };
 }
 export async function generateWidgetsJson(qxwPath, outputPath) {
     const logger = getLogger();

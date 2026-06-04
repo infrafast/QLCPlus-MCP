@@ -221,7 +221,7 @@ From an existing QLC+ project (`.qxw` file):
 npm run generate:widgets ./show.qxw config/widgets.json
 ```
 
-This automatically extracts all Virtual Console widgets and creates mappings.
+This automatically extracts Virtual Console widgets that have `<Input Universe="0" Channel="..."/>` and creates mappings from the widget captions. The `Channel` value is QLC+'s internal Auto Detect hash, not a DMX channel.
 
 ### Naming Conventions
 

@@ -315,7 +315,7 @@ If you have an existing QLC+ project (`.qxw` file):
 npm run generate:widgets /path/to/show.qxw config/widgets.json
 ```
 
-This extracts all Virtual Console widgets and generates mappings automatically.
+This extracts Virtual Console widgets that have `<Input Universe="0" Channel="..."/>` and generates OSC paths from the widget caption. The `Channel` value is QLC+'s internal Auto Detect hash, not a DMX channel.
 
 ## Assistant Prompt Configuration
 

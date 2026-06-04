@@ -176,11 +176,11 @@ Set `MCP_PROMPT_FILE=/absolute/path/to/PROMPT.md` to expose a custom prompt file
 
 2. **Create Virtual Console Widgets**
    - Add buttons, sliders, speed dials, cue lists to your show
-   - Note the OSC control addresses (or auto-generate with the parser)
+   - Note the OSC control addresses, or auto-generate mappings for widgets that have a QLC+ external input mapping
 
 3. **Configure OSC Mappings (Optional)**
    - For each widget, optionally set custom OSC feedback addresses
-   - By default, widgets use generated paths like `/vc/button/1`
+   - Generated mappings keep only widgets with `<Input Universe="0" Channel="..."/>`, then build the OSC path from the widget caption, for example `BLACK` becomes `/black`
 
 ## Usage
 
@@ -239,7 +239,7 @@ If you have an existing QLC+ project file (`.qxw`):
 npm run generate:widgets ./my_show.qxw config/widgets.json
 ```
 
-This extracts buttons, sliders, and other widgets from the project and generates a widget mapping file.
+This extracts Virtual Console widgets that have `<Input Universe="0" Channel="..."/>` and generates OSC paths from the widget caption. The `Channel` value is QLC+'s internal Auto Detect hash, not a DMX channel.
 
 ## MCP Tools Reference
 
