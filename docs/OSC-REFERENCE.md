@@ -64,7 +64,7 @@ Universe 4, Channel 12  → /3/dmx/11 [255]
 | Sliders | 0-1 | Normalized float |
 | Master Dimmer | 0-1 | Normalized float |
 | Speed (BPM) | 10-240 | Converted to 0-1 internally |
-| Buttons | 1 (press), 0 (release) | Momentary |
+| Buttons | 1 | Sent to the mapped widget path |
 | Toggles | 1 | Single value toggles state |
 
 ## Common Operations
@@ -136,16 +136,13 @@ OSC: /0/dmx/2 [255]    # Blue
 **Input:**
 ```typescript
 {
-  widgetName: "scene_intro",
-  duration: 100
+  widgetName: "scene_intro"
 }
 ```
 
 **OSC Sent (via widget mapping):**
 ```
-/scene_intro [1]     # Press
-[100ms delay]
-/scene_intro [0]     # Release
+/scene_intro [1]
 ```
 
 ### qlc_slider_set

@@ -145,7 +145,6 @@ export type LaunchSceneInput = z.infer<typeof LaunchSceneInputSchema>;
 export declare const ButtonPressInputSchema: z.ZodObject<{
     widgetName: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
     oscPath: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
-    duration: z.ZodPreprocess<z.ZodOptional<z.ZodNumber>>;
 }, z.core.$strip>;
 export type ButtonPressInput = z.infer<typeof ButtonPressInputSchema>;
 export declare const CueListInputSchema: z.ZodObject<{

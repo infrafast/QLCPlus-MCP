@@ -322,22 +322,11 @@ qlc_send_osc({
 
 #### `qlc_button_press`
 
-Momentary button press (press + release).
+Trigger a mapped QLC+ button by sending value `1` to its OSC path.
 
 ```typescript
 qlc_button_press({
   widgetName: "BLACK",  // or oscPath: "/black"
-  duration: 100  // milliseconds
-})
-```
-
-#### `qlc_button_toggle`
-
-Toggle button state.
-
-```typescript
-qlc_button_toggle({
-  widgetName: "go_button"
 })
 ```
 
@@ -546,7 +535,7 @@ ambient blue-yellow -> /ambient_blue-yellow
 - **DMX Channels**: 0-255 (8-bit)
 - **Mapped sliders**: 0-1 normalized float on the widget path from `config/widgets.json`
 - **Speed (BPM)**: 10-240 (converted to 0-1 internally)
-- **Button Press**: 1 (press), 0 (release)
+- **Button Press**: 1 sent to the mapped widget path
 
 ## Troubleshooting
 

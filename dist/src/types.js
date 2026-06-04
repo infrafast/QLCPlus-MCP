@@ -98,7 +98,6 @@ export const LaunchSceneInputSchema = z.object({
 export const ButtonPressInputSchema = z.object({
     widgetName: optionalString().describe("Logical widget name"),
     oscPath: optionalString().describe("Direct OSC path"),
-    duration: optionalNumber().describe("Press duration in milliseconds"),
 });
 export const CueListInputSchema = z.object({
     widgetName: optionalString().describe("Logical widget name"),

@@ -13,10 +13,7 @@ import { createSetDmxRgbTool } from "./tools/qlc_set_dmx_rgb.js";
 import { createSendOscTool } from "./tools/qlc_send_osc.js";
 import { createGetStateTool } from "./tools/qlc_get_state.js";
 import { createListWidgetsTool } from "./tools/qlc_list_widgets.js";
-import {
-  createButtonPressTool,
-  createButtonToggleTool,
-} from "./tools/qlc_button_control.js";
+import { createButtonPressTool } from "./tools/qlc_button_control.js";
 import {
   createSliderSetTool,
   createSpeedSetTool,
@@ -60,7 +57,6 @@ async function main() {
 
       // Button controls
       createButtonPressTool(config),
-      createButtonToggleTool(config),
 
       // Sliders and speed
       createSliderSetTool(config),

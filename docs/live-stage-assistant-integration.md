@@ -433,7 +433,7 @@ QLC+ fades RGB channels to amber color.
 User: "Go to the next cue"
 
 LiveStageAssistant resolves:
-→ qlc_button_toggle(widgetName="cues_next")
+→ qlc_button_press(widgetName="cues_next")
 
 QLCPlus-MCP sends OSC:
 → /main_cuelist_next [1]

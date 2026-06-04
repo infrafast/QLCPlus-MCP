@@ -135,7 +135,6 @@ export type LaunchSceneInput = z.infer<typeof LaunchSceneInputSchema>;
 export const ButtonPressInputSchema = z.object({
   widgetName: optionalString().describe("Logical widget name"),
   oscPath: optionalString().describe("Direct OSC path"),
-  duration: optionalNumber().describe("Press duration in milliseconds"),
 });
 export type ButtonPressInput = z.infer<typeof ButtonPressInputSchema>;
 
