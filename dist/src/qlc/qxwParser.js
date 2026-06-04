@@ -5,16 +5,23 @@ import * as unzipper from "unzipper";
 import { getLogger } from "../logger.js";
 import path from "path";
 const xmlParser = new xml2js.Parser();
-async function extractQxwZip(qxwPath) {
+const ZIP_SIGNATURE = "PK";
+async function readQxwContent(qxwPath) {
     const logger = getLogger();
     try {
         const buffer = await fs.readFile(qxwPath);
+        if (buffer.subarray(0, 2).toString("utf-8") !== ZIP_SIGNATURE) {
+            return {
+                xmlContent: buffer.toString("utf-8"),
+                hasWorkspace: true,
+            };
+        }
         return new Promise((resolve, reject) => {
             const parser = unzipper.Parse();
             let xmlContent = "";
             let hasWorkspace = false;
             parser.on("entry", (entry) => {
-                if (entry.path === "workspace.xml") {
+                if (entry.path.toLowerCase() === "workspace.xml") {
                     hasWorkspace = true;
                     let data = "";
                     entry.on("data", (chunk) => {
@@ -37,7 +44,7 @@ async function extractQxwZip(qxwPath) {
     }
     catch (error) {
         const err = error instanceof Error ? error.message : String(error);
-        logger.error(`Failed to extract QXW file: ${err}`);
+        logger.error(`Failed to read QXW file: ${err}`);
         throw error;
     }
 }
@@ -47,48 +54,40 @@ export async function parseQxwFile(qxwPath) {
     const errors = [];
     try {
         logger.info(`Parsing QXW file: ${qxwPath}`);
-        const { xmlContent, hasWorkspace } = await extractQxwZip(qxwPath);
+        const { xmlContent, hasWorkspace } = await readQxwContent(qxwPath);
         if (!hasWorkspace || !xmlContent) {
             logger.warn("workspace.xml not found in QXW file");
             return { widgets, errors: ["workspace.xml not found in QXW file"] };
         }
         const parsed = (await xmlParser.parseStringPromise(xmlContent));
-        const vc = parsed.QLC?.VirtualConsole?.[0];
+        const vc = parsed.Workspace?.VirtualConsole?.[0] || parsed.QLC?.VirtualConsole?.[0];
         if (!vc) {
             logger.warn("No VirtualConsole found in workspace");
             return { widgets, errors: ["No VirtualConsole found in workspace"] };
         }
         // Parse buttons
-        if (vc.Button) {
-            for (const button of vc.Button) {
-                const widget = parseButton(button);
-                if (widget)
-                    widgets.push(widget);
-            }
+        for (const button of collectElements(vc, "Button")) {
+            const widget = parseButton(button);
+            if (widget)
+                widgets.push(widget);
         }
         // Parse sliders
-        if (vc.Slider) {
-            for (const slider of vc.Slider) {
-                const widget = parseSlider(slider);
-                if (widget)
-                    widgets.push(widget);
-            }
+        for (const slider of collectElements(vc, "Slider")) {
+            const widget = parseSlider(slider);
+            if (widget)
+                widgets.push(widget);
         }
         // Parse speed dials
-        if (vc.SpeedDial) {
-            for (const speedDial of vc.SpeedDial) {
-                const widget = parseSpeedDial(speedDial);
-                if (widget)
-                    widgets.push(widget);
-            }
+        for (const speedDial of collectElements(vc, "SpeedDial")) {
+            const widget = parseSpeedDial(speedDial);
+            if (widget)
+                widgets.push(widget);
         }
         // Parse cue lists
-        if (vc.CueList) {
-            for (const cueList of vc.CueList) {
-                const widget = parseCueList(cueList);
-                if (widget)
-                    widgets.push(widget);
-            }
+        for (const cueList of collectElements(vc, "CueList")) {
+            const widget = parseCueList(cueList);
+            if (widget)
+                widgets.push(widget);
         }
         logger.info(`Parsed QXW file: found ${widgets.length} widgets, ${errors.length} errors`);
         return { widgets, errors };
@@ -100,12 +99,40 @@ export async function parseQxwFile(qxwPath) {
         return { widgets, errors };
     }
 }
+function collectElements(element, tagName) {
+    if (!element || typeof element !== "object") {
+        return [];
+    }
+    const matches = [];
+    if (Array.isArray(element[tagName])) {
+        matches.push(...element[tagName]);
+    }
+    for (const [key, value] of Object.entries(element)) {
+        if (key === "$" || key === "_" || key === tagName) {
+            continue;
+        }
+        if (Array.isArray(value)) {
+            for (const child of value) {
+                matches.push(...collectElements(child, tagName));
+            }
+        }
+        else if (value && typeof value === "object") {
+            matches.push(...collectElements(value, tagName));
+        }
+    }
+    return matches;
+}
+function getWidgetName(element, fallback) {
+    const id = element.$?.ID || "";
+    const name = element.$?.Name || element.$?.Caption || "";
+    const trimmed = name.trim();
+    return trimmed || (id ? `${fallback}_${id}` : fallback);
+}
 function parseButton(button) {
     try {
-        const name = button.$.Name || "button";
-        const id = button.$.ID || "";
+        const id = button.$?.ID || "";
+        const name = getWidgetName(button, "button");
         // Try to extract OSC path from button properties
-        const feedbackLowLimit = button.FeedbackLowLimit?.[0];
         const oscPath = extractOscPath(button) || `/vc/button/${id}`;
         return {
             id,
@@ -121,11 +148,19 @@ function parseButton(button) {
 }
 function parseSlider(slider) {
     try {
-        const name = slider.$.Name || "slider";
-        const id = slider.$.ID || "";
+        const id = slider.$?.ID || "";
+        const name = getWidgetName(slider, "slider");
         const oscPath = extractOscPath(slider) || `/vc/slider/${id}`;
-        const minValue = slider.MinValue?.[0] ? parseInt(slider.MinValue[0], 10) : 0;
-        const maxValue = slider.MaxValue?.[0] ? parseInt(slider.MaxValue[0], 10) : 255;
+        const minValue = slider.MinValue?.[0]
+            ? parseInt(slider.MinValue[0], 10)
+            : slider.Level?.[0]?.$?.LowLimit
+                ? parseInt(slider.Level[0].$.LowLimit, 10)
+                : 0;
+        const maxValue = slider.MaxValue?.[0]
+            ? parseInt(slider.MaxValue[0], 10)
+            : slider.Level?.[0]?.$?.HighLimit
+                ? parseInt(slider.Level[0].$.HighLimit, 10)
+                : 255;
         return {
             id,
             name,
@@ -142,8 +177,8 @@ function parseSlider(slider) {
 }
 function parseSpeedDial(speedDial) {
     try {
-        const name = speedDial.$.Name || "speed";
-        const id = speedDial.$.ID || "";
+        const id = speedDial.$?.ID || "";
+        const name = getWidgetName(speedDial, "speed");
         const oscPath = extractOscPath(speedDial) || `/vc/speed/${id}`;
         return {
             id,
@@ -159,8 +194,8 @@ function parseSpeedDial(speedDial) {
 }
 function parseCueList(cueList) {
     try {
-        const name = cueList.$.Name || "cuelist";
-        const id = cueList.$.ID || "";
+        const id = cueList.$?.ID || "";
+        const name = getWidgetName(cueList, "cuelist");
         const oscPath = extractOscPath(cueList) || `/vc/cuelist/${id}`;
         return {
             id,
