@@ -5788,7 +5788,7 @@
     <Mixing>False</Mixing>
     <Collapsed>False</Collapsed>
     <Disabled>False</Disabled>
-    <Button Caption="Arc en ciel" ID="28" Icon="">
+    <Button Caption="Rainbow" ID="28" Icon="">
      <WindowState Visible="True" X="340" Y="430" Width="170" Height="45"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -5809,7 +5809,7 @@
       <ForegroundColor>4294967040</ForegroundColor>
       <BackgroundColor>4278190335</BackgroundColor>
       <BackgroundImage>None</BackgroundImage>
-      <Font>MS Shell Dlg 2,18,-1,5,50,0,0,0,0,0</Font>
+      <Font>Sans Serif,14,-1,5,50,0,0,0,0,0</Font>
      </Appearance>
      <Function ID="317"/>
      <Action>Toggle</Action>
@@ -5830,31 +5830,33 @@
      <Intensity Adjust="False">100</Intensity>
      <Input Universe="0" Channel="64092"/>
     </Button>
-    <Button Caption="ambiant static" ID="94" Icon="">
+    <Button Caption="ambiant blanc fixe" ID="94" Icon="">
      <WindowState Visible="True" X="170" Y="430" Width="165" Height="45"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
       <ForegroundColor>Default</ForegroundColor>
       <BackgroundColor>4294967295</BackgroundColor>
       <BackgroundImage>None</BackgroundImage>
-      <Font>MS Shell Dlg 2,20,-1,5,50,0,0,0,0,0</Font>
+      <Font>Sans Serif,18,-1,5,50,0,0,0,0,0</Font>
      </Appearance>
      <Function ID="315"/>
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
+     <Input Universe="0" Channel="779"/>
     </Button>
-    <Button Caption="ambient blanc" ID="45" Icon="">
+    <Button Caption="ambiant blanc mobile" ID="45" Icon="">
      <WindowState Visible="True" X="5" Y="430" Width="160" Height="45"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
       <ForegroundColor>4283760895</ForegroundColor>
       <BackgroundColor>Default</BackgroundColor>
       <BackgroundImage>pictures/stars.png</BackgroundImage>
-      <Font>MS Shell Dlg 2,26,-1,5,75,0,0,0,0,0</Font>
+      <Font>Sans Serif,18,-1,5,50,0,0,0,0,0</Font>
      </Appearance>
      <Function ID="318"/>
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
+     <Input Universe="0" Channel="36155"/>
     </Button>
     <Clock Type="Clock" Caption="" ID="1">
      <WindowState Visible="True" X="1060" Y="420" Width="210" Height="60"/>

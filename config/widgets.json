@@ -2,10 +2,10 @@
   "widgets": [
     {
       "id": "28",
-      "name": "Arc en ciel",
-      "path": "/arc_en_ciel",
+      "name": "Rainbow",
+      "path": "/rainbow",
       "type": "button",
-      "description": "Button: Arc en ciel (Input Universe 0, Channel 58598)"
+      "description": "Button: Rainbow (Input Universe 0, Channel 58598)"
     },
     {
       "id": "30",
@@ -20,6 +20,20 @@
       "path": "/reset",
       "type": "button",
       "description": "Button: RESET (Input Universe 0, Channel 64092)"
+    },
+    {
+      "id": "94",
+      "name": "ambiant blanc fixe",
+      "path": "/ambiant_blanc_fixe",
+      "type": "button",
+      "description": "Button: ambiant blanc fixe (Input Universe 0, Channel 779)"
+    },
+    {
+      "id": "45",
+      "name": "ambiant blanc mobile",
+      "path": "/ambiant_blanc_mobile",
+      "type": "button",
+      "description": "Button: ambiant blanc mobile (Input Universe 0, Channel 36155)"
     },
     {
       "id": "204",
@@ -198,5 +212,5 @@
     }
   ],
   "generated": true,
-  "generatedAt": "2026-06-04T14:08:22.102Z"
+  "generatedAt": "2026-06-04T14:33:05.595Z"
 }
