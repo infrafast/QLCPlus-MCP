@@ -1,6 +1,13 @@
 {
   "widgets": [
     {
+      "id": "28",
+      "name": "Arc en ciel",
+      "path": "/arc_en_ciel",
+      "type": "button",
+      "description": "Button: Arc en ciel (Input Universe 0, Channel 58598)"
+    },
+    {
       "id": "30",
       "name": "ambient bleu-jaune",
       "path": "/ambient_bleu-jaune",
@@ -191,5 +198,5 @@
     }
   ],
   "generated": true,
-  "generatedAt": "2026-06-04T13:05:00.094Z"
+  "generatedAt": "2026-06-04T14:08:22.102Z"
 }
