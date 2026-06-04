@@ -1,7 +1,8 @@
 import { pino } from "pino";
 let loggerInstance = null;
 export function initLogger(config) {
-    const pinoConfig = config.nodeEnv === "development"
+    const usePrettyLogs = config.nodeEnv === "development" && config.transport !== "stdio";
+    const pinoConfig = usePrettyLogs
         ? {
             transport: {
                 target: "pino-pretty",
@@ -14,10 +15,11 @@ export function initLogger(config) {
             },
         }
         : {};
+    const destination = config.transport === "stdio" ? pino.destination(2) : pino.destination();
     loggerInstance = pino({
         level: config.logLevel,
         ...pinoConfig,
-    }, pino.destination());
+    }, destination);
     return loggerInstance;
 }
 export function getLogger() {

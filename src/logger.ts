@@ -4,8 +4,9 @@ import { Config } from "./config.js";
 let loggerInstance: Logger | null = null;
 
 export function initLogger(config: Config): Logger {
+  const usePrettyLogs = config.nodeEnv === "development" && config.transport !== "stdio";
   const pinoConfig =
-    config.nodeEnv === "development"
+    usePrettyLogs
       ? {
           transport: {
             target: "pino-pretty",
@@ -19,12 +20,14 @@ export function initLogger(config: Config): Logger {
         }
       : {};
 
+  const destination = config.transport === "stdio" ? pino.destination(2) : pino.destination();
+
   loggerInstance = pino(
     {
       level: config.logLevel,
       ...pinoConfig,
     },
-    pino.destination()
+    destination
   );
 
   return loggerInstance;
