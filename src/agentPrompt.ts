@@ -3,8 +3,10 @@ import path from "path";
 import { text, type ToolDefinition } from "mcp-use/server";
 import { z } from "zod";
 
-export const PROMPT_RESOURCE_URI = "qlcplus://prompt/system";
-export const PROMPT_NAME = "qlcplus_lighting_assistant";
+export const PROMPT_RESOURCE_URI = "agent://prompt/system";
+export const PROMPT_NAME = "agent_prompt";
+export const LEGACY_PROMPT_RESOURCE_URI = "qlcplus://prompt/system";
+export const LEGACY_PROMPT_NAME = "qlcplus_lighting_assistant";
 export const PROMPT_TOOL_NAME = "get_agent_prompt";
 export const PROMPT_FILE = process.env.MCP_PROMPT_FILE
   ? path.resolve(process.env.MCP_PROMPT_FILE)
@@ -14,10 +16,10 @@ export async function readAgentPrompt(): Promise<string> {
   return readFile(PROMPT_FILE, "utf8");
 }
 
-export function registerAgentPrompt(server: any): void {
+function registerPromptName(server: any, name: string): void {
   server.prompt(
     {
-      name: PROMPT_NAME,
+      name,
       title: "QLCPlus Lighting Assistant",
       description: "Recommended system prompt for agents controlling QLC+ lighting through this MCP server.",
     },
@@ -37,12 +39,14 @@ export function registerAgentPrompt(server: any): void {
       };
     }
   );
+}
 
+function registerPromptResource(server: any, uri: string): void {
   server.resource(
     {
       name: "QLCPlus MCP Agent Prompt",
       title: "QLCPlus Lighting Assistant Prompt",
-      uri: PROMPT_RESOURCE_URI,
+      uri,
       description: "Contents of PROMPT.md for agents that inject MCP resources into model instructions.",
       mimeType: "text/markdown",
     },
@@ -51,7 +55,7 @@ export function registerAgentPrompt(server: any): void {
       return {
         contents: [
           {
-            uri: PROMPT_RESOURCE_URI,
+            uri,
             mimeType: "text/markdown",
             text: prompt,
           },
@@ -59,6 +63,13 @@ export function registerAgentPrompt(server: any): void {
       };
     }
   );
+}
+
+export function registerAgentPrompt(server: any): void {
+  registerPromptName(server, PROMPT_NAME);
+  registerPromptName(server, LEGACY_PROMPT_NAME);
+  registerPromptResource(server, PROMPT_RESOURCE_URI);
+  registerPromptResource(server, LEGACY_PROMPT_RESOURCE_URI);
 }
 
 export function createAgentPromptTool(): ToolDefinition {

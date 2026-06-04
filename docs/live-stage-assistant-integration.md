@@ -72,8 +72,6 @@ Add to LiveStageAssistant's MCP server configuration file:
         "MCP_PROMPT_FILE": "/path/to/QLCPlus-MCP/PROMPT.md"
       },
       "assistantPrompt": {
-        "promptName": "qlcplus_lighting_assistant",
-        "resourceUri": "qlcplus://prompt/system",
         "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,couleur"
       }
     }
@@ -89,8 +87,6 @@ Add to LiveStageAssistant's MCP server configuration file:
     "qlcplus": {
       "url": "http://localhost:8788/mcp",
       "assistantPrompt": {
-        "promptName": "qlcplus_lighting_assistant",
-        "resourceUri": "qlcplus://prompt/system",
         "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,couleur"
       }
     }

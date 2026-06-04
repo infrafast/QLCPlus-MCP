@@ -65,9 +65,7 @@ For LiveStageAssistant, configure the active MCP config to use:
       "MCP_PROMPT_FILE": "/full/path/to/QLCPlus-MCP/PROMPT.md"
     },
     "assistantPrompt": {
-      "promptName": "qlcplus_lighting_assistant",
-      "resourceUri": "qlcplus://prompt/system",
-            "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,couleur"
+      "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,couleur"
     }
   }
 }
@@ -93,7 +91,7 @@ Once all three are running:
 
 **"Widget not found"** → Create `config/widgets.json` with your scene names
 
-**Prompt not loaded in the agent** → Configure your MCP host to fetch prompt `qlcplus_lighting_assistant`, resource `qlcplus://prompt/system`, or standard fallback tool `get_agent_prompt`
+**Prompt not loaded in the agent** → Configure your MCP host to fetch standard prompt `agent_prompt`, resource `agent://prompt/system`, or fallback tool `get_agent_prompt`
 
 **No logs** → Check `LOG_LEVEL=debug` in `.env` for more details
 
