@@ -1,6 +1,7 @@
 import { type ToolDefinition, MCPServer } from "mcp-use/server";
 import { getLogger } from "../logger.js";
 import { Config } from "../config.js";
+import { registerAgentPrompt } from "../agentPrompt.js";
 
 export async function startHttpServer(
   config: Config,
@@ -21,6 +22,7 @@ export async function startHttpServer(
   tools.forEach((tool) => {
     server.tool(tool);
   });
+  registerAgentPrompt(server);
 
   if (config.authMode === "bearer") {
     server.app.use("*", async (c, next) => {

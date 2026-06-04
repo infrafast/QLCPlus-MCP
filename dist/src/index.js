@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { loadConfig } from "./config.js";
+import { createAgentPromptTool } from "./agentPrompt.js";
 import { initLogger, getLogger } from "./logger.js";
 import { initOsc } from "./osc/oscClient.js";
 import { loadWidgetConfig } from "./qlc/widgetResolver.js";
@@ -32,6 +33,7 @@ async function main() {
         // Create tools
         logger.info("Registering MCP tools...");
         const tools = [
+            createAgentPromptTool(),
             // DMX/OSC tools
             createSetDmxChannelTool(config),
             createSetDmxRgbTool(config),

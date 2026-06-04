@@ -161,6 +161,12 @@ Widget mappings define logical names for QLC+ controls. Create `config/widgets.j
 
 Use logical names in tools: `qlc_button_press(widgetName="scene_intro")`
 
+### Agent Prompt
+
+The server exposes the repository `PROMPT.md` as MCP prompt `qlcplus_lighting_assistant`, MCP resource `qlcplus://prompt/system`, and fallback tool `qlc_get_agent_prompt`. MCP hosts such as LiveStageAssistant can fetch this prompt at startup and append it to the LLM instructions so lighting-specific safety rules, QLC+ widget guidance, and DMX/OSC constraints are available to the model.
+
+Set `MCP_PROMPT_FILE=/absolute/path/to/PROMPT.md` to expose a custom prompt file. If omitted, the server reads `PROMPT.md` from the current working directory.
+
 ### QLC+ Setup
 
 1. **Enable OSC Plugin**

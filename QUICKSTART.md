@@ -32,6 +32,7 @@ QLC_HOST=127.0.0.1
 QLC_OSC_INPUT_PORT=7700
 QLC_OSC_OUTPUT_PORT=9000
 QLC_DRY_RUN=false
+MCP_PROMPT_FILE=/full/path/to/QLCPlus-MCP/PROMPT.md
 ```
 
 ## Start
@@ -76,6 +77,8 @@ Once all three are running:
 **"OSC not initialized"** → Ensure QLC+ is running with OSC enabled
 
 **"Widget not found"** → Create `config/widgets.json` with your scene names
+
+**Prompt not loaded in the agent** → Configure your MCP host to fetch prompt `qlcplus_lighting_assistant`, resource `qlcplus://prompt/system`, or fallback tool `qlc_get_agent_prompt`
 
 **No logs** → Check `LOG_LEVEL=debug` in `.env` for more details
 

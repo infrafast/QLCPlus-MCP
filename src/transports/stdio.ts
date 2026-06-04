@@ -1,7 +1,9 @@
 import { MCPServer } from "mcp-use/server";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { ListResourceTemplatesRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { getLogger } from "../logger.js";
 import { Config } from "../config.js";
+import { registerAgentPrompt } from "../agentPrompt.js";
 import type { ToolDefinition } from "mcp-use/server";
 
 export async function startStdioServer(
@@ -22,6 +24,14 @@ export async function startStdioServer(
   tools.forEach((tool) => {
     server.tool(tool);
   });
+  registerAgentPrompt(server);
+
+  // mcp_use may ask for resource templates during startup. This server exposes
+  // one static prompt resource but no templates, so return an empty list.
+  const nativeSdkServer = (server.nativeServer as any).server;
+  nativeSdkServer.setRequestHandler(ListResourceTemplatesRequestSchema, async () => ({
+    resourceTemplates: [],
+  }));
 
   const transport = new StdioServerTransport();
   transport.onclose = () => {

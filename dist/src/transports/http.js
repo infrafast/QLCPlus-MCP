@@ -1,5 +1,6 @@
 import { MCPServer } from "mcp-use/server";
 import { getLogger } from "../logger.js";
+import { registerAgentPrompt } from "../agentPrompt.js";
 export async function startHttpServer(config, tools) {
     const logger = getLogger();
     logger.info("Starting MCP server in HTTP mode");
@@ -13,6 +14,7 @@ export async function startHttpServer(config, tools) {
     tools.forEach((tool) => {
         server.tool(tool);
     });
+    registerAgentPrompt(server);
     if (config.authMode === "bearer") {
         server.app.use("*", async (c, next) => {
             if (c.req.path === "/health") {
