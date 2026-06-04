@@ -137,7 +137,7 @@ QLCPlus-MCP is a complete, production-ready TypeScript MCP (Model Context Protoc
 
 #### Special Functions
 
-11. **`qlc_set_master`**
+11. **Removed: non-documented `/vc/...` shortcut**
     - Set grand master dimmer (0-1)
     - Affects all lighting proportionally
 
@@ -146,11 +146,11 @@ QLCPlus-MCP is a complete, production-ready TypeScript MCP (Model Context Protoc
     - Optional DMX channel specification
     - Full RGB control support
 
-13. **`qlc_blackout`**
+13. **Removed: non-documented `/vc/...` shortcut**
     - Emergency darkness (safe tool)
     - Smooth fade to black
 
-14. **`qlc_panic`**
+14. **Removed: non-documented `/vc/...` shortcut**
     - Emergency stop (safe tool)
     - Instant kill all lighting
 
@@ -355,9 +355,9 @@ User Request → "Launch intro scene"
 ↓
 QLCPlus-MCP → Resolves "intro_scene" from widgets.json
 ↓
-Gets OSC Path → "/vc/scene/intro"
+Gets OSC Path → "/scene_intro"
 ↓
-Sends OSC Message → /vc/scene/intro [1]
+Sends OSC Message → /scene_intro [1]
 ↓
 QLC+ Responds → Fades to intro lighting
 ```

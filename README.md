@@ -135,22 +135,22 @@ Widget mappings define logical names for QLC+ controls. Create `config/widgets.j
   "widgets": [
     {
       "id": "1",
-      "name": "blackout",
-      "path": "/vc/blackout",
+      "name": "BLACK",
+      "path": "/black",
       "type": "button",
-      "description": "Emergency blackout"
+      "description": "Mapped Virtual Console button"
     },
     {
       "id": "2",
       "name": "scene_intro",
-      "path": "/vc/scene/intro",
+      "path": "/scene_intro",
       "type": "button",
-      "description": "Launch intro scene"
+      "description": "Mapped Virtual Console scene button"
     },
     {
       "id": "3",
       "name": "master_dimmer",
-      "path": "/vc/master",
+      "path": "/master_dimmer",
       "type": "slider",
       "minValue": 0,
       "maxValue": 1
@@ -236,7 +236,7 @@ npm run dev
 If you have an existing QLC+ project file (`.qxw`):
 
 ```bash
-npm run generate:widgets ./my_show.qxw config/widgets.json
+npm run generate:widgets ./intervalPI.qxw config/widgets.json
 ```
 
 This extracts Virtual Console widgets that have `<Input Universe="0" Channel="..."/>` and generates OSC paths from the widget caption. The `Channel` value is QLC+'s internal Auto Detect hash, not a DMX channel.
@@ -247,7 +247,7 @@ This extracts Virtual Console widgets that have `<Input Universe="0" Channel="..
 
 #### `qlc_get_state`
 
-Report the OSC runtime state: configured QLC+ host and ports, whether the OSC client is initialized, last command sent, feedback listener status, and whether recent QLC+ feedback was received.
+Report the OSC runtime state: configured QLC+ host and ports, whether the OSC client is initialized, last command sent, feedback listener status, whether recent QLC+ feedback was received, and the recent feedback event history.
 
 ```typescript
 qlc_get_state({
@@ -256,6 +256,20 @@ qlc_get_state({
 ```
 
 Use this before answering questions such as "Are you connected to QLC+?". UDP sends do not provide acknowledgements, so recent feedback is the strongest confirmation that QLC+ is responding.
+
+### Widget Discovery
+
+#### `qlc_list_widgets`
+
+List widgets loaded from `config/widgets.json`, with optional `type`, `query`, and `limit` filters.
+
+```typescript
+qlc_list_widgets({
+  query: "black"
+})
+```
+
+Use this to discover available mapped QLC+ widget names and their OSC paths before using named widget tools.
 
 ### DMX and OSC
 
@@ -299,7 +313,7 @@ Send arbitrary OSC messages. **Disabled by default** — enable with `QLC_ALLOW_
 
 ```typescript
 qlc_send_osc({
-  path: "/vc/button/custom",
+  path: "/custom_button",
   args: [1]
 })
 ```
@@ -312,7 +326,7 @@ Momentary button press (press + release).
 
 ```typescript
 qlc_button_press({
-  widgetName: "blackout",  // or oscPath: "/vc/blackout"
+  widgetName: "BLACK",  // or oscPath: "/black"
   duration: 100  // milliseconds
 })
 ```
@@ -361,37 +375,7 @@ qlc_launch_scene({
 })
 ```
 
-#### `qlc_cuelist_next`
-
-Advance to next cue.
-
-```typescript
-qlc_cuelist_next({
-  widgetName: "cues_main"
-})
-```
-
-#### `qlc_cuelist_previous`
-
-Go to previous cue.
-
-```typescript
-qlc_cuelist_previous({
-  widgetName: "cues_main"
-})
-```
-
 ### Special Functions
-
-#### `qlc_set_master`
-
-Set grand master dimmer (0-1 normalized).
-
-```typescript
-qlc_set_master({
-  value: 1.0  // Full brightness
-})
-```
 
 #### `qlc_set_color_wash`
 
@@ -405,22 +389,6 @@ qlc_set_color_wash({
   greenChannel: 2,
   blueChannel: 3
 })
-```
-
-#### `qlc_blackout`
-
-Trigger blackout (emergency darkness).
-
-```typescript
-qlc_blackout({})
-```
-
-#### `qlc_panic`
-
-Trigger panic mode (emergency stop — instantly kills all lighting).
-
-```typescript
-qlc_panic({})
 ```
 
 ## LiveStageAssistant Integration
@@ -503,8 +471,7 @@ Recommended instructions for Claude / LiveStageAssistant:
    - Use specific tools for safety and clarity
 
 3. **Use emergency tools carefully**
-   - `qlc_blackout`: For immediate darkness (transitions smoothly)
-   - `qlc_panic`: For actual emergencies only (instant kill)
+   - Use mapped widgets for blackout, panic, master, or any Virtual Console action
 
 4. **Widget mappings**
    - Available scenes: intro, verse, chorus, bridge, outro
@@ -566,20 +533,18 @@ Universe 1, Channel 12 = 255
 
 ### Virtual Console Paths
 
+QLC+ 4 Virtual Console widgets should use OSC paths learned with Auto Detect and stored in `config/widgets.json`. Do not assume generic `/vc/...` paths.
+
 ```
-Buttons:      /vc/button/<id>
-Sliders:      /vc/slider/<id>
-Speed:        /vc/speed/<id>
-Cue Lists:    /vc/cuelist/<id>
-Master:       /vc/master
-Blackout:     /vc/blackout
-Panic:        /vc/panic
+BLACK -> /black
+STOP -> /stop
+ambient blue-yellow -> /ambient_blue-yellow
 ```
 
 ### Value Ranges
 
 - **DMX Channels**: 0-255 (8-bit)
-- **Sliders/Master**: 0-1 (normalized float)
+- **Mapped sliders**: 0-1 normalized float on the widget path from `config/widgets.json`
 - **Speed (BPM)**: 10-240 (converted to 0-1 internally)
 - **Button Press**: 1 (press), 0 (release)
 
@@ -635,6 +600,9 @@ Change log level in `.env`:
 
 ```bash
 LOG_LEVEL=debug  # trace|debug|info|warn|error|fatal
+# With debug enabled, OSC traffic is logged as:
+# [WRITE_OSC] <qlc-host>:<qlc-input-port> <path> args=<json-array>
+# [READ_OSC] <source-host>:<source-port> <path> args=<json-array>
 NODE_ENV=development  # Enables pretty printing
 ```
 

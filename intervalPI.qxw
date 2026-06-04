@@ -11,7 +11,9 @@
    <BeatGenerator BeatType="Disabled" BPM="0"/>
    <Universe Name="Universe 1" ID="0">
     <Input Plugin="OSC" UID="192.168.100.10" Line="1"/>
-    <Output Plugin="DMX USB" UID="FT232R USB UART (S/N: A50285BI)" Line="0"/>
+    <Output Plugin="DMX USB" UID="FT232R USB UART (S/N: A50285BI)" Line="0">
+     <PluginParameters UniverseChannels="300"/>
+    </Output>
     <Feedback Plugin="OSC" UID="192.168.100.10" Line="1"/>
    </Universe>
    <Universe Name="Universe 2" ID="1">
@@ -5799,7 +5801,7 @@
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
     </Button>
-    <Button Caption="ambient blue-yellow" ID="30" Icon="">
+    <Button Caption="ambient bleu-jaune" ID="30" Icon="">
      <WindowState Visible="True" X="515" Y="430" Width="125" Height="45"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -5813,7 +5815,7 @@
      <Intensity Adjust="False">100</Intensity>
      <Input Universe="0" Channel="17393"/>
     </Button>
-    <Button Caption="STOP" ID="87" Icon="">
+    <Button Caption="RESET" ID="87" Icon="">
      <WindowState Visible="True" X="885" Y="120" Width="230" Height="95"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -5825,9 +5827,9 @@
      <Function ID="48"/>
      <Action>StopAll</Action>
      <Intensity Adjust="False">100</Intensity>
-     <Input Universe="0" Channel="52273"/>
+     <Input Universe="0" Channel="64092"/>
     </Button>
-    <Button Caption="White static" ID="94" Icon="">
+    <Button Caption="ambiant static" ID="94" Icon="">
      <WindowState Visible="True" X="170" Y="430" Width="165" Height="45"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -5840,7 +5842,7 @@
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
     </Button>
-    <Button Caption="White Ambiant" ID="45" Icon="">
+    <Button Caption="ambient blanc" ID="45" Icon="">
      <WindowState Visible="True" X="5" Y="430" Width="160" Height="45"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -5878,7 +5880,7 @@
      <ShowEnableButton>True</ShowEnableButton>
      <Collapsed>False</Collapsed>
      <Disabled>False</Disabled>
-     <Button Caption="auto low chaser" ID="204" Icon="">
+     <Button Caption="auto lent" ID="204" Icon="">
       <WindowState Visible="True" X="5" Y="5" Width="100" Height="95"/>
       <Appearance>
        <FrameStyle>None</FrameStyle>
@@ -5890,8 +5892,9 @@
       <Function ID="26"/>
       <Action>Toggle</Action>
       <Intensity Adjust="False">100</Intensity>
+      <Input Universe="0" Channel="756"/>
      </Button>
-     <Button Caption="auto normal chaser" ID="206" Icon="">
+     <Button Caption="auto normal" ID="206" Icon="">
       <WindowState Visible="True" X="105" Y="5" Width="105" Height="95"/>
       <Appearance>
        <FrameStyle>None</FrameStyle>
@@ -5903,8 +5906,9 @@
       <Function ID="268"/>
       <Action>Toggle</Action>
       <Intensity Adjust="False">100</Intensity>
+      <Input Universe="0" Channel="60218"/>
      </Button>
-     <Button Caption="auto punchy chaser" ID="208" Icon="">
+     <Button Caption="auto rapide" ID="208" Icon="">
       <WindowState Visible="True" X="210" Y="5" Width="110" Height="95"/>
       <Appearance>
        <FrameStyle>None</FrameStyle>
@@ -5916,8 +5920,9 @@
       <Function ID="313"/>
       <Action>Toggle</Action>
       <Intensity Adjust="False">100</Intensity>
+      <Input Universe="0" Channel="16552"/>
      </Button>
-     <Button Caption="FX strobe" ID="210" Icon="">
+     <Button Caption="strobe" ID="210" Icon="">
       <WindowState Visible="True" X="345" Y="5" Width="70" Height="95"/>
       <Appearance>
        <FrameStyle>None</FrameStyle>
@@ -5929,6 +5934,7 @@
       <Function ID="17"/>
       <Action Override="0" ForceLTP="0">Flash</Action>
       <Intensity Adjust="False">100</Intensity>
+      <Input Universe="0" Channel="18799"/>
      </Button>
      <Button Caption=" FX strobe multi color" ID="211" Icon="">
       <WindowState Visible="True" X="415" Y="5" Width="70" Height="95"/>
@@ -5995,7 +6001,7 @@
       <Action>Toggle</Action>
       <Intensity Adjust="False">100</Intensity>
      </Button>
-     <Button Caption="MATRIX vumetre" ID="216" Icon="">
+     <Button Caption="vumetre" ID="216" Icon="">
       <WindowState Visible="True" X="765" Y="5" Width="70" Height="95"/>
       <Appearance>
        <FrameStyle>None</FrameStyle>
@@ -6007,8 +6013,9 @@
       <Function ID="228"/>
       <Action>Toggle</Action>
       <Intensity Adjust="False">100</Intensity>
+      <Input Universe="0" Channel="8740"/>
      </Button>
-     <Button Caption="FX soundmode fullAuto" ID="217" Icon="">
+     <Button Caption="auto complet" ID="217" Icon="">
       <WindowState Visible="True" X="835" Y="5" Width="70" Height="95"/>
       <Appearance>
        <FrameStyle>None</FrameStyle>
@@ -6020,6 +6027,7 @@
       <Function ID="89"/>
       <Action>Toggle</Action>
       <Intensity Adjust="False">100</Intensity>
+      <Input Universe="0" Channel="52051"/>
      </Button>
      <Button Caption="laser 3d  bar green" ID="218" Icon="">
       <WindowState Visible="True" X="905" Y="5" Width="70" Height="95"/>
@@ -6175,99 +6183,106 @@
      <Mixing>False</Mixing>
      <Collapsed>False</Collapsed>
      <Disabled>False</Disabled>
-     <Button Caption="" ID="7" Icon="">
+     <Button Caption="lecteur stop" ID="7" Icon="">
       <WindowState Visible="True" X="150" Y="0" Width="50" Height="50"/>
       <Appearance>
        <FrameStyle>None</FrameStyle>
        <ForegroundColor>Default</ForegroundColor>
        <BackgroundColor>Default</BackgroundColor>
        <BackgroundImage>pictures/stop.png</BackgroundImage>
-       <Font>Default</Font>
+       <Font>Sans Serif,1,-1,5,50,0,0,0,0,0</Font>
       </Appearance>
       <Function ID="135"/>
       <Action>Toggle</Action>
       <Intensity Adjust="False">100</Intensity>
+      <Input Universe="0" Channel="10295"/>
      </Button>
-     <Button Caption="" ID="8" Icon="">
+     <Button Caption="lecture play" ID="8" Icon="">
       <WindowState Visible="True" X="100" Y="0" Width="50" Height="50"/>
       <Appearance>
        <FrameStyle>None</FrameStyle>
        <ForegroundColor>Default</ForegroundColor>
        <BackgroundColor>Default</BackgroundColor>
        <BackgroundImage>pictures/play.png</BackgroundImage>
-       <Font>Default</Font>
+       <Font>Sans Serif,1,-1,5,50,0,0,0,0,0</Font>
       </Appearance>
       <Function ID="137"/>
       <Action>Toggle</Action>
       <Intensity Adjust="False">100</Intensity>
+      <Input Universe="0" Channel="40394"/>
      </Button>
-     <Button Caption="" ID="9" Icon="">
+     <Button Caption="lecture fade in" ID="9" Icon="">
       <WindowState Visible="True" X="300" Y="0" Width="50" Height="50"/>
       <Appearance>
        <FrameStyle>None</FrameStyle>
        <ForegroundColor>Default</ForegroundColor>
        <BackgroundColor>Default</BackgroundColor>
        <BackgroundImage>pictures/fadein.png</BackgroundImage>
-       <Font>Default</Font>
+       <Font>Sans Serif,1,-1,5,50,0,0,0,0,0</Font>
       </Appearance>
       <Function ID="127"/>
       <Action>Toggle</Action>
       <Intensity Adjust="False">100</Intensity>
+      <Input Universe="0" Channel="19714"/>
      </Button>
-     <Button Caption="" ID="10" Icon="">
+     <Button Caption="lecture plus" ID="10" Icon="">
       <WindowState Visible="True" X="50" Y="0" Width="50" Height="50"/>
       <Appearance>
        <FrameStyle>None</FrameStyle>
        <ForegroundColor>Default</ForegroundColor>
        <BackgroundColor>Default</BackgroundColor>
        <BackgroundImage>pictures/incvol.jpg</BackgroundImage>
-       <Font>Default</Font>
+       <Font>Sans Serif,1,-1,5,50,0,0,0,0,0</Font>
       </Appearance>
       <Function ID="132"/>
       <Action>Toggle</Action>
       <Intensity Adjust="False">100</Intensity>
+      <Input Universe="0" Channel="49249"/>
      </Button>
-     <Button Caption="" ID="15" Icon="">
+     <Button Caption="lecture moins" ID="15" Icon="">
       <WindowState Visible="True" X="0" Y="0" Width="50" Height="50"/>
       <Appearance>
        <FrameStyle>None</FrameStyle>
        <ForegroundColor>Default</ForegroundColor>
        <BackgroundColor>Default</BackgroundColor>
        <BackgroundImage>pictures/decvol.jpg</BackgroundImage>
-       <Font>Default</Font>
+       <Font>Sans Serif,1,-1,5,50,0,0,0,0,0</Font>
       </Appearance>
       <Function ID="128"/>
       <Action>Toggle</Action>
       <Intensity Adjust="False">100</Intensity>
+      <Input Universe="0" Channel="11021"/>
      </Button>
-     <Button Caption="" ID="6" Icon="">
+     <Button Caption="lecture fade out" ID="6" Icon="">
       <WindowState Visible="True" X="250" Y="0" Width="50" Height="50"/>
       <Appearance>
        <FrameStyle>None</FrameStyle>
        <ForegroundColor>Default</ForegroundColor>
        <BackgroundColor>Default</BackgroundColor>
        <BackgroundImage>pictures/fadeout.png</BackgroundImage>
-       <Font>Default</Font>
+       <Font>Sans Serif,1,-1,5,50,0,0,0,0,0</Font>
       </Appearance>
       <Function ID="113"/>
       <Action>Toggle</Action>
       <Intensity Adjust="False">100</Intensity>
+      <Input Universe="0" Channel="16740"/>
      </Button>
-     <Button Caption="" ID="16" Icon="">
+     <Button Caption="lecture aleatoire" ID="16" Icon="">
       <WindowState Visible="True" X="200" Y="0" Width="50" Height="50"/>
       <Appearance>
        <FrameStyle>None</FrameStyle>
        <ForegroundColor>Default</ForegroundColor>
        <BackgroundColor>Default</BackgroundColor>
        <BackgroundImage>pictures/shuffle.jpg</BackgroundImage>
-       <Font>Default</Font>
+       <Font>Sans Serif,1,-1,5,50,0,0,0,0,0</Font>
       </Appearance>
       <Function ID="139"/>
       <Action>Toggle</Action>
       <Intensity Adjust="False">100</Intensity>
+      <Input Universe="0" Channel="28269"/>
      </Button>
      <Button Caption="" ID="17" Icon="">
-      <WindowState Visible="True" X="350" Y="0" Width="50" Height="50"/>
+      <WindowState Visible="True" X="355" Y="0" Width="50" Height="50"/>
       <Appearance>
        <FrameStyle>None</FrameStyle>
        <ForegroundColor>Default</ForegroundColor>
@@ -6336,7 +6351,7 @@
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
     </Button>
-    <Button Caption="bloody 1M" ID="83" Icon="">
+    <Button Caption="bloody" ID="83" Icon="">
      <WindowState Visible="True" X="150" Y="10" Width="70" Height="70"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -6363,7 +6378,7 @@
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
     </Button>
-    <Button Caption="il suffira 1M" ID="85" Icon="">
+    <Button Caption="il suffira" ID="85" Icon="">
      <WindowState Visible="True" X="1200" Y="10" Width="70" Height="70"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -6403,7 +6418,7 @@
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
     </Button>
-    <Button Caption="nothin 2M" ID="89" Icon="">
+    <Button Caption="nothing" ID="89" Icon="">
      <WindowState Visible="True" X="220" Y="80" Width="70" Height="70"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -6442,7 +6457,7 @@
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
     </Button>
-    <Button Caption="gimee 1M" ID="92" Icon="">
+    <Button Caption="gimee" ID="92" Icon="">
      <WindowState Visible="True" X="710" Y="10" Width="70" Height="70"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -6468,7 +6483,7 @@
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
     </Button>
-    <Button Caption="plugin 4M" ID="95" Icon="">
+    <Button Caption="plugin" ID="95" Icon="">
      <WindowState Visible="True" X="290" Y="80" Width="70" Height="70"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -6493,8 +6508,9 @@
      <Function ID="353"/>
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
+     <Input Universe="0" Channel="60664"/>
     </Button>
-    <Button Caption="addict 1M" ID="97" Icon="">
+    <Button Caption="addict" ID="97" Icon="">
      <WindowState Visible="True" X="10" Y="10" Width="70" Height="70"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -6508,7 +6524,7 @@
      <Intensity Adjust="False">100</Intensity>
      <Input Universe="0" Channel="61947"/>
     </Button>
-    <Button Caption="toto 1M" ID="98" Icon="">
+    <Button Caption="toto" ID="98" Icon="">
      <WindowState Visible="True" X="990" Y="80" Width="70" Height="70"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -6534,7 +6550,7 @@
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
     </Button>
-    <Button Caption="sweet child 2M" ID="100" Icon="">
+    <Button Caption="sweet child" ID="100" Icon="">
      <WindowState Visible="True" X="780" Y="80" Width="70" Height="70"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -6573,7 +6589,7 @@
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
     </Button>
-    <Button Caption="have you 1M" ID="103" Icon="">
+    <Button Caption="have you" ID="103" Icon="">
      <WindowState Visible="True" X="780" Y="10" Width="70" Height="70"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -6599,7 +6615,7 @@
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
     </Button>
-    <Button Caption="hotel 1M" ID="105" Icon="">
+    <Button Caption="hotel" ID="105" Icon="">
      <WindowState Visible="True" X="1060" Y="10" Width="70" Height="70"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -6612,7 +6628,7 @@
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
     </Button>
-    <Button Caption="AMBER" ID="106" Icon="">
+    <Button Caption="AMBRE" ID="106" Icon="">
      <WindowState Visible="True" X="710" Y="150" Width="70" Height="70"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -6624,6 +6640,7 @@
      <Function ID="117"/>
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
+     <Input Universe="0" Channel="45264"/>
     </Button>
     <Button Caption="cendrillon" ID="107" Icon="">
      <WindowState Visible="True" X="360" Y="10" Width="70" Height="70"/>
@@ -6677,7 +6694,7 @@
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
     </Button>
-    <Button Caption="like a stone 1M" ID="111" Icon="">
+    <Button Caption="like a stone" ID="111" Icon="">
      <WindowState Visible="True" X="80" Y="80" Width="70" Height="70"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -6690,7 +6707,7 @@
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
     </Button>
-    <Button Caption="shape 1M" ID="112" Icon="">
+    <Button Caption="shape" ID="112" Icon="">
      <WindowState Visible="True" X="500" Y="80" Width="70" Height="70"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -6833,7 +6850,7 @@
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
     </Button>
-    <Button Caption="time running out 1M" ID="123" Icon="">
+    <Button Caption="time running out" ID="123" Icon="">
      <WindowState Visible="True" X="920" Y="80" Width="70" Height="70"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -6871,6 +6888,7 @@
      <Function ID="147"/>
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
+     <Input Universe="0" Channel="19311"/>
     </Button>
     <Button Caption="MAGENTA-VERT" ID="126" Icon="">
      <WindowState Visible="True" X="640" Y="150" Width="70" Height="70"/>
@@ -6884,6 +6902,7 @@
      <Function ID="312"/>
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
+     <Input Universe="0" Channel="16553"/>
     </Button>
     <Button Caption="" ID="127" Icon="">
      <WindowState Visible="True" X="360" Y="150" Width="70" Height="70"/>
@@ -6910,8 +6929,9 @@
      <Function ID="143"/>
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
+     <Input Universe="0" Channel="61281"/>
     </Button>
-    <Button Caption="RED" ID="129" Icon="">
+    <Button Caption="ROUGE" ID="129" Icon="">
      <WindowState Visible="True" X="780" Y="150" Width="70" Height="70"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -6923,8 +6943,9 @@
      <Function ID="296"/>
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
+     <Input Universe="0" Channel="49811"/>
     </Button>
-    <Button Caption="GREEN" ID="130" Icon="">
+    <Button Caption="VERT" ID="130" Icon="">
      <WindowState Visible="True" X="850" Y="150" Width="70" Height="70"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -6936,8 +6957,9 @@
      <Function ID="320"/>
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
+     <Input Universe="0" Channel="7906"/>
     </Button>
-    <Button Caption="BLUE" ID="131" Icon="">
+    <Button Caption="BLEU" ID="131" Icon="">
      <WindowState Visible="True" X="920" Y="150" Width="70" Height="70"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
@@ -6949,6 +6971,7 @@
      <Function ID="319"/>
      <Action>Toggle</Action>
      <Intensity Adjust="False">100</Intensity>
+     <Input Universe="0" Channel="64161"/>
     </Button>
     <Button Caption="BLACK" ID="135" Icon="">
      <WindowState Visible="True" X="990" Y="150" Width="280" Height="70"/>
@@ -6964,6 +6987,126 @@
      <Intensity Adjust="False">100</Intensity>
      <Input Universe="0" Channel="15348"/>
     </Button>
+    <Label Caption="1M" ID="22">
+     <WindowState Visible="True" X="970" Y="80" Width="20" Height="20"/>
+     <Appearance>
+      <FrameStyle>None</FrameStyle>
+      <ForegroundColor>4294967295</ForegroundColor>
+      <BackgroundColor>Default</BackgroundColor>
+      <BackgroundImage>None</BackgroundImage>
+      <Font>Sans Serif,6,-1,5,50,0,0,0,0,0</Font>
+     </Appearance>
+    </Label>
+    <Label Caption="1M" ID="27">
+     <WindowState Visible="True" X="1040" Y="80" Width="20" Height="20"/>
+     <Appearance>
+      <FrameStyle>None</FrameStyle>
+      <ForegroundColor>4294967295</ForegroundColor>
+      <BackgroundColor>Default</BackgroundColor>
+      <BackgroundImage>None</BackgroundImage>
+      <Font>Sans Serif,6,-1,5,50,0,0,0,0,0</Font>
+     </Appearance>
+    </Label>
+    <Label Caption="1M" ID="37">
+     <WindowState Visible="True" X="1250" Y="10" Width="20" Height="20"/>
+     <Appearance>
+      <FrameStyle>None</FrameStyle>
+      <ForegroundColor>4294967295</ForegroundColor>
+      <BackgroundColor>Default</BackgroundColor>
+      <BackgroundImage>None</BackgroundImage>
+      <Font>Sans Serif,6,-1,5,50,0,0,0,0,0</Font>
+     </Appearance>
+    </Label>
+    <Label Caption="1M" ID="38">
+     <WindowState Visible="True" X="830" Y="10" Width="20" Height="20"/>
+     <Appearance>
+      <FrameStyle>None</FrameStyle>
+      <ForegroundColor>4294967295</ForegroundColor>
+      <BackgroundColor>Default</BackgroundColor>
+      <BackgroundImage>None</BackgroundImage>
+      <Font>Sans Serif,6,-1,5,50,0,0,0,0,0</Font>
+     </Appearance>
+    </Label>
+    <Label Caption="1M" ID="39">
+     <WindowState Visible="True" X="760" Y="10" Width="20" Height="20"/>
+     <Appearance>
+      <FrameStyle>None</FrameStyle>
+      <ForegroundColor>4294967295</ForegroundColor>
+      <BackgroundColor>Default</BackgroundColor>
+      <BackgroundImage>None</BackgroundImage>
+      <Font>Sans Serif,6,-1,5,50,0,0,0,0,0</Font>
+     </Appearance>
+    </Label>
+    <Label Caption="4M" ID="40">
+     <WindowState Visible="True" X="340" Y="80" Width="20" Height="20"/>
+     <Appearance>
+      <FrameStyle>None</FrameStyle>
+      <ForegroundColor>4294967295</ForegroundColor>
+      <BackgroundColor>Default</BackgroundColor>
+      <BackgroundImage>None</BackgroundImage>
+      <Font>Sans Serif,6,-1,5,50,0,0,0,0,0</Font>
+     </Appearance>
+    </Label>
+    <Label Caption="1M" ID="41">
+     <WindowState Visible="True" X="200" Y="10" Width="20" Height="20"/>
+     <Appearance>
+      <FrameStyle>None</FrameStyle>
+      <ForegroundColor>4294967295</ForegroundColor>
+      <BackgroundColor>Default</BackgroundColor>
+      <BackgroundImage>None</BackgroundImage>
+      <Font>Sans Serif,6,-1,5,50,0,0,0,0,0</Font>
+     </Appearance>
+    </Label>
+    <Label Caption="1M" ID="42">
+     <WindowState Visible="True" X="130" Y="80" Width="20" Height="20"/>
+     <Appearance>
+      <FrameStyle>None</FrameStyle>
+      <ForegroundColor>4294967295</ForegroundColor>
+      <BackgroundColor>Default</BackgroundColor>
+      <BackgroundImage>None</BackgroundImage>
+      <Font>Sans Serif,6,-1,5,50,0,0,0,0,0</Font>
+     </Appearance>
+    </Label>
+    <Label Caption="2M" ID="43">
+     <WindowState Visible="True" X="270" Y="80" Width="20" Height="20"/>
+     <Appearance>
+      <FrameStyle>None</FrameStyle>
+      <ForegroundColor>4294967295</ForegroundColor>
+      <BackgroundColor>Default</BackgroundColor>
+      <BackgroundImage>None</BackgroundImage>
+      <Font>Sans Serif,6,-1,5,50,0,0,0,0,0</Font>
+     </Appearance>
+    </Label>
+    <Label Caption="1M" ID="44">
+     <WindowState Visible="True" X="1110" Y="10" Width="20" Height="20"/>
+     <Appearance>
+      <FrameStyle>None</FrameStyle>
+      <ForegroundColor>4294967295</ForegroundColor>
+      <BackgroundColor>Default</BackgroundColor>
+      <BackgroundImage>None</BackgroundImage>
+      <Font>Sans Serif,6,-1,5,50,0,0,0,0,0</Font>
+     </Appearance>
+    </Label>
+    <Label Caption="2M" ID="46">
+     <WindowState Visible="True" X="830" Y="80" Width="20" Height="20"/>
+     <Appearance>
+      <FrameStyle>None</FrameStyle>
+      <ForegroundColor>4294967295</ForegroundColor>
+      <BackgroundColor>Default</BackgroundColor>
+      <BackgroundImage>None</BackgroundImage>
+      <Font>Sans Serif,6,-1,5,50,0,0,0,0,0</Font>
+     </Appearance>
+    </Label>
+    <Label Caption="1M" ID="47">
+     <WindowState Visible="True" X="550" Y="80" Width="20" Height="20"/>
+     <Appearance>
+      <FrameStyle>None</FrameStyle>
+      <ForegroundColor>4294967295</ForegroundColor>
+      <BackgroundColor>Default</BackgroundColor>
+      <BackgroundImage>None</BackgroundImage>
+      <Font>Sans Serif,6,-1,5,50,0,0,0,0,0</Font>
+     </Appearance>
+    </Label>
    </SoloFrame>
    <Frame Caption="" ID="29">
     <Appearance>

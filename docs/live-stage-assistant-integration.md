@@ -254,7 +254,7 @@ docker-compose up -d
 
 ### Creating Widget Mappings
 
-QLCPlus-MCP uses a logical widget mapping system. Create `config/widgets.json`:
+QLCPlus-MCP uses a logical widget mapping system. The `qlc_list_widgets` tool lets LiveStageAssistant list the loaded mappings at runtime. Create `config/widgets.json`:
 
 ```json
 {
@@ -262,28 +262,28 @@ QLCPlus-MCP uses a logical widget mapping system. Create `config/widgets.json`:
     {
       "id": "1",
       "name": "intro_scene",
-      "path": "/vc/scene/intro",
+      "path": "/scene_intro",
       "type": "button",
       "description": "Launch intro lighting scene"
     },
     {
       "id": "2",
       "name": "verse_scene",
-      "path": "/vc/scene/verse",
+      "path": "/scene_verse",
       "type": "button",
       "description": "Launch verse lighting scene"
     },
     {
       "id": "3",
       "name": "chorus_scene",
-      "path": "/vc/scene/chorus",
+      "path": "/scene_chorus",
       "type": "button",
       "description": "Launch chorus lighting scene"
     },
     {
       "id": "4",
       "name": "master_dimmer",
-      "path": "/vc/master",
+      "path": "/master_dimmer",
       "type": "slider",
       "description": "Master brightness control",
       "minValue": 0,
@@ -292,14 +292,14 @@ QLCPlus-MCP uses a logical widget mapping system. Create `config/widgets.json`:
     {
       "id": "5",
       "name": "strobe_speed",
-      "path": "/vc/speed/strobe",
+      "path": "/strobe_speed",
       "type": "speed",
       "description": "Strobe effect speed (BPM)"
     },
     {
       "id": "6",
       "name": "cues",
-      "path": "/vc/cuelist/main",
+      "path": "/main_cuelist",
       "type": "cuelist",
       "description": "Main cue list"
     }
@@ -339,8 +339,7 @@ You have access to QLCPlus-MCP tools for controlling stage lighting.
    - Avoid `qlc_send_osc` unless absolutely necessary
 
 3. **Emergency Functions**
-   - `qlc_blackout`: Fade to darkness smoothly
-   - `qlc_panic`: Emergency stop - use only for real emergencies
+   - Use mapped widgets for blackout, panic, master, and other Virtual Console actions
 
 4. **Widget Reference**
 
@@ -364,7 +363,7 @@ You have access to QLCPlus-MCP tools for controlling stage lighting.
 ### Example Interactions
 
 **User:** "Dim the lights to 50%"
-**Assistant:** Calls `qlc_set_master(value=0.5)`
+**Assistant:** Resolves a mapped master slider widget and calls `qlc_slider_set(value=0.5)`
 
 **User:** "Go to the chorus scene"
 **Assistant:** Calls `qlc_launch_scene(sceneName="chorus_scene")`
@@ -373,7 +372,7 @@ You have access to QLCPlus-MCP tools for controlling stage lighting.
 **Assistant:** Calls `qlc_set_color_wash(color="red", universe=1, redChannel=1, greenChannel=2, blueChannel=3)`
 
 **User:** "Emergency! Turn everything off!"
-**Assistant:** Calls `qlc_panic()`
+**Assistant:** Resolves a mapped panic/stop widget if one exists; otherwise says no mapped emergency widget is available
 ```
 
 ## Usage Examples
@@ -387,7 +386,7 @@ LiveStageAssistant resolves:
 → qlc_launch_scene(sceneName="verse_scene")
 
 QLCPlus-MCP sends OSC:
-→ /vc/scene/verse [1]
+→ /scene_verse [1]
 
 QLC+ fades to verse lighting in 3 seconds.
 ```
@@ -398,10 +397,10 @@ QLC+ fades to verse lighting in 3 seconds.
 User: "Lower the brightness to 75% for the acoustic section"
 
 LiveStageAssistant resolves:
-→ qlc_set_master(value=0.75)
+→ qlc_slider_set(widgetName="master_dimmer", value=0.75)
 
 QLCPlus-MCP sends OSC:
-→ /vc/master [0.75]
+→ /master_dimmer [0.75]
 
 QLC+ master dimmer smoothly transitions to 75%.
 ```
@@ -434,10 +433,10 @@ QLC+ fades RGB channels to amber color.
 User: "Go to the next cue"
 
 LiveStageAssistant resolves:
-→ qlc_cuelist_next(widgetName="cues")
+→ qlc_button_toggle(widgetName="cues_next")
 
 QLCPlus-MCP sends OSC:
-→ /vc/cuelist/main/next [1]
+→ /main_cuelist_next [1]
 
 QLC+ advances to next cue in the sequence.
 ```
@@ -574,7 +573,7 @@ export const customWidgets: WidgetMapping[] = [
   {
     id: "scene_001",
     name: "act1_scene1",
-    path: "/vc/scene/act1_scene1",
+    path: "/act1_scene1",
     type: "button",
     description: "Act 1, Scene 1 - The Entrance"
   },
@@ -582,7 +581,7 @@ export const customWidgets: WidgetMapping[] = [
   {
     id: "effect_001",
     name: "laser_show_start",
-    path: "/vc/button/laser_sequence",
+    path: "/laser_sequence",
     type: "button",
     description: "Start laser sequence"
   }

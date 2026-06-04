@@ -2,24 +2,115 @@
   "widgets": [
     {
       "id": "30",
-      "name": "ambient blue-yellow",
-      "path": "/ambient_blue-yellow",
+      "name": "ambient bleu-jaune",
+      "path": "/ambient_bleu-jaune",
       "type": "button",
-      "description": "Button: ambient blue-yellow (Input Universe 0, Channel 17393)"
+      "description": "Button: ambient bleu-jaune (Input Universe 0, Channel 17393)"
     },
     {
       "id": "87",
-      "name": "STOP",
-      "path": "/stop",
+      "name": "RESET",
+      "path": "/reset",
       "type": "button",
-      "description": "Button: STOP (Input Universe 0, Channel 52273)"
+      "description": "Button: RESET (Input Universe 0, Channel 64092)"
+    },
+    {
+      "id": "204",
+      "name": "auto lent",
+      "path": "/auto_lent",
+      "type": "button",
+      "description": "Button: auto lent (Input Universe 0, Channel 756)"
+    },
+    {
+      "id": "206",
+      "name": "auto normal",
+      "path": "/auto_normal",
+      "type": "button",
+      "description": "Button: auto normal (Input Universe 0, Channel 60218)"
+    },
+    {
+      "id": "208",
+      "name": "auto rapide",
+      "path": "/auto_rapide",
+      "type": "button",
+      "description": "Button: auto rapide (Input Universe 0, Channel 16552)"
+    },
+    {
+      "id": "210",
+      "name": "strobe",
+      "path": "/strobe",
+      "type": "button",
+      "description": "Button: strobe (Input Universe 0, Channel 18799)"
+    },
+    {
+      "id": "216",
+      "name": "vumetre",
+      "path": "/vumetre",
+      "type": "button",
+      "description": "Button: vumetre (Input Universe 0, Channel 8740)"
+    },
+    {
+      "id": "217",
+      "name": "auto complet",
+      "path": "/auto_complet",
+      "type": "button",
+      "description": "Button: auto complet (Input Universe 0, Channel 52051)"
+    },
+    {
+      "id": "7",
+      "name": "lecteur stop",
+      "path": "/lecteur_stop",
+      "type": "button",
+      "description": "Button: lecteur stop (Input Universe 0, Channel 10295)"
+    },
+    {
+      "id": "8",
+      "name": "lecture play",
+      "path": "/lecture_play",
+      "type": "button",
+      "description": "Button: lecture play (Input Universe 0, Channel 40394)"
+    },
+    {
+      "id": "9",
+      "name": "lecture fade in",
+      "path": "/lecture_fade_in",
+      "type": "button",
+      "description": "Button: lecture fade in (Input Universe 0, Channel 19714)"
+    },
+    {
+      "id": "10",
+      "name": "lecture plus",
+      "path": "/lecture_plus",
+      "type": "button",
+      "description": "Button: lecture plus (Input Universe 0, Channel 49249)"
+    },
+    {
+      "id": "15",
+      "name": "lecture moins",
+      "path": "/lecture_moins",
+      "type": "button",
+      "description": "Button: lecture moins (Input Universe 0, Channel 11021)"
+    },
+    {
+      "id": "6",
+      "name": "lecture fade out",
+      "path": "/lecture_fade_out",
+      "type": "button",
+      "description": "Button: lecture fade out (Input Universe 0, Channel 16740)"
+    },
+    {
+      "id": "16",
+      "name": "lecture aleatoire",
+      "path": "/lecture_aleatoire",
+      "type": "button",
+      "description": "Button: lecture aleatoire (Input Universe 0, Channel 28269)"
     },
     {
       "id": "83",
-      "name": "bloody 1M",
-      "path": "/bloody_1m",
+      "name": "bloody",
+      "path": "/bloody",
       "type": "button",
-      "description": "Button: bloody 1M (Input Universe 0, Channel 34603)"
+      "description": "Button: bloody (Input Universe 0, Channel 34603)"
     },
     {
       "id": "86",
@@ -29,11 +120,67 @@
       "description": "Button: autre monde (Input Universe 0, Channel 16985)"
     },
     {
-      "id": "97",
-      "name": "addict 1M",
-      "path": "/addict_1m",
+      "id": "96",
+      "name": "broken",
+      "path": "/broken",
       "type": "button",
-      "description": "Button: addict 1M (Input Universe 0, Channel 61947)"
+      "description": "Button: broken (Input Universe 0, Channel 60664)"
+    },
+    {
+      "id": "97",
+      "name": "addict",
+      "path": "/addict",
+      "type": "button",
+      "description": "Button: addict (Input Universe 0, Channel 61947)"
+    },
+    {
+      "id": "106",
+      "name": "AMBRE",
+      "path": "/ambre",
+      "type": "button",
+      "description": "Button: AMBRE (Input Universe 0, Channel 45264)"
+    },
+    {
+      "id": "125",
+      "name": "BLINDER",
+      "path": "/blinder",
+      "type": "button",
+      "description": "Button: BLINDER (Input Universe 0, Channel 19311)"
+    },
+    {
+      "id": "126",
+      "name": "MAGENTA-VERT",
+      "path": "/magenta-vert",
+      "type": "button",
+      "description": "Button: MAGENTA-VERT (Input Universe 0, Channel 16553)"
+    },
+    {
+      "id": "128",
+      "name": "BLUE AMBER",
+      "path": "/blue_amber",
+      "type": "button",
+      "description": "Button: BLUE AMBER (Input Universe 0, Channel 61281)"
+    },
+    {
+      "id": "129",
+      "name": "ROUGE",
+      "path": "/rouge",
+      "type": "button",
+      "description": "Button: ROUGE (Input Universe 0, Channel 49811)"
+    },
+    {
+      "id": "130",
+      "name": "VERT",
+      "path": "/vert",
+      "type": "button",
+      "description": "Button: VERT (Input Universe 0, Channel 7906)"
+    },
+    {
+      "id": "131",
+      "name": "BLEU",
+      "path": "/bleu",
+      "type": "button",
+      "description": "Button: BLEU (Input Universe 0, Channel 64161)"
     },
     {
       "id": "135",
@@ -44,5 +191,5 @@
     }
   ],
   "generated": true,
-  "generatedAt": "2026-06-04T10:45:13.465Z"
+  "generatedAt": "2026-06-04T13:05:00.094Z"
 }

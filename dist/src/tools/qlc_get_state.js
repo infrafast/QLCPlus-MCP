@@ -2,13 +2,9 @@ import { z } from "zod";
 import { text } from "mcp-use/server";
 import { getLogger } from "../logger.js";
 import { getOscRuntimeState } from "../osc/oscClient.js";
-const GetStateInputSchema = z.object({
-    freshnessSeconds: z
-        .number()
-        .int()
-        .min(1)
-        .max(300)
-        .optional()
+import { optionalInt } from "../types.js";
+export const GetStateInputSchema = z.object({
+    freshnessSeconds: optionalInt(z.number().int().min(1).max(300))
         .describe("How recent QLC+ feedback must be to count as live, in seconds."),
 });
 export function createGetStateTool() {

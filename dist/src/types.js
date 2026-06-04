@@ -1,4 +1,9 @@
 import { z } from "zod";
+export const nullToUndefined = (value) => value === null ? undefined : value;
+export const optionalString = () => z.preprocess(nullToUndefined, z.string().optional());
+export const optionalNumber = () => z.preprocess(nullToUndefined, z.number().optional());
+export const optionalBoolean = () => z.preprocess(nullToUndefined, z.boolean().optional());
+export const optionalInt = (schema = z.number().int()) => z.preprocess(nullToUndefined, schema.optional());
 // OSC Related Types
 export const OscValueSchema = z.union([z.number(), z.string(), z.boolean()]);
 export const OscMessageSchema = z.object({
@@ -6,8 +11,8 @@ export const OscMessageSchema = z.object({
     args: z.array(OscValueSchema),
 });
 export const OscSendOptionsSchema = z.object({
-    dryRun: z.boolean().optional(),
-    timeout: z.number().optional(),
+    dryRun: optionalBoolean(),
+    timeout: optionalNumber(),
 });
 // DMX Related Types
 export const DmxValueSchema = z.union([
@@ -40,14 +45,14 @@ export const WidgetMappingSchema = z.object({
     name: z.string(),
     path: z.string(),
     type: WidgetTypeSchema,
-    description: z.string().optional(),
-    minValue: z.number().optional(),
-    maxValue: z.number().optional(),
+    description: optionalString(),
+    minValue: optionalNumber(),
+    maxValue: optionalNumber(),
 });
 export const WidgetConfigSchema = z.object({
     widgets: z.array(WidgetMappingSchema),
-    generated: z.boolean().optional(),
-    generatedAt: z.string().optional(),
+    generated: optionalBoolean(),
+    generatedAt: optionalString(),
 });
 // Predefined Colors
 export const PredefinedColorsSchema = z.enum([
@@ -78,40 +83,40 @@ export const SetDmxRgbInputSchema = z.object({
     b: z.number().min(0).max(255).describe("Blue value (0-255)"),
 });
 export const SliderSetInputSchema = z.object({
-    widgetName: z.string().optional().describe("Logical widget name"),
-    oscPath: z.string().optional().describe("Direct OSC path"),
+    widgetName: optionalString().describe("Logical widget name"),
+    oscPath: optionalString().describe("Direct OSC path"),
     value: z.number().min(0).max(1).describe("Slider value (0-1 normalized)"),
 });
 export const SendOscInputSchema = z.object({
     path: z.string().describe("OSC path"),
     args: z.array(OscValueSchema).describe("OSC arguments"),
-    dryRun: z.boolean().optional().describe("Dry run mode"),
+    dryRun: optionalBoolean().describe("Dry run mode"),
 });
 export const LaunchSceneInputSchema = z.object({
     sceneName: z.string().describe("Scene name or logical widget name"),
 });
 export const ButtonPressInputSchema = z.object({
-    widgetName: z.string().optional().describe("Logical widget name"),
-    oscPath: z.string().optional().describe("Direct OSC path"),
-    duration: z.number().optional().describe("Press duration in milliseconds"),
+    widgetName: optionalString().describe("Logical widget name"),
+    oscPath: optionalString().describe("Direct OSC path"),
+    duration: optionalNumber().describe("Press duration in milliseconds"),
 });
 export const CueListInputSchema = z.object({
-    widgetName: z.string().optional().describe("Logical widget name"),
-    oscPath: z.string().optional().describe("Direct OSC path"),
+    widgetName: optionalString().describe("Logical widget name"),
+    oscPath: optionalString().describe("Direct OSC path"),
 });
 export const SetMasterInputSchema = z.object({
     value: z.number().min(0).max(1).describe("Master dimmer value (0-1 normalized)"),
 });
 export const SetColorWashInputSchema = z.object({
     color: PredefinedColorsSchema.describe("Predefined color name"),
-    universe: z.number().int().min(1).optional().describe("DMX universe"),
-    redChannel: z.number().int().min(1).optional().describe("Red channel"),
-    greenChannel: z.number().int().min(1).optional().describe("Green channel"),
-    blueChannel: z.number().int().min(1).optional().describe("Blue channel"),
+    universe: optionalInt(z.number().int().min(1)).describe("DMX universe"),
+    redChannel: optionalInt(z.number().int().min(1)).describe("Red channel"),
+    greenChannel: optionalInt(z.number().int().min(1)).describe("Green channel"),
+    blueChannel: optionalInt(z.number().int().min(1)).describe("Blue channel"),
 });
 export const SetSpeedInputSchema = z.object({
-    widgetName: z.string().optional().describe("Logical widget name"),
-    oscPath: z.string().optional().describe("Direct OSC path"),
+    widgetName: optionalString().describe("Logical widget name"),
+    oscPath: optionalString().describe("Direct OSC path"),
     bpm: z.number().min(1).describe("Speed in BPM"),
 });
 //# sourceMappingURL=types.js.map

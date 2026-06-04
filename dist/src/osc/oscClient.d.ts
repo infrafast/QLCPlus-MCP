@@ -12,6 +12,12 @@ export interface OscSendResult {
     path: string;
     dryRun: boolean;
 }
+export interface OscFeedbackEvent {
+    at: string;
+    path: string | null;
+    args: unknown[] | null;
+    source: string | null;
+}
 export interface OscRuntimeState {
     initialized: boolean;
     qlcHost: string | null;
@@ -36,6 +42,7 @@ export interface OscRuntimeState {
     lastFeedbackSource: string | null;
     lastFeedbackErrorAt: string | null;
     lastFeedbackError: string | null;
+    recentFeedback: OscFeedbackEvent[];
     feedbackSeenRecently: boolean;
     feedbackFreshnessSeconds: number;
 }

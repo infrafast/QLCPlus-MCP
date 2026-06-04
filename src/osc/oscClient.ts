@@ -13,11 +13,20 @@ type OscInstance = {
 let oscInstance: OscInstance | null = null;
 let feedbackOscInstance: OscInstance | null = null;
 
+const RECENT_FEEDBACK_LIMIT = 25;
+
 export interface OscSendResult {
   success: boolean;
   message: string;
   path: string;
   dryRun: boolean;
+}
+
+export interface OscFeedbackEvent {
+  at: string;
+  path: string | null;
+  args: unknown[] | null;
+  source: string | null;
 }
 
 export interface OscRuntimeState {
@@ -44,6 +53,7 @@ export interface OscRuntimeState {
   lastFeedbackSource: string | null;
   lastFeedbackErrorAt: string | null;
   lastFeedbackError: string | null;
+  recentFeedback: OscFeedbackEvent[];
   feedbackSeenRecently: boolean;
   feedbackFreshnessSeconds: number;
 }
@@ -72,6 +82,7 @@ const runtimeState: OscRuntimeState = {
   lastFeedbackSource: null,
   lastFeedbackErrorAt: null,
   lastFeedbackError: null,
+  recentFeedback: [],
   feedbackSeenRecently: false,
   feedbackFreshnessSeconds: 10,
 };
@@ -90,11 +101,25 @@ function formatFeedbackSource(info: any): string | null {
 }
 
 function recordFeedback(message: any, info?: any): void {
+  const logger = getLogger();
+  const at = nowIso();
+  const path = message?.address ?? message?.path ?? null;
+  const args = Array.isArray(message?.args) ? message.args : null;
+  const source = formatFeedbackSource(info);
+
   runtimeState.feedbackCount += 1;
-  runtimeState.lastFeedbackAt = nowIso();
-  runtimeState.lastFeedbackPath = message?.address ?? message?.path ?? null;
-  runtimeState.lastFeedbackArgs = Array.isArray(message?.args) ? message.args : null;
-  runtimeState.lastFeedbackSource = formatFeedbackSource(info);
+  runtimeState.lastFeedbackAt = at;
+  runtimeState.lastFeedbackPath = path;
+  runtimeState.lastFeedbackArgs = args;
+  runtimeState.lastFeedbackSource = source;
+  runtimeState.recentFeedback.push({ at, path, args, source });
+  if (runtimeState.recentFeedback.length > RECENT_FEEDBACK_LIMIT) {
+    runtimeState.recentFeedback.shift();
+  }
+
+  logger.debug(
+    `[READ_OSC] ${source ?? "unknown"} ${path ?? "unknown"} args=${JSON.stringify(args ?? [])}`
+  );
 }
 
 async function initFeedbackListener(config: Config): Promise<void> {
@@ -148,7 +173,7 @@ export async function initOsc(config: Config): Promise<void> {
   runtimeState.qlcUniverse = config.qlcUniverse;
   runtimeState.dryRun = config.qlcDryRun;
   runtimeState.commandSendHost = config.qlcHost;
-  runtimeState.commandSendPort = config.qlcOscOutputPort;
+  runtimeState.commandSendPort = config.qlcOscInputPort;
 
   const plugin = new (OSC as any).DatagramPlugin();
   oscInstance = new (OSC as any)({ plugin });
@@ -162,7 +187,7 @@ export async function initOsc(config: Config): Promise<void> {
   await initFeedbackListener(config);
 
   logger.info(
-    `OSC initialized - Server: ${config.qlcHost}:${config.qlcOscInputPort}, Client: ${config.qlcHost}:${config.qlcOscOutputPort}`
+    `OSC initialized - Command target: ${config.qlcHost}:${config.qlcOscInputPort}, Feedback listener: ${runtimeState.feedbackListenHost}:${config.qlcOscOutputPort}`
   );
 }
 
@@ -202,6 +227,10 @@ export function getOscRuntimeState(freshnessSeconds = 10): OscRuntimeState {
     lastFeedbackArgs: runtimeState.lastFeedbackArgs
       ? [...runtimeState.lastFeedbackArgs]
       : null,
+    recentFeedback: runtimeState.recentFeedback.map((event) => ({
+      ...event,
+      args: event.args ? [...event.args] : null,
+    })),
   };
 }
 
@@ -213,8 +242,12 @@ export async function sendOsc(
   const logger = getLogger();
   const dryRun = options?.dryRun ?? config?.qlcDryRun ?? false;
 
+  const targetHost = config?.qlcHost ?? runtimeState.commandSendHost ?? "unknown";
+  const targetPort = config?.qlcOscInputPort ?? runtimeState.commandSendPort ?? "unknown";
+  const serializedArgs = JSON.stringify(message.args);
+
   logger.debug(
-    `[OSC${dryRun ? " DRY_RUN" : ""}] ${message.path} <- ${JSON.stringify(message.args)}`
+    `[${dryRun ? "WRITE_OSC_DRY_RUN" : "WRITE_OSC"}] ${targetHost}:${targetPort} ${message.path} args=${serializedArgs}`
   );
 
   if (dryRun) {
@@ -232,8 +265,8 @@ export async function sendOsc(
     const oscMsg = new MessageClass(message.path, ...message.args);
 
     await osc.send(oscMsg, {
-      host: config?.qlcHost,
-      port: config?.qlcOscOutputPort,
+      host: targetHost,
+      port: targetPort,
     });
 
     runtimeState.sendCount += 1;
@@ -241,8 +274,8 @@ export async function sendOsc(
     runtimeState.lastSentPath = message.path;
     runtimeState.lastSendError = null;
     runtimeState.lastSendErrorAt = null;
-    runtimeState.commandSendHost = config?.qlcHost ?? runtimeState.commandSendHost;
-    runtimeState.commandSendPort = config?.qlcOscOutputPort ?? runtimeState.commandSendPort;
+    runtimeState.commandSendHost = targetHost;
+    runtimeState.commandSendPort = typeof targetPort === "number" ? targetPort : runtimeState.commandSendPort;
 
     logger.info(`OSC sent: ${message.path}`);
 

@@ -12,6 +12,7 @@ import { createSetDmxChannelTool } from "./tools/qlc_set_dmx_channel.js";
 import { createSetDmxRgbTool } from "./tools/qlc_set_dmx_rgb.js";
 import { createSendOscTool } from "./tools/qlc_send_osc.js";
 import { createGetStateTool } from "./tools/qlc_get_state.js";
+import { createListWidgetsTool } from "./tools/qlc_list_widgets.js";
 import {
   createButtonPressTool,
   createButtonToggleTool,
@@ -20,17 +21,8 @@ import {
   createSliderSetTool,
   createSpeedSetTool,
 } from "./tools/qlc_slider_speed.js";
-import {
-  createCueListNextTool,
-  createCueListPreviousTool,
-  createLaunchSceneTool,
-} from "./tools/qlc_cuelist_scene.js";
-import {
-  createSetMasterTool,
-  createBlackoutTool,
-  createPanicTool,
-  createSetColorWashTool,
-} from "./tools/qlc_special.js";
+import { createLaunchSceneTool } from "./tools/qlc_cuelist_scene.js";
+import { createSetColorWashTool } from "./tools/qlc_special.js";
 import type { ToolDefinition } from "mcp-use/server";
 
 async function main() {
@@ -59,6 +51,7 @@ async function main() {
     const tools: ToolDefinition[] = [
       createAgentPromptTool(),
       createGetStateTool(),
+      createListWidgetsTool(),
 
       // DMX/OSC tools
       createSetDmxChannelTool(config),
@@ -73,15 +66,10 @@ async function main() {
       createSliderSetTool(config),
       createSpeedSetTool(config),
 
-      // Cue lists and scenes
-      createCueListNextTool(config),
-      createCueListPreviousTool(config),
+      // Scenes
       createLaunchSceneTool(config),
 
-      // Special functions
-      createSetMasterTool(config),
-      createBlackoutTool(config),
-      createPanicTool(config),
+      // DMX helper functions
       createSetColorWashTool(config),
     ];
 

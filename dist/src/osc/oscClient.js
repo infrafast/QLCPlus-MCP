@@ -2,6 +2,7 @@ import OSC from "osc-js";
 import { getLogger } from "../logger.js";
 let oscInstance = null;
 let feedbackOscInstance = null;
+const RECENT_FEEDBACK_LIMIT = 25;
 const runtimeState = {
     initialized: false,
     qlcHost: null,
@@ -26,6 +27,7 @@ const runtimeState = {
     lastFeedbackSource: null,
     lastFeedbackErrorAt: null,
     lastFeedbackError: null,
+    recentFeedback: [],
     feedbackSeenRecently: false,
     feedbackFreshnessSeconds: 10,
 };
@@ -41,11 +43,21 @@ function formatFeedbackSource(info) {
     return `${address ?? "unknown"}:${port ?? "unknown"}`;
 }
 function recordFeedback(message, info) {
+    const logger = getLogger();
+    const at = nowIso();
+    const path = message?.address ?? message?.path ?? null;
+    const args = Array.isArray(message?.args) ? message.args : null;
+    const source = formatFeedbackSource(info);
     runtimeState.feedbackCount += 1;
-    runtimeState.lastFeedbackAt = nowIso();
-    runtimeState.lastFeedbackPath = message?.address ?? message?.path ?? null;
-    runtimeState.lastFeedbackArgs = Array.isArray(message?.args) ? message.args : null;
-    runtimeState.lastFeedbackSource = formatFeedbackSource(info);
+    runtimeState.lastFeedbackAt = at;
+    runtimeState.lastFeedbackPath = path;
+    runtimeState.lastFeedbackArgs = args;
+    runtimeState.lastFeedbackSource = source;
+    runtimeState.recentFeedback.push({ at, path, args, source });
+    if (runtimeState.recentFeedback.length > RECENT_FEEDBACK_LIMIT) {
+        runtimeState.recentFeedback.shift();
+    }
+    logger.debug(`[READ_OSC] ${source ?? "unknown"} ${path ?? "unknown"} args=${JSON.stringify(args ?? [])}`);
 }
 async function initFeedbackListener(config) {
     const logger = getLogger();
@@ -91,7 +103,7 @@ export async function initOsc(config) {
     runtimeState.qlcUniverse = config.qlcUniverse;
     runtimeState.dryRun = config.qlcDryRun;
     runtimeState.commandSendHost = config.qlcHost;
-    runtimeState.commandSendPort = config.qlcOscOutputPort;
+    runtimeState.commandSendPort = config.qlcOscInputPort;
     const plugin = new OSC.DatagramPlugin();
     oscInstance = new OSC({ plugin });
     await oscInstance.open({
@@ -100,7 +112,7 @@ export async function initOsc(config) {
     });
     runtimeState.initialized = true;
     await initFeedbackListener(config);
-    logger.info(`OSC initialized - Server: ${config.qlcHost}:${config.qlcOscInputPort}, Client: ${config.qlcHost}:${config.qlcOscOutputPort}`);
+    logger.info(`OSC initialized - Command target: ${config.qlcHost}:${config.qlcOscInputPort}, Feedback listener: ${runtimeState.feedbackListenHost}:${config.qlcOscOutputPort}`);
 }
 export function getOsc() {
     if (!oscInstance) {
@@ -134,12 +146,19 @@ export function getOscRuntimeState(freshnessSeconds = 10) {
         lastFeedbackArgs: runtimeState.lastFeedbackArgs
             ? [...runtimeState.lastFeedbackArgs]
             : null,
+        recentFeedback: runtimeState.recentFeedback.map((event) => ({
+            ...event,
+            args: event.args ? [...event.args] : null,
+        })),
     };
 }
 export async function sendOsc(message, options, config) {
     const logger = getLogger();
     const dryRun = options?.dryRun ?? config?.qlcDryRun ?? false;
-    logger.debug(`[OSC${dryRun ? " DRY_RUN" : ""}] ${message.path} <- ${JSON.stringify(message.args)}`);
+    const targetHost = config?.qlcHost ?? runtimeState.commandSendHost ?? "unknown";
+    const targetPort = config?.qlcOscInputPort ?? runtimeState.commandSendPort ?? "unknown";
+    const serializedArgs = JSON.stringify(message.args);
+    logger.debug(`[${dryRun ? "WRITE_OSC_DRY_RUN" : "WRITE_OSC"}] ${targetHost}:${targetPort} ${message.path} args=${serializedArgs}`);
     if (dryRun) {
         return {
             success: true,
@@ -153,16 +172,16 @@ export async function sendOsc(message, options, config) {
         const MessageClass = OSC.Message;
         const oscMsg = new MessageClass(message.path, ...message.args);
         await osc.send(oscMsg, {
-            host: config?.qlcHost,
-            port: config?.qlcOscOutputPort,
+            host: targetHost,
+            port: targetPort,
         });
         runtimeState.sendCount += 1;
         runtimeState.lastSentAt = nowIso();
         runtimeState.lastSentPath = message.path;
         runtimeState.lastSendError = null;
         runtimeState.lastSendErrorAt = null;
-        runtimeState.commandSendHost = config?.qlcHost ?? runtimeState.commandSendHost;
-        runtimeState.commandSendPort = config?.qlcOscOutputPort ?? runtimeState.commandSendPort;
+        runtimeState.commandSendHost = targetHost;
+        runtimeState.commandSendPort = typeof targetPort === "number" ? targetPort : runtimeState.commandSendPort;
         logger.info(`OSC sent: ${message.path}`);
         return {
             success: true,

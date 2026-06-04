@@ -31,17 +31,14 @@ Argument: 255
 
 ## Virtual Console Paths
 
-Standard QLC+ Virtual Console OSC paths:
+QLC+ 4 Virtual Console widgets are controlled through OSC paths learned with Auto Detect. QLC+ stores the learned path as an internal input hash, so QLCPlus-MCP must use the mapped widget paths from `config/widgets.json` instead of inventing generic `/vc/...` paths.
+
+Examples from a generated widget map:
 
 ```
-Buttons:        /vc/button/<id>
-Sliders:        /vc/slider/<id>
-Speed Dials:    /vc/speed/<id>
-Cue Lists:      /vc/cuelist/<id>
-Chasers:        /vc/chaser/<id>
-Master:         /vc/master
-Blackout:       /vc/blackout
-Panic:          /vc/panic
+BLACK -> /black
+STOP -> /stop
+ambient blue-yellow -> /ambient_blue-yellow
 ```
 
 ## DMX Channel Mapping
@@ -92,48 +89,6 @@ OSC: /0/dmx/2 [0]      # Blue channel
 OSC: /0/dmx/0 [0]      # Red
 OSC: /0/dmx/1 [255]    # Green
 OSC: /0/dmx/2 [255]    # Blue
-```
-
-### Press Button
-
-```
-# Momentary press (100ms)
-OSC: /vc/button/1 [1]      # Press
-[wait 100ms]
-OSC: /vc/button/1 [0]      # Release
-```
-
-### Toggle Button
-
-```
-OSC: /vc/button/1 [1]      # Toggle (no release needed)
-```
-
-### Set Slider
-
-```
-# Normalized 0-1 range
-OSC: /vc/slider/1 [0.0]    # Minimum
-OSC: /vc/slider/1 [0.5]    # Middle
-OSC: /vc/slider/1 [1.0]    # Maximum
-```
-
-### Set Master Dimmer
-
-```
-OSC: /vc/master [0.75]     # 75% brightness
-```
-
-### Blackout
-
-```
-OSC: /vc/blackout [1]      # Fade to black
-```
-
-### Panic
-
-```
-OSC: /vc/panic [1]         # Emergency stop - instant off
 ```
 
 ## MCP Tool to OSC Mapping
@@ -188,9 +143,9 @@ OSC: /vc/panic [1]         # Emergency stop - instant off
 
 **OSC Sent (via widget mapping):**
 ```
-/vc/scene/intro [1]     # Press
+/scene_intro [1]     # Press
 [100ms delay]
-/vc/scene/intro [0]     # Release
+/scene_intro [0]     # Release
 ```
 
 ### qlc_slider_set
@@ -205,7 +160,7 @@ OSC: /vc/panic [1]         # Emergency stop - instant off
 
 **OSC Sent:**
 ```
-/vc/master [0.75]
+Use a mapped slider widget path, for example /master_dimmer [0.75]
 ```
 
 ### qlc_set_color_wash
@@ -244,34 +199,11 @@ OSC: /vc/panic [1]         # Emergency stop - instant off
 
 ## QLC+ Cue List Control
 
-**Cue list paths:**
-```
-/vc/cuelist/<id>          # Current cue index
-/vc/cuelist/<id>/next     # Go to next cue
-/vc/cuelist/<id>/previous # Go to previous cue
-/vc/cuelist/<id>/stop     # Stop the list
-/vc/cuelist/<id>/start    # Start the list
-```
-
-**Example:**
-```
-OSC: /vc/cuelist/main/next [1]      # Advance to next cue
-OSC: /vc/cuelist/main/previous [1]  # Go to previous cue
-```
+QLC+ 4 does not document generic OSC paths or suffixes for Cue List next/previous/start/stop controls. Configure dedicated Virtual Console controls in QLC+, learn their OSC paths with Auto Detect, and call those mapped widgets from `config/widgets.json`.
 
 ## Speed Dial Control
 
-**Path:**
-```
-/vc/speed/<id> [value]    # 0-1 normalized (maps to BPM internally)
-```
-
-**Conversion:**
-```
-BPM 10   → 0.0
-BPM 120  → 0.5
-BPM 240  → 1.0
-```
+Use a mapped speed widget path from `config/widgets.json` and send a normalized float value. Do not assume generic `/vc/speed/...` paths.
 
 ## Multi-Universe Support
 
@@ -317,10 +249,16 @@ Monitor incoming OSC:
 oscdump osc.udp://127.0.0.1:9000
 ```
 
-Monitor outgoing OSC sent by QLCPlus-MCP:
+Monitor commands sent to QLC+ on its input port:
 
 ```bash
-oscdump osc.udp://127.0.0.1:7700
+oscdump osc.udp://0.0.0.0:7700
+```
+
+Monitor feedback received from QLC+ on the MCP feedback port:
+
+```bash
+oscdump osc.udp://0.0.0.0:9000
 ```
 
 ### Using netcat
@@ -339,7 +277,7 @@ echo "/0/dmx/0,i 255" | socat - UDP:127.0.0.1:7700
 
 ## Feedback from QLC+
 
-By default, QLC+ sends feedback on port 9000 (output port). QLCPlus-MCP listens on `QLC_OSC_OUTPUT_PORT` and exposes the observed state through `qlc_get_state`.
+By default, QLC+ sends feedback on port 9000 (output port). QLCPlus-MCP listens on `QLC_OSC_OUTPUT_PORT`, logs received packets as `[READ_OSC]` when `LOG_LEVEL=debug`, and exposes the latest observed feedback plus recent feedback history through `qlc_get_state`.
 
 Important nuance: OSC over UDP has no built-in acknowledgement. A successful send means the local UDP send did not fail; it does not prove QLC+ received or applied the command. Recent feedback received by `qlc_get_state` is the best live indication that QLC+ is responding.
 
@@ -349,7 +287,7 @@ Important nuance: OSC over UDP has no built-in acknowledgement. A successful sen
 2. **Normalize Values** - Use 0-1 for all slider-type controls
 3. **DMX Channel Format** - Always use zero-based addressing in paths
 4. **Error Handling** - Implement retry logic for network-based connections
-5. **Logging** - Enable debug logging to trace OSC communication
+5. **Logging** - Enable debug logging to trace OSC communication. Each outgoing OSC write logs a line like `[WRITE_OSC] 192.168.0.160:7700 /black args=[1]`; dry-run writes use `[WRITE_OSC_DRY_RUN]`. Each incoming feedback packet logs as `[READ_OSC] <source-host>:<source-port> <path> args=<json-array>`.
 
 ## Common Issues
 

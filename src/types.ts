@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+export const nullToUndefined = (value: unknown) => value === null ? undefined : value;
+export const optionalString = () => z.preprocess(nullToUndefined, z.string().optional());
+export const optionalNumber = () => z.preprocess(nullToUndefined, z.number().optional());
+export const optionalBoolean = () => z.preprocess(nullToUndefined, z.boolean().optional());
+export const optionalInt = (schema: z.ZodNumber = z.number().int()) =>
+  z.preprocess(nullToUndefined, schema.optional());
+
 // OSC Related Types
 export const OscValueSchema = z.union([z.number(), z.string(), z.boolean()]);
 export type OscValue = z.infer<typeof OscValueSchema>;
@@ -11,8 +18,8 @@ export const OscMessageSchema = z.object({
 export type OscMessage = z.infer<typeof OscMessageSchema>;
 
 export const OscSendOptionsSchema = z.object({
-  dryRun: z.boolean().optional(),
-  timeout: z.number().optional(),
+  dryRun: optionalBoolean(),
+  timeout: optionalNumber(),
 });
 export type OscSendOptions = z.infer<typeof OscSendOptionsSchema>;
 
@@ -54,16 +61,16 @@ export const WidgetMappingSchema = z.object({
   name: z.string(),
   path: z.string(),
   type: WidgetTypeSchema,
-  description: z.string().optional(),
-  minValue: z.number().optional(),
-  maxValue: z.number().optional(),
+  description: optionalString(),
+  minValue: optionalNumber(),
+  maxValue: optionalNumber(),
 });
 export type WidgetMapping = z.infer<typeof WidgetMappingSchema>;
 
 export const WidgetConfigSchema = z.object({
   widgets: z.array(WidgetMappingSchema),
-  generated: z.boolean().optional(),
-  generatedAt: z.string().optional(),
+  generated: optionalBoolean(),
+  generatedAt: optionalString(),
 });
 export type WidgetConfig = z.infer<typeof WidgetConfigSchema>;
 
@@ -107,8 +114,8 @@ export const SetDmxRgbInputSchema = z.object({
 export type SetDmxRgbInput = z.infer<typeof SetDmxRgbInputSchema>;
 
 export const SliderSetInputSchema = z.object({
-  widgetName: z.string().optional().describe("Logical widget name"),
-  oscPath: z.string().optional().describe("Direct OSC path"),
+  widgetName: optionalString().describe("Logical widget name"),
+  oscPath: optionalString().describe("Direct OSC path"),
   value: z.number().min(0).max(1).describe("Slider value (0-1 normalized)"),
 });
 export type SliderSetInput = z.infer<typeof SliderSetInputSchema>;
@@ -116,7 +123,7 @@ export type SliderSetInput = z.infer<typeof SliderSetInputSchema>;
 export const SendOscInputSchema = z.object({
   path: z.string().describe("OSC path"),
   args: z.array(OscValueSchema).describe("OSC arguments"),
-  dryRun: z.boolean().optional().describe("Dry run mode"),
+  dryRun: optionalBoolean().describe("Dry run mode"),
 });
 export type SendOscInput = z.infer<typeof SendOscInputSchema>;
 
@@ -126,15 +133,15 @@ export const LaunchSceneInputSchema = z.object({
 export type LaunchSceneInput = z.infer<typeof LaunchSceneInputSchema>;
 
 export const ButtonPressInputSchema = z.object({
-  widgetName: z.string().optional().describe("Logical widget name"),
-  oscPath: z.string().optional().describe("Direct OSC path"),
-  duration: z.number().optional().describe("Press duration in milliseconds"),
+  widgetName: optionalString().describe("Logical widget name"),
+  oscPath: optionalString().describe("Direct OSC path"),
+  duration: optionalNumber().describe("Press duration in milliseconds"),
 });
 export type ButtonPressInput = z.infer<typeof ButtonPressInputSchema>;
 
 export const CueListInputSchema = z.object({
-  widgetName: z.string().optional().describe("Logical widget name"),
-  oscPath: z.string().optional().describe("Direct OSC path"),
+  widgetName: optionalString().describe("Logical widget name"),
+  oscPath: optionalString().describe("Direct OSC path"),
 });
 export type CueListInput = z.infer<typeof CueListInputSchema>;
 
@@ -145,16 +152,16 @@ export type SetMasterInput = z.infer<typeof SetMasterInputSchema>;
 
 export const SetColorWashInputSchema = z.object({
   color: PredefinedColorsSchema.describe("Predefined color name"),
-  universe: z.number().int().min(1).optional().describe("DMX universe"),
-  redChannel: z.number().int().min(1).optional().describe("Red channel"),
-  greenChannel: z.number().int().min(1).optional().describe("Green channel"),
-  blueChannel: z.number().int().min(1).optional().describe("Blue channel"),
+  universe: optionalInt(z.number().int().min(1)).describe("DMX universe"),
+  redChannel: optionalInt(z.number().int().min(1)).describe("Red channel"),
+  greenChannel: optionalInt(z.number().int().min(1)).describe("Green channel"),
+  blueChannel: optionalInt(z.number().int().min(1)).describe("Blue channel"),
 });
 export type SetColorWashInput = z.infer<typeof SetColorWashInputSchema>;
 
 export const SetSpeedInputSchema = z.object({
-  widgetName: z.string().optional().describe("Logical widget name"),
-  oscPath: z.string().optional().describe("Direct OSC path"),
+  widgetName: optionalString().describe("Logical widget name"),
+  oscPath: optionalString().describe("Direct OSC path"),
   bpm: z.number().min(1).describe("Speed in BPM"),
 });
 export type SetSpeedInput = z.infer<typeof SetSpeedInputSchema>;

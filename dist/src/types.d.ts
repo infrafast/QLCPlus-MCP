@@ -1,4 +1,9 @@
 import { z } from "zod";
+export declare const nullToUndefined: (value: unknown) => {} | undefined;
+export declare const optionalString: () => z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
+export declare const optionalNumber: () => z.ZodPreprocess<z.ZodOptional<z.ZodNumber>>;
+export declare const optionalBoolean: () => z.ZodPreprocess<z.ZodOptional<z.ZodBoolean>>;
+export declare const optionalInt: (schema?: z.ZodNumber) => z.ZodPreprocess<z.ZodOptional<z.ZodNumber>>;
 export declare const OscValueSchema: z.ZodUnion<readonly [z.ZodNumber, z.ZodString, z.ZodBoolean]>;
 export type OscValue = z.infer<typeof OscValueSchema>;
 export declare const OscMessageSchema: z.ZodObject<{
@@ -7,8 +12,8 @@ export declare const OscMessageSchema: z.ZodObject<{
 }, z.core.$strip>;
 export type OscMessage = z.infer<typeof OscMessageSchema>;
 export declare const OscSendOptionsSchema: z.ZodObject<{
-    dryRun: z.ZodOptional<z.ZodBoolean>;
-    timeout: z.ZodOptional<z.ZodNumber>;
+    dryRun: z.ZodPreprocess<z.ZodOptional<z.ZodBoolean>>;
+    timeout: z.ZodPreprocess<z.ZodOptional<z.ZodNumber>>;
 }, z.core.$strip>;
 export type OscSendOptions = z.infer<typeof OscSendOptionsSchema>;
 export declare const DmxValueSchema: z.ZodUnion<readonly [z.ZodNumber, z.ZodNumber]>;
@@ -49,9 +54,9 @@ export declare const WidgetMappingSchema: z.ZodObject<{
         frame: "frame";
         label: "label";
     }>;
-    description: z.ZodOptional<z.ZodString>;
-    minValue: z.ZodOptional<z.ZodNumber>;
-    maxValue: z.ZodOptional<z.ZodNumber>;
+    description: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
+    minValue: z.ZodPreprocess<z.ZodOptional<z.ZodNumber>>;
+    maxValue: z.ZodPreprocess<z.ZodOptional<z.ZodNumber>>;
 }, z.core.$strip>;
 export type WidgetMapping = z.infer<typeof WidgetMappingSchema>;
 export declare const WidgetConfigSchema: z.ZodObject<{
@@ -69,12 +74,12 @@ export declare const WidgetConfigSchema: z.ZodObject<{
             frame: "frame";
             label: "label";
         }>;
-        description: z.ZodOptional<z.ZodString>;
-        minValue: z.ZodOptional<z.ZodNumber>;
-        maxValue: z.ZodOptional<z.ZodNumber>;
+        description: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
+        minValue: z.ZodPreprocess<z.ZodOptional<z.ZodNumber>>;
+        maxValue: z.ZodPreprocess<z.ZodOptional<z.ZodNumber>>;
     }, z.core.$strip>>;
-    generated: z.ZodOptional<z.ZodBoolean>;
-    generatedAt: z.ZodOptional<z.ZodString>;
+    generated: z.ZodPreprocess<z.ZodOptional<z.ZodBoolean>>;
+    generatedAt: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
 }, z.core.$strip>;
 export type WidgetConfig = z.infer<typeof WidgetConfigSchema>;
 export declare const PredefinedColorsSchema: z.ZodEnum<{
@@ -122,15 +127,15 @@ export declare const SetDmxRgbInputSchema: z.ZodObject<{
 }, z.core.$strip>;
 export type SetDmxRgbInput = z.infer<typeof SetDmxRgbInputSchema>;
 export declare const SliderSetInputSchema: z.ZodObject<{
-    widgetName: z.ZodOptional<z.ZodString>;
-    oscPath: z.ZodOptional<z.ZodString>;
+    widgetName: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
+    oscPath: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
     value: z.ZodNumber;
 }, z.core.$strip>;
 export type SliderSetInput = z.infer<typeof SliderSetInputSchema>;
 export declare const SendOscInputSchema: z.ZodObject<{
     path: z.ZodString;
     args: z.ZodArray<z.ZodUnion<readonly [z.ZodNumber, z.ZodString, z.ZodBoolean]>>;
-    dryRun: z.ZodOptional<z.ZodBoolean>;
+    dryRun: z.ZodPreprocess<z.ZodOptional<z.ZodBoolean>>;
 }, z.core.$strip>;
 export type SendOscInput = z.infer<typeof SendOscInputSchema>;
 export declare const LaunchSceneInputSchema: z.ZodObject<{
@@ -138,14 +143,14 @@ export declare const LaunchSceneInputSchema: z.ZodObject<{
 }, z.core.$strip>;
 export type LaunchSceneInput = z.infer<typeof LaunchSceneInputSchema>;
 export declare const ButtonPressInputSchema: z.ZodObject<{
-    widgetName: z.ZodOptional<z.ZodString>;
-    oscPath: z.ZodOptional<z.ZodString>;
-    duration: z.ZodOptional<z.ZodNumber>;
+    widgetName: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
+    oscPath: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
+    duration: z.ZodPreprocess<z.ZodOptional<z.ZodNumber>>;
 }, z.core.$strip>;
 export type ButtonPressInput = z.infer<typeof ButtonPressInputSchema>;
 export declare const CueListInputSchema: z.ZodObject<{
-    widgetName: z.ZodOptional<z.ZodString>;
-    oscPath: z.ZodOptional<z.ZodString>;
+    widgetName: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
+    oscPath: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
 }, z.core.$strip>;
 export type CueListInput = z.infer<typeof CueListInputSchema>;
 export declare const SetMasterInputSchema: z.ZodObject<{
@@ -164,15 +169,15 @@ export declare const SetColorWashInputSchema: z.ZodObject<{
         magenta: "magenta";
         yellow: "yellow";
     }>;
-    universe: z.ZodOptional<z.ZodNumber>;
-    redChannel: z.ZodOptional<z.ZodNumber>;
-    greenChannel: z.ZodOptional<z.ZodNumber>;
-    blueChannel: z.ZodOptional<z.ZodNumber>;
+    universe: z.ZodPreprocess<z.ZodOptional<z.ZodNumber>>;
+    redChannel: z.ZodPreprocess<z.ZodOptional<z.ZodNumber>>;
+    greenChannel: z.ZodPreprocess<z.ZodOptional<z.ZodNumber>>;
+    blueChannel: z.ZodPreprocess<z.ZodOptional<z.ZodNumber>>;
 }, z.core.$strip>;
 export type SetColorWashInput = z.infer<typeof SetColorWashInputSchema>;
 export declare const SetSpeedInputSchema: z.ZodObject<{
-    widgetName: z.ZodOptional<z.ZodString>;
-    oscPath: z.ZodOptional<z.ZodString>;
+    widgetName: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
+    oscPath: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
     bpm: z.ZodNumber;
 }, z.core.$strip>;
 export type SetSpeedInput = z.infer<typeof SetSpeedInputSchema>;

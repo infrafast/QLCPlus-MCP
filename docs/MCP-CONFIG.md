@@ -169,7 +169,7 @@ Widget mappings are defined in JSON format:
 {
   "id": "btn_intro",
   "name": "scene_intro",
-  "path": "/vc/button/intro",
+  "path": "/scene_intro",
   "type": "button",
   "description": "Launch intro scene"
 }
@@ -181,7 +181,7 @@ Widget mappings are defined in JSON format:
 {
   "id": "sld_master",
   "name": "master_dimmer",
-  "path": "/vc/master",
+  "path": "/master_dimmer",
   "type": "slider",
   "description": "Master brightness",
   "minValue": 0,
@@ -195,7 +195,7 @@ Widget mappings are defined in JSON format:
 {
   "id": "spd_chase",
   "name": "chase_speed",
-  "path": "/vc/speed/chase",
+  "path": "/chase_speed",
   "type": "speed",
   "description": "Chase sequence speed (BPM)"
 }
@@ -207,7 +207,7 @@ Widget mappings are defined in JSON format:
 {
   "id": "cue_main",
   "name": "cues_main",
-  "path": "/vc/cuelist/main",
+  "path": "/main_cuelist_next",
   "type": "cuelist",
   "description": "Main cue sequence"
 }
@@ -405,7 +405,7 @@ QLC_OSC_OUTPUT_PORT=9001
 1. **Add Button:**
    - Right-click Virtual Console → **Add Button**
    - Name: "scene_intro"
-   - Optional: Set OSC feedback address `/vc/scene/intro`
+   - Optional: use Auto Detect so QLC+ learns the desired widget OSC path, for example `/scene_intro`
 
 2. **Add Slider:**
    - Right-click Virtual Console → **Add Slider**
@@ -429,7 +429,7 @@ From another machine:
 oscdump osc.udp://127.0.0.1:9000 &
 
 # Press a button in QLC+ - should see output
-# /vc/button/1 1
+# /scene_intro 1
 ```
 
 ## Logging Configuration
