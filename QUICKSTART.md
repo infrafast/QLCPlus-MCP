@@ -64,7 +64,7 @@ For LiveStageAssistant, configure the active MCP config to use:
       "MCP_TRANSPORT": "stdio",
       "MCP_PROMPT_FILE": "/full/path/to/QLCPlus-MCP/PROMPT.md"
     },
-    "assistantPrompt": {
+    "assistantOptions": {
       "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,couleur"
     }
   }

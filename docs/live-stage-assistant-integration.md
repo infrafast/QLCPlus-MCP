@@ -71,7 +71,7 @@ Add to LiveStageAssistant's MCP server configuration file:
         "MCP_TRANSPORT": "stdio",
         "MCP_PROMPT_FILE": "/path/to/QLCPlus-MCP/PROMPT.md"
       },
-      "assistantPrompt": {
+      "assistantOptions": {
         "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,couleur"
       }
     }
@@ -86,7 +86,7 @@ Add to LiveStageAssistant's MCP server configuration file:
   "mcpServers": {
     "qlcplus": {
       "url": "http://localhost:8788/mcp",
-      "assistantPrompt": {
+      "assistantOptions": {
         "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,couleur"
       }
     }
@@ -94,7 +94,7 @@ Add to LiveStageAssistant's MCP server configuration file:
 }
 ```
 
-If LiveStageAssistant also loads another large MCP server such as XMSeries-MCP, enable `MCP_TOOL_ROUTING_ENABLED=true` in the active LiveStageAssistant `.env`. The `assistantPrompt.routing` keywords let LiveStageAssistant expose only the relevant server tools on each routed turn and avoid OpenAI's 128-tool request limit.
+If LiveStageAssistant also loads another large MCP server such as XMSeries-MCP, enable `MCP_TOOL_ROUTING_ENABLED=true` in the active LiveStageAssistant `.env`. The `assistantOptions.routing` keywords let LiveStageAssistant expose only the relevant server tools on each routed turn and avoid OpenAI's 128-tool request limit.
 
 For questions such as "es-tu connecté à QLC ?", LiveStageAssistant should call `qlc_get_state`. The tool reports initialization, configured host/ports, last command sent, and whether QLC+ feedback was received recently.
 

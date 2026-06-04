@@ -400,7 +400,7 @@ Add to LiveStageAssistant MCP configuration:
         "QLC_DRY_RUN": "false",
         "MCP_PROMPT_FILE": "/absolute/path/to/QLCPlus-MCP/PROMPT.md"
       },
-      "assistantPrompt": {
+      "assistantOptions": {
         "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,couleur"
       }
     }
@@ -408,7 +408,7 @@ Add to LiveStageAssistant MCP configuration:
 }
 ```
 
-When QLCPlus-MCP is used together with another large MCP server such as XMSeries-MCP, enable `MCP_TOOL_ROUTING_ENABLED=true` in LiveStageAssistant and keep the `assistantPrompt.routing` keywords above. This prevents the host from sending every available MCP tool in one LLM request and avoids OpenAI's 128-tool request limit.
+When QLCPlus-MCP is used together with another large MCP server such as XMSeries-MCP, enable `MCP_TOOL_ROUTING_ENABLED=true` in LiveStageAssistant and keep the `assistantOptions.routing` keywords above. This prevents the host from sending every available MCP tool in one LLM request and avoids OpenAI's 128-tool request limit.
 
 ### HTTP Configuration
 
@@ -423,7 +423,7 @@ Add to LiveStageAssistant MCP configuration:
         "type": "bearer",
         "token": "my-secret-token"
       },
-      "assistantPrompt": {
+      "assistantOptions": {
         "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,couleur"
       }
     }
