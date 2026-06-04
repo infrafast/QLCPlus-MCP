@@ -18,21 +18,22 @@ npm install
 npm run build
 
 # Setup environment
-cp .env.example .env
+cp .env.example config/.env
 ```
 
 ## Configure
 
-Edit `.env`:
+Edit `config/.env`:
 
 ```bash
-# Basic setup - change these for your QLC+ host
-MCP_TRANSPORT=stdio
+# Basic setup - change QLC_HOST for your QLC+ machine
+MCP_TRANSPORT=http
+HTTP_HOST=0.0.0.0
+HTTP_PORT=8788
 QLC_HOST=127.0.0.1
 QLC_OSC_INPUT_PORT=7700
 QLC_OSC_OUTPUT_PORT=9000
 QLC_DRY_RUN=false
-MCP_PROMPT_FILE=/full/path/to/QLCPlus-MCP/PROMPT.md
 ```
 
 ## Start
@@ -47,8 +48,8 @@ qlcplus
 **Terminal 2: QLCPlus-MCP**
 
 ```bash
-npm run start:stdio
-# Should see: "OSC initialized" and "MCP server ready"
+npm run start:http
+# Should see: "OSC initialized" and "Agent HTTP MCP config"
 ```
 
 **Terminal 3: Your client**
@@ -58,12 +59,9 @@ For LiveStageAssistant, configure the active MCP config to use:
 ```json
 {
   "qlcplus": {
-    "command": "node",
-    "args": ["/full/path/to/QLCPlus-MCP/dist/src/index.js"],
-    "env": {
-      "MCP_TRANSPORT": "stdio",
-      "MCP_PROMPT_FILE": "/full/path/to/QLCPlus-MCP/PROMPT.md"
-    },
+    "type": "streamable-http",
+    "url": "http://127.0.0.1:8788/mcp",
+    "headers": {},
     "assistantOptions": {
       "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,couleur"
     }
@@ -93,7 +91,7 @@ Once all three are running:
 
 **Prompt not loaded in the agent** → Configure your MCP host to fetch standard prompt `agent_prompt`, resource `agent://prompt/system`, or fallback tool `get_agent_prompt`
 
-**No logs** → Check `LOG_LEVEL=debug` in `.env` for more details
+**No logs** → Check `LOG_LEVEL=debug` in `config/.env` for more details
 
 ## Next Steps
 
@@ -107,24 +105,57 @@ Once all three are running:
 For remote/network access:
 
 ```bash
-# Server (lighting machine)
-MCP_TRANSPORT=http \
-MCP_AUTH_TOKEN=my-secret \
+# Server
 npm run start:http
 
 # Client configuration
 {
   "qlcplus": {
+    "type": "streamable-http",
     "url": "http://lighting-machine:8788/mcp",
-    "auth": { "type": "bearer", "token": "my-secret" }
+    "headers": {}
   }
 }
 ```
 
+For bearer authentication, set `MCP_AUTH_MODE=bearer` and `MCP_AUTH_TOKEN=my-secret` in `config/.env`. The startup log prints the correct client JSON.
+
+## Docker / Synology DSM Quick Start
+
+QLCPlus-MCP ships with `Dockerfile`, `.dockerignore`, and `docker-compose.yml`.
+
+```bash
+cp .env.example config/.env
+# Edit QLC_HOST to the LAN IP of the QLC+ machine.
+docker compose build
+docker compose up -d
+docker compose logs -f qlcplus-mcp
+```
+
+`docker-compose.yml` mounts `./config` to `/config`, so you can edit `config/.env` or `config/widgets.json` on the host, then restart the container without rebuilding the image.
+
+Container endpoints:
+
+```text
+http://<docker-host>:8788/mcp
+http://<docker-host>:8788/health
+```
+
+For Synology DSM Container Manager:
+
+1. Copy this repository to a NAS folder such as `/volume2/docker/QLCPlus-MCP`.
+2. Edit `config/.env` in that folder and set `QLC_HOST`, `HTTP_PORT`, and `QLC_WIDGETS_FILE=/config/widgets.json`.
+3. Put your widget mappings in `/volume2/docker/QLCPlus-MCP/config/widgets.json`.
+4. Create a Container Manager Project from `docker-compose.yml`.
+5. Publish `8788/tcp` and `9000/udp` as defined by compose.
+6. Start the project and copy the printed `Agent HTTP MCP config` from the logs.
+
+If LiveStageAssistant runs on another machine, replace `127.0.0.1` in the printed JSON with the Synology IP or hostname.
+
 ## Help
 
-- Check `.env` configuration
-- Review logs: `LOG_LEVEL=debug npm run start:stdio`
+- Check `config/.env` configuration
+- Review logs: `LOG_LEVEL=debug npm run start:http`
 - See troubleshooting in [README.md](./README.md#troubleshooting)
 
 ---

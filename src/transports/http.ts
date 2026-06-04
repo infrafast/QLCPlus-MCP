@@ -3,6 +3,13 @@ import { getLogger } from "../logger.js";
 import { Config } from "../config.js";
 import { registerAgentPrompt } from "../agentPrompt.js";
 
+function getConnectableHost(host: string): string {
+  if (host === "0.0.0.0" || host === "::") {
+    return "127.0.0.1";
+  }
+  return host;
+}
+
 export async function startHttpServer(
   config: Config,
   tools: ToolDefinition[]
@@ -56,11 +63,42 @@ export async function startHttpServer(
 
   await server.listen(config.httpPort);
 
+  const connectableHost = getConnectableHost(config.httpHost);
+  const mcpUrl =
+    "http://" + connectableHost + ":" + config.httpPort + config.httpMcpPath;
+  const healthUrl = "http://" + connectableHost + ":" + config.httpPort + "/health";
+  const agentConfig = {
+    mcpServers: {
+      qlcplus: {
+        type: "streamable-http",
+        url: mcpUrl,
+        headers:
+          config.authMode === "bearer" && config.authToken
+            ? { Authorization: "Bearer " + config.authToken }
+            : {},
+        assistantOptions: {
+          routing:
+            "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,couleur",
+        },
+      },
+    },
+  };
+
   logger.info(
-    `MCP server listening on http://${config.httpHost}:${config.httpPort}${config.httpMcpPath}`
+    "MCP server listening on http://" +
+      config.httpHost +
+      ":" +
+      config.httpPort +
+      config.httpMcpPath
   );
-  logger.info(`Health endpoint: http://${config.httpHost}:${config.httpPort}/health`);
+  logger.info("Health endpoint: http://" + config.httpHost + ":" + config.httpPort + "/health");
+  logger.info("Agent MCP URL: " + mcpUrl);
+  logger.info("Agent health URL: " + healthUrl);
   if (config.authMode === "bearer") {
     logger.info("Bearer token authentication enabled");
+  } else {
+    logger.info("HTTP auth: disabled");
   }
+  logger.info("Agent HTTP MCP config:");
+  logger.info(JSON.stringify(agentConfig, null, 2));
 }

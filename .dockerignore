@@ -1,0 +1,14 @@
+.git
+.DS_Store
+.env
+.env.*
+!config/.env
+!.env.example
+node_modules
+dist
+.mcp-use
+resources
+coverage
+npm-debug.log*
+*.qxw
+garbage.txt

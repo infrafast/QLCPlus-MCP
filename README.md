@@ -83,10 +83,10 @@ npm run build
 Copy the example configuration:
 
 ```bash
-cp .env.example .env
+cp .env.example config/.env
 ```
 
-Edit `.env` to match your QLC+ setup (see Configuration section).
+Edit `config/.env` to match your QLC+ setup (see Configuration section).
 
 ## Configuration
 
@@ -94,9 +94,9 @@ Edit `.env` to match your QLC+ setup (see Configuration section).
 
 ```bash
 # MCP Transport mode (stdio or http)
-MCP_TRANSPORT=stdio
+MCP_TRANSPORT=http
 
-# HTTP Server (only used if MCP_TRANSPORT=http)
+# HTTP Server
 HTTP_HOST=0.0.0.0
 HTTP_PORT=8788
 HTTP_MCP_PATH=/mcp
@@ -199,10 +199,11 @@ Use with Claude Desktop or other STDIO-based MCP clients.
 Start the server:
 
 ```bash
+npm run build
 npm run start:http
 ```
 
-Server listens on `http://0.0.0.0:8788/mcp`
+Server listens on `http://0.0.0.0:8788/mcp` and prints the LiveStageAssistant/client JSON to copy.
 
 **Health check endpoint:**
 
@@ -418,11 +419,9 @@ Add to LiveStageAssistant MCP configuration:
 {
   "mcpServers": {
     "qlcplus": {
+      "type": "streamable-http",
       "url": "http://localhost:8788/mcp",
-      "auth": {
-        "type": "bearer",
-        "token": "my-secret-token"
-      },
+      "headers": {},
       "assistantOptions": {
         "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,couleur"
       }
@@ -434,8 +433,17 @@ Add to LiveStageAssistant MCP configuration:
 Start QLCPlus-MCP HTTP server:
 
 ```bash
-MCP_TRANSPORT=http MCP_AUTH_TOKEN=my-secret-token npm run start:http
+npm run build
+npm run start:http
 ```
+
+If bearer authentication is enabled:
+
+```bash
+MCP_AUTH_MODE=bearer MCP_AUTH_TOKEN=my-secret-token npm run start:http
+```
+
+The startup log prints the exact JSON block expected by LiveStageAssistant, including the `Authorization` header when bearer auth is enabled.
 
 ### Assistant Prompt Rules
 
@@ -541,7 +549,7 @@ Ensure QLC+ is running with OSC plugin enabled.
 
 Run `qlc_get_state`. If the OSC client is initialized but `feedbackSeenRecently` is false, QLCPlus-MCP can attempt UDP sends but has not observed QLC+ feedback recently. Check QLC+ Input/Output feedback settings, `QLC_OSC_OUTPUT_PORT`, firewall rules, and whether another local process already owns that UDP port.
 
-Check ports in `.env`:
+Check ports in `config/.env`:
 ```bash
 QLC_OSC_INPUT_PORT=7700
 QLC_OSC_OUTPUT_PORT=9000
@@ -569,7 +577,7 @@ Authorization: Bearer my-token
 
 ### Dry-run mode
 
-Set in `.env` to test without sending OSC:
+Set in `config/.env` to test without sending OSC:
 
 ```bash
 QLC_DRY_RUN=true
@@ -579,7 +587,7 @@ Check logs for OSC commands that would be sent.
 
 ### Logging
 
-Change log level in `.env`:
+Change log level in `config/.env`:
 
 ```bash
 LOG_LEVEL=debug  # trace|debug|info|warn|error|fatal
@@ -616,7 +624,11 @@ QLCPlus-MCP/
 │       ├── stdio.ts                # STDIO MCP transport
 │       └── http.ts                 # HTTP MCP transport
 ├── config/
+│   ├── .env                        # Runtime configuration for local/Docker use
 │   └── widgets.json                # Widget mappings (example)
+├── Dockerfile                      # Production HTTP container image
+├── docker-compose.yml              # Local/Synology container deployment
+├── .dockerignore
 ├── tests/
 │   └── osc.test.ts                 # Test suite
 ├── package.json
@@ -645,49 +657,89 @@ QLCPlus-MCP/
 
 ### Docker
 
-```dockerfile
-FROM node:20-alpine
-WORKDIR /app
+QLCPlus-MCP includes a production `Dockerfile`, `.dockerignore`, and `docker-compose.yml`.
 
-COPY package*.json ./
-RUN npm ci --only=production
-
-COPY dist ./dist
-COPY config ./config
-
-ENV MCP_TRANSPORT=http
-ENV QLC_DRY_RUN=false
-ENV LOG_LEVEL=info
-
-EXPOSE 8788
-
-CMD ["node", "dist/src/index.js"]
+```bash
+cp .env.example config/.env
+# Edit QLC_HOST so the container can reach the QLC+ machine on your LAN.
+docker compose build
+docker compose up -d
+docker compose logs -f qlcplus-mcp
 ```
 
-### Docker Compose with QLC+
+The container starts in HTTP mode by default and exposes:
 
-```yaml
-version: '3.8'
-services:
-  qlcplus:
-    image: qlcplus/qlcplus:latest
-    ports:
-      - "7700:7700/udp"
-      - "9000:9000/udp"
-    environment:
-      - DISPLAY=:99  # Virtual display
+- MCP HTTP: `http://<docker-host>:8788/mcp`
+- Health: `http://<docker-host>:8788/health`
+- QLC+ feedback listener: UDP `9000`
 
-  qlcplus-mcp:
-    build: .
-    ports:
-      - "8788:8788"
-    environment:
-      - MCP_TRANSPORT=http
-      - QLC_HOST=qlcplus
-      - QLC_DRY_RUN=false
-    depends_on:
-      - qlcplus
+`docker-compose.yml` mounts `./config` as read-write `/config`, so `QLC_WIDGETS_FILE=/config/widgets.json` works in containers while the local dev default can still use `config/widgets.json`.
+
+Because `/config` is a host-mounted volume, you can edit `config/.env` or `config/widgets.json` from the host and restart the container. Rebuilding the image is only needed after code or dependency changes.
+
+The startup log prints the client configuration JSON to paste into LiveStageAssistant.
+
+### Synology DSM Container Manager Quick Start
+
+1. Copy the repository to the NAS, for example:
+
+```text
+/volume2/docker/QLCPlus-MCP
 ```
+
+2. Create `/volume2/docker/QLCPlus-MCP/config/.env` from `.env.example` and set at least:
+
+```bash
+MCP_TRANSPORT=http
+HTTP_HOST=0.0.0.0
+HTTP_PORT=8788
+QLC_HOST=192.168.0.160
+QLC_OSC_INPUT_PORT=7700
+QLC_OSC_OUTPUT_PORT=9000
+QLC_WIDGETS_FILE=/config/widgets.json
+QLC_DRY_RUN=false
+LOG_LEVEL=info
+```
+
+3. Put your generated widget file at:
+
+```text
+/volume2/docker/QLCPlus-MCP/config/widgets.json
+```
+
+4. In DSM Container Manager, create a Project from `/volume2/docker/QLCPlus-MCP/docker-compose.yml`.
+
+5. Build and start the project. The compose file publishes:
+
+```text
+8788/tcp -> MCP HTTP
+9000/udp -> QLC+ OSC feedback
+```
+
+6. Open the logs and copy the printed `Agent HTTP MCP config` JSON into LiveStageAssistant. From another machine, replace `127.0.0.1` with the NAS hostname/IP, for example:
+
+```json
+{
+  "mcpServers": {
+    "qlcplus": {
+      "type": "streamable-http",
+      "url": "http://synology.local:8788/mcp",
+      "headers": {},
+      "assistantOptions": {
+        "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,couleur"
+      }
+    }
+  }
+}
+```
+
+7. Check health:
+
+```bash
+curl http://synology.local:8788/health
+```
+
+If QLC+ runs on another machine, configure QLC+ OSC input on `7700` and feedback/output to the NAS IP on UDP `9000`.
 
 ### systemd Service
 

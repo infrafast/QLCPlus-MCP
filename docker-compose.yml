@@ -1,0 +1,14 @@
+services:
+  qlcplus-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: qlcplus-mcp
+    environment:
+      QLCPLUS_MCP_ENV_FILE: /config/.env
+    ports:
+      - "${HTTP_PORT:-8788}:${HTTP_PORT:-8788}/tcp"
+      - "${QLC_OSC_OUTPUT_PORT:-9000}:${QLC_OSC_OUTPUT_PORT:-9000}/udp"
+    volumes:
+      - ./config:/config:rw
+    restart: unless-stopped

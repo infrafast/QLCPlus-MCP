@@ -1,4 +1,6 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+import fs from "node:fs";
+import path from "node:path";
 import { loadConfig } from "./config.js";
 import { createAgentPromptTool } from "./agentPrompt.js";
 import { initLogger, getLogger } from "./logger.js";
@@ -22,6 +24,34 @@ import { createLaunchSceneTool } from "./tools/qlc_cuelist_scene.js";
 import { createSetColorWashTool } from "./tools/qlc_special.js";
 import type { ToolDefinition } from "mcp-use/server";
 
+function loadRuntimeEnv(): string | undefined {
+  const candidates = [
+    process.env.QLCPLUS_MCP_ENV_FILE,
+    "/config/.env",
+    "config/.env",
+    ".env",
+  ].filter(Boolean) as string[];
+
+  for (const candidate of candidates) {
+    const envPath = path.resolve(candidate);
+    if (fs.existsSync(envPath)) {
+      dotenv.config({ path: envPath });
+      if (
+        envPath === "/config/.env" &&
+        process.env.QLC_WIDGETS_FILE === "config/widgets.json"
+      ) {
+        process.env.QLC_WIDGETS_FILE = "/config/widgets.json";
+      }
+      return envPath;
+    }
+  }
+
+  dotenv.config();
+  return undefined;
+}
+
+const runtimeEnvFile = loadRuntimeEnv();
+
 async function main() {
   try {
     // Load config
@@ -34,6 +64,11 @@ async function main() {
     logger.info(`Transport: ${config.transport}`);
     logger.info(`QLC+ Host: ${config.qlcHost}`);
     logger.info(`Log Level: ${config.logLevel}`);
+    logger.info(
+      runtimeEnvFile
+        ? `Runtime env file: ${runtimeEnvFile}`
+        : "Runtime env file: default dotenv lookup"
+    );
 
     // Initialize OSC
     logger.info("Initializing OSC client...");
