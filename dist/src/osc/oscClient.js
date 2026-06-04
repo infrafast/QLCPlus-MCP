@@ -1,4 +1,4 @@
-import * as OSC from "osc-js";
+import OSC from "osc-js";
 import { getLogger } from "../logger.js";
 let oscInstance = null;
 export async function initOsc(config) {

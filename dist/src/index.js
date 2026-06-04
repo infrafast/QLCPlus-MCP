@@ -63,8 +63,12 @@ async function main() {
     }
     catch (error) {
         const logger = getLogger();
-        const err = error instanceof Error ? error.message : String(error);
-        logger.fatal("Failed to start server:", err);
+        if (error instanceof Error) {
+            logger.fatal({ err: error }, "Failed to start server");
+        }
+        else {
+            logger.fatal({ err: String(error) }, "Failed to start server");
+        }
         process.exit(1);
     }
 }

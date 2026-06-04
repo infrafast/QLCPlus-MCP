@@ -1,4 +1,4 @@
-import * as OSC from "osc-js";
+import OSC from "osc-js";
 import { getLogger } from "../logger.js";
 import { Config } from "../config.js";
 import { OscMessage, OscSendOptions } from "../types.js";
