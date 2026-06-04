@@ -1,14 +1,105 @@
 import OSC from "osc-js";
 import { getLogger } from "../logger.js";
 let oscInstance = null;
+let feedbackOscInstance = null;
+const runtimeState = {
+    initialized: false,
+    qlcHost: null,
+    qlcOscInputPort: null,
+    qlcOscOutputPort: null,
+    qlcUniverse: null,
+    dryRun: false,
+    commandSendHost: null,
+    commandSendPort: null,
+    sendCount: 0,
+    lastSentAt: null,
+    lastSentPath: null,
+    lastSendErrorAt: null,
+    lastSendError: null,
+    feedbackListening: false,
+    feedbackListenHost: null,
+    feedbackListenPort: null,
+    feedbackCount: 0,
+    lastFeedbackAt: null,
+    lastFeedbackPath: null,
+    lastFeedbackArgs: null,
+    lastFeedbackSource: null,
+    lastFeedbackErrorAt: null,
+    lastFeedbackError: null,
+    feedbackSeenRecently: false,
+    feedbackFreshnessSeconds: 10,
+};
+function nowIso() {
+    return new Date().toISOString();
+}
+function formatFeedbackSource(info) {
+    const address = info?.address ?? info?.host ?? info?.remoteAddress;
+    const port = info?.port ?? info?.remotePort;
+    if (!address && !port) {
+        return null;
+    }
+    return `${address ?? "unknown"}:${port ?? "unknown"}`;
+}
+function recordFeedback(message, info) {
+    runtimeState.feedbackCount += 1;
+    runtimeState.lastFeedbackAt = nowIso();
+    runtimeState.lastFeedbackPath = message?.address ?? message?.path ?? null;
+    runtimeState.lastFeedbackArgs = Array.isArray(message?.args) ? message.args : null;
+    runtimeState.lastFeedbackSource = formatFeedbackSource(info);
+}
+async function initFeedbackListener(config) {
+    const logger = getLogger();
+    runtimeState.feedbackListening = false;
+    runtimeState.feedbackListenHost = "0.0.0.0";
+    runtimeState.feedbackListenPort = config.qlcOscOutputPort;
+    runtimeState.lastFeedbackError = null;
+    runtimeState.lastFeedbackErrorAt = null;
+    try {
+        const plugin = new OSC.DatagramPlugin();
+        const listener = new OSC({ plugin });
+        feedbackOscInstance = listener;
+        if (listener.on) {
+            listener.on("*", recordFeedback);
+            listener.on("error", (err) => {
+                const message = err instanceof Error ? err.message : String(err);
+                runtimeState.lastFeedbackError = message;
+                runtimeState.lastFeedbackErrorAt = nowIso();
+                logger.warn(`QLC+ OSC feedback listener error: ${message}`);
+            });
+        }
+        await listener.open({
+            host: runtimeState.feedbackListenHost,
+            port: runtimeState.feedbackListenPort,
+        });
+        runtimeState.feedbackListening = true;
+        logger.info(`QLC+ OSC feedback listener open on ${runtimeState.feedbackListenHost}:${runtimeState.feedbackListenPort}`);
+    }
+    catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        runtimeState.lastFeedbackError = message;
+        runtimeState.lastFeedbackErrorAt = nowIso();
+        feedbackOscInstance = null;
+        logger.warn(`QLC+ OSC feedback listener unavailable: ${message}`);
+    }
+}
 export async function initOsc(config) {
     const logger = getLogger();
+    runtimeState.initialized = false;
+    runtimeState.qlcHost = config.qlcHost;
+    runtimeState.qlcOscInputPort = config.qlcOscInputPort;
+    runtimeState.qlcOscOutputPort = config.qlcOscOutputPort;
+    runtimeState.qlcUniverse = config.qlcUniverse;
+    runtimeState.dryRun = config.qlcDryRun;
+    runtimeState.commandSendHost = config.qlcHost;
+    runtimeState.commandSendPort = config.qlcOscOutputPort;
     const plugin = new OSC.DatagramPlugin();
     oscInstance = new OSC({ plugin });
     await oscInstance.open({
         host: config.qlcHost,
         port: config.qlcOscInputPort,
     });
+    runtimeState.initialized = true;
+    await initFeedbackListener(config);
     logger.info(`OSC initialized - Server: ${config.qlcHost}:${config.qlcOscInputPort}, Client: ${config.qlcHost}:${config.qlcOscOutputPort}`);
 }
 export function getOsc() {
@@ -18,10 +109,32 @@ export function getOsc() {
     return oscInstance;
 }
 export async function closeOsc() {
+    if (feedbackOscInstance) {
+        await feedbackOscInstance.close();
+        feedbackOscInstance = null;
+    }
+    runtimeState.feedbackListening = false;
     if (oscInstance) {
         await oscInstance.close();
         oscInstance = null;
     }
+    runtimeState.initialized = false;
+}
+export function getOscRuntimeState(freshnessSeconds = 10) {
+    const lastFeedbackTime = runtimeState.lastFeedbackAt
+        ? Date.parse(runtimeState.lastFeedbackAt)
+        : Number.NaN;
+    const feedbackSeenRecently = Number.isFinite(lastFeedbackTime)
+        ? Date.now() - lastFeedbackTime <= freshnessSeconds * 1000
+        : false;
+    return {
+        ...runtimeState,
+        feedbackSeenRecently,
+        feedbackFreshnessSeconds: freshnessSeconds,
+        lastFeedbackArgs: runtimeState.lastFeedbackArgs
+            ? [...runtimeState.lastFeedbackArgs]
+            : null,
+    };
 }
 export async function sendOsc(message, options, config) {
     const logger = getLogger();
@@ -43,6 +156,13 @@ export async function sendOsc(message, options, config) {
             host: config?.qlcHost,
             port: config?.qlcOscOutputPort,
         });
+        runtimeState.sendCount += 1;
+        runtimeState.lastSentAt = nowIso();
+        runtimeState.lastSentPath = message.path;
+        runtimeState.lastSendError = null;
+        runtimeState.lastSendErrorAt = null;
+        runtimeState.commandSendHost = config?.qlcHost ?? runtimeState.commandSendHost;
+        runtimeState.commandSendPort = config?.qlcOscOutputPort ?? runtimeState.commandSendPort;
         logger.info(`OSC sent: ${message.path}`);
         return {
             success: true,
@@ -53,6 +173,8 @@ export async function sendOsc(message, options, config) {
     }
     catch (error) {
         const err = error instanceof Error ? error.message : String(error);
+        runtimeState.lastSendError = err;
+        runtimeState.lastSendErrorAt = nowIso();
         logger.error(`Failed to send OSC message: ${err}`);
         throw new Error(`OSC send failed: ${err}`);
     }

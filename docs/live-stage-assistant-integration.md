@@ -102,6 +102,8 @@ Add to LiveStageAssistant's MCP server configuration file:
 
 If LiveStageAssistant also loads another large MCP server such as XMSeries-MCP, enable `MCP_TOOL_ROUTING_ENABLED=true` in the active LiveStageAssistant `.env`. The `assistantPrompt.routing` keywords let LiveStageAssistant expose only the relevant server tools on each routed turn and avoid OpenAI's 128-tool request limit.
 
+For questions such as "es-tu connecté à QLC ?", LiveStageAssistant should call `qlc_get_state`. The tool reports initialization, configured host/ports, last command sent, and whether QLC+ feedback was received recently.
+
 ### 3. Start Services
 
 **Terminal 1: Start QLC+**
@@ -481,6 +483,10 @@ NODE_ENV=production
    - Only expose through secure channel
 
 ## Troubleshooting
+
+### QLC+ Connection State
+
+Ask the assistant "es-tu connecté à QLC ?" or call `qlc_get_state` directly. If the OSC client is initialized but no recent feedback is seen, verify QLC+ Input/Output feedback settings, the configured `QLC_OSC_OUTPUT_PORT`, and firewall rules.
 
 ### "MCP Server Not Found"
 

@@ -77,7 +77,7 @@ QLC_OSC_INPUT_PORT=7700
 # Standard QLC+ default: 7700 + (universe - 1)
 
 QLC_OSC_OUTPUT_PORT=9000
-# OSC output port (QLC+ sends feedback on this)
+# OSC output port (QLC+ sends feedback on this; qlc_get_state listens here)
 # Default: 9000
 # Standard QLC+ default: 9000 + (universe - 1)
 

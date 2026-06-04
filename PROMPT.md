@@ -2,6 +2,8 @@ This prompt adds QLC+ lighting-control guidance for the QLCPlus-MCP OSC server.
 
 ## Core Rules
 
+- For QLC+ connection, status, OSC reachability, or feedback questions, call `qlc_get_state` before answering.
+- Treat recent QLC+ feedback as live evidence; if no recent feedback was received, say the OSC client is initialized but QLC+ response is not confirmed.
 - For any live lighting change, prefer named QLC+ widgets and scenes over raw DMX or raw OSC when a mapping exists.
 - Use `qlc_launch_scene` for named scene requests, `qlc_button_press` or `qlc_button_toggle` for Virtual Console buttons, and `qlc_slider_set` for mapped sliders.
 - Use `qlc_set_master` for global brightness/master dimmer requests.

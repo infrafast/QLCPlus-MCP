@@ -339,7 +339,9 @@ echo "/0/dmx/0,i 255" | socat - UDP:127.0.0.1:7700
 
 ## Feedback from QLC+
 
-By default, QLC+ sends feedback on port 9000 (output port). Tools can subscribe to this feedback for status updates (future enhancement).
+By default, QLC+ sends feedback on port 9000 (output port). QLCPlus-MCP listens on `QLC_OSC_OUTPUT_PORT` and exposes the observed state through `qlc_get_state`.
+
+Important nuance: OSC over UDP has no built-in acknowledgement. A successful send means the local UDP send did not fail; it does not prove QLC+ received or applied the command. Recent feedback received by `qlc_get_state` is the best live indication that QLC+ is responding.
 
 ## Best Practices
 

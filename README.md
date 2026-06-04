@@ -243,6 +243,20 @@ This extracts buttons, sliders, and other widgets from the project and generates
 
 ## MCP Tools Reference
 
+### State and Diagnostics
+
+#### `qlc_get_state`
+
+Report the OSC runtime state: configured QLC+ host and ports, whether the OSC client is initialized, last command sent, feedback listener status, and whether recent QLC+ feedback was received.
+
+```typescript
+qlc_get_state({
+  freshnessSeconds: 10
+})
+```
+
+Use this before answering questions such as "Are you connected to QLC+?". UDP sends do not provide acknowledgements, so recent feedback is the strongest confirmation that QLC+ is responding.
+
 ### DMX and OSC
 
 #### `qlc_set_dmx_channel`
@@ -574,6 +588,10 @@ Panic:        /vc/panic
 ### "OSC not initialized"
 
 Ensure QLC+ is running with OSC plugin enabled.
+
+### No recent QLC+ feedback
+
+Run `qlc_get_state`. If the OSC client is initialized but `feedbackSeenRecently` is false, QLCPlus-MCP can attempt UDP sends but has not observed QLC+ feedback recently. Check QLC+ Input/Output feedback settings, `QLC_OSC_OUTPUT_PORT`, firewall rules, and whether another local process already owns that UDP port.
 
 Check ports in `.env`:
 ```bash

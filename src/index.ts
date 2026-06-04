@@ -11,6 +11,7 @@ import { startHttpServer } from "./transports/http.js";
 import { createSetDmxChannelTool } from "./tools/qlc_set_dmx_channel.js";
 import { createSetDmxRgbTool } from "./tools/qlc_set_dmx_rgb.js";
 import { createSendOscTool } from "./tools/qlc_send_osc.js";
+import { createGetStateTool } from "./tools/qlc_get_state.js";
 import {
   createButtonPressTool,
   createButtonToggleTool,
@@ -57,6 +58,7 @@ async function main() {
     logger.info("Registering MCP tools...");
     const tools: ToolDefinition[] = [
       createAgentPromptTool(),
+      createGetStateTool(),
 
       // DMX/OSC tools
       createSetDmxChannelTool(config),

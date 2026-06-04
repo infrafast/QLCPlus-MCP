@@ -10,6 +10,7 @@ import { startHttpServer } from "./transports/http.js";
 import { createSetDmxChannelTool } from "./tools/qlc_set_dmx_channel.js";
 import { createSetDmxRgbTool } from "./tools/qlc_set_dmx_rgb.js";
 import { createSendOscTool } from "./tools/qlc_send_osc.js";
+import { createGetStateTool } from "./tools/qlc_get_state.js";
 import { createButtonPressTool, createButtonToggleTool, } from "./tools/qlc_button_control.js";
 import { createSliderSetTool, createSpeedSetTool, } from "./tools/qlc_slider_speed.js";
 import { createCueListNextTool, createCueListPreviousTool, createLaunchSceneTool, } from "./tools/qlc_cuelist_scene.js";
@@ -34,6 +35,7 @@ async function main() {
         logger.info("Registering MCP tools...");
         const tools = [
             createAgentPromptTool(),
+            createGetStateTool(),
             // DMX/OSC tools
             createSetDmxChannelTool(config),
             createSetDmxRgbTool(config),

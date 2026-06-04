@@ -82,11 +82,15 @@ Once all three are running:
 
 1. Ask your AI client to dim the lights: "Set master brightness to 50%"
 2. Watch QLC+ respond in real-time
-3. Check QLCPlus-MCP terminal for logs
+3. Ask your AI client: "Are you connected to QLC+?"
+4. The assistant should call `qlc_get_state` and report the configured host/port plus whether recent QLC+ feedback was seen
+5. Check QLCPlus-MCP terminal for logs
 
 ## Common Issues
 
 **"OSC not initialized"** → Ensure QLC+ is running with OSC enabled
+
+**No recent QLC+ feedback** → QLCPlus-MCP can send UDP, but cannot confirm QLC+ response until feedback is received on `QLC_OSC_OUTPUT_PORT`
 
 **"Widget not found"** → Create `config/widgets.json` with your scene names
 
