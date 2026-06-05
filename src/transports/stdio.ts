@@ -13,7 +13,7 @@ export async function startStdioServer(
   const logger = getLogger();
 
   logger.info("Starting MCP server in STDIO mode");
-  logger.debug("Tools registered:", tools.map((t) => t.name));
+  logger.debug({ tools: tools.map((t) => t.name) }, "Tools registered");
 
   const server = new MCPServer({
     name: "qlcplus-mcp",
@@ -38,7 +38,7 @@ export async function startStdioServer(
     logger.info("STDIO transport closed");
   };
   transport.onerror = (error) => {
-    logger.error("STDIO transport error:", error.message);
+    logger.error({ err: error }, "STDIO transport error");
     process.exit(1);
   };
 

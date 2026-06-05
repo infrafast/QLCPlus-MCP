@@ -17,7 +17,7 @@ export async function startHttpServer(
   const logger = getLogger();
 
   logger.info("Starting MCP server in HTTP mode");
-  logger.debug("Tools registered:", tools.map((t) => t.name));
+  logger.debug({ tools: tools.map((t) => t.name) }, "Tools registered");
 
   const server = new MCPServer({
     name: "qlcplus-mcp",

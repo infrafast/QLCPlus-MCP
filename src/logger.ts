@@ -1,4 +1,4 @@
-import { pino, type Logger } from "pino";
+import pino, { type Logger } from "pino";
 import { Config } from "./config.js";
 
 let loggerInstance: Logger | null = null;

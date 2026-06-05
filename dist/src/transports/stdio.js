@@ -6,7 +6,7 @@ import { registerAgentPrompt } from "../agentPrompt.js";
 export async function startStdioServer(config, tools) {
     const logger = getLogger();
     logger.info("Starting MCP server in STDIO mode");
-    logger.debug("Tools registered:", tools.map((t) => t.name));
+    logger.debug({ tools: tools.map((t) => t.name) }, "Tools registered");
     const server = new MCPServer({
         name: "qlcplus-mcp",
         version: "1.0.0",
@@ -27,7 +27,7 @@ export async function startStdioServer(config, tools) {
         logger.info("STDIO transport closed");
     };
     transport.onerror = (error) => {
-        logger.error("STDIO transport error:", error.message);
+        logger.error({ err: error }, "STDIO transport error");
         process.exit(1);
     };
     await server.nativeServer.connect(transport);

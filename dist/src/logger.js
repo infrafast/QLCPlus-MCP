@@ -1,4 +1,4 @@
-import { pino } from "pino";
+import pino from "pino";
 let loggerInstance = null;
 export function initLogger(config) {
     const usePrettyLogs = config.nodeEnv === "development" && config.transport !== "stdio";
