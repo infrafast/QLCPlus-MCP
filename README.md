@@ -593,6 +593,8 @@ The startup log prints the client configuration JSON to paste into LiveStageAssi
 
 ### Synology DSM Container Manager Quick Start
 
+please note it may take up to 15 minutes to build the container.
+
 1. Copy the repository to the NAS, for example:
 
 ```text
