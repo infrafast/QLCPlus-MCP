@@ -326,11 +326,10 @@ You have access to QLCPlus-MCP tools for controlling stage lighting.
    - Always check available widget names before using them
    - Ask if unsure about exact scene names
 
-2. **Prefer High-Level Tools**
-   - Use `qlc_launch_scene` for scenes (safer than raw OSC)
-   - Use `qlc_set_dmx_channel` for direct DMX control
-   - Use `qlc_button_press` for button widgets
-   - Avoid `qlc_send_osc` unless absolutely necessary
+2. **Prefer Mapped Widgets**
+   - Use `qlc_list_widgets` to discover available controls
+   - Use `qlc_button_press` for mapped scenes, buttons, cue-list controls, blackout, panic, master, and other Virtual Console actions
+   - Avoid `qlc_send_osc` unless the user explicitly asks for raw OSC and it is enabled
 
 3. **Emergency Functions**
    - Use mapped widgets for blackout, panic, master, and other Virtual Console actions
@@ -350,20 +349,19 @@ You have access to QLCPlus-MCP tools for controlling stage lighting.
    - cues: Main cue list
 
 5. **DMX Control**
-   - Universe 1: Main lighting rig
-   - Channels 1-3: RGB wash (auto-fade capable)
-   - Channels 4-15: Individual moving lights
+   - Direct DMX helper tools are not exposed
+   - Map fixture actions in QLC+ Virtual Console and expose them through `config/widgets.json`
 
 ### Example Interactions
 
 **User:** "Dim the lights to 50%"
-**Assistant:** Resolves a mapped master slider widget and calls `qlc_slider_set(value=0.5)`
+**Assistant:** Resolves a mapped 50% dimmer widget and calls `qlc_button_press(widgetName="master_50")`
 
 **User:** "Go to the chorus scene"
-**Assistant:** Calls `qlc_launch_scene(sceneName="chorus_scene")`
+**Assistant:** Calls `qlc_button_press(widgetName="chorus_scene")`
 
 **User:** "Set the wash to red"
-**Assistant:** Calls `qlc_set_color_wash(color="red", universe=1, redChannel=1, greenChannel=2, blueChannel=3)`
+**Assistant:** Calls `qlc_button_press(widgetName="wash_red")` if that mapped widget exists
 
 **User:** "Emergency! Turn everything off!"
 **Assistant:** Resolves a mapped panic/stop widget if one exists; otherwise says no mapped emergency widget is available
@@ -377,7 +375,7 @@ You have access to QLCPlus-MCP tools for controlling stage lighting.
 User: "The singer is coming on stage now. Launch the verse lighting."
 
 LiveStageAssistant resolves:
-→ qlc_launch_scene(sceneName="verse_scene")
+→ qlc_button_press(widgetName="verse_scene")
 
 QLCPlus-MCP sends OSC:
 → /scene_verse [1]
@@ -391,10 +389,10 @@ QLC+ fades to verse lighting in 3 seconds.
 User: "Lower the brightness to 75% for the acoustic section"
 
 LiveStageAssistant resolves:
-→ qlc_slider_set(widgetName="master_dimmer", value=0.75)
+→ qlc_button_press(widgetName="master_75")
 
 QLCPlus-MCP sends OSC:
-→ /master_dimmer [0.75]
+→ /master_75 [1]
 
 QLC+ master dimmer smoothly transitions to 75%.
 ```
@@ -405,18 +403,10 @@ QLC+ master dimmer smoothly transitions to 75%.
 User: "Switch the wash lights to amber for the warm section"
 
 LiveStageAssistant resolves:
-→ qlc_set_color_wash(
-    color="amber",
-    universe=1,
-    redChannel=1,
-    greenChannel=2,
-    blueChannel=3
-  )
+→ qlc_button_press(widgetName="wash_amber")
 
-QLCPlus-MCP sends OSC batch:
-→ /0/dmx/0 [255]  (red)
-→ /0/dmx/1 [191]  (green)
-→ /0/dmx/2 [0]    (blue)
+QLCPlus-MCP sends OSC:
+→ /wash_amber [1]
 
 QLC+ fades RGB channels to amber color.
 ```

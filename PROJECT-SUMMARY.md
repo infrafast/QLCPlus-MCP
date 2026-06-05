@@ -83,76 +83,30 @@ QLCPlus-MCP is a complete, production-ready TypeScript MCP (Model Context Protoc
 - `generateWidgetsJson()` - Save as JSON mappings
 - Widget-specific parsers for each type
 
-### 4. MCP Tools (14 Total)
+### 4. MCP Tools
 
-#### DMX/OSC Level
+#### Prompt and Status
 
-1. **`qlc_set_dmx_channel`**
-   - Set single DMX channel (0-255 or 0-1 normalized)
-   - Full validation of universe/channel numbers
-   - Automatic value normalization
+1. **`get_agent_prompt`**
+   - Return the recommended agent prompt from `PROMPT.md`
 
-2. **`qlc_set_dmx_rgb`**
-   - Set RGB color on three channels
-   - Batch OSC messages for efficiency
-   - Full RGB value control
+2. **`qlc_get_state`**
+   - Report OSC runtime state and feedback freshness
 
-3. **`qlc_send_osc`**
+3. **`qlc_list_widgets`**
+   - List mapped QLC+ widgets from `config/widgets.json`
+
+#### OSC and Widget Control
+
+4. **`qlc_send_osc`**
    - Send arbitrary OSC messages
    - Disabled by default (`QLC_ALLOW_RAW_OSC=false`)
    - Safe path validation
    - For advanced use cases
 
-#### Widget Control Level
-
-4. **`qlc_button_press`**
-   - Momentary button press with configurable duration
-   - Handles press/release sequence
+5. **`qlc_button_press`**
+   - Trigger mapped scenes, buttons, cue-list controls, blackout, panic, master, and other Virtual Console actions
    - Widget name or direct path support
-
-5. **`qlc_button_toggle`**
-   - Toggle button state
-   - Single value toggle
-
-6. **`qlc_slider_set`**
-   - Set slider value (0-1 normalized)
-   - Full range support
-
-7. **`qlc_speed_set`**
-   - Set speed dial in BPM (10-240)
-   - Auto-converts to 0-1 normalized range
-
-#### Scene/Cue Level
-
-8. **`qlc_launch_scene`**
-   - Launch scene by logical name
-   - Resolves from widget mappings
-   - Provides suggestions on mismatch
-
-9. **`qlc_cuelist_next`**
-   - Advance to next cue
-
-10. **`qlc_cuelist_previous`**
-    - Go to previous cue
-
-#### Special Functions
-
-11. **Removed: non-documented `/vc/...` shortcut**
-    - Set grand master dimmer (0-1)
-    - Affects all lighting proportionally
-
-12. **`qlc_set_color_wash`**
-    - Apply predefined colors (9 color presets)
-    - Optional DMX channel specification
-    - Full RGB control support
-
-13. **Removed: non-documented `/vc/...` shortcut**
-    - Emergency darkness (safe tool)
-    - Smooth fade to black
-
-14. **Removed: non-documented `/vc/...` shortcut**
-    - Emergency stop (safe tool)
-    - Instant kill all lighting
 
 ### 5. Transport Modes
 
@@ -292,13 +246,10 @@ QLCPlus-MCP/
 │   │   ├── widgetResolver.ts         # Widget mapping resolver
 │   │   └── generateWidgets.ts        # CLI widget generator
 │   ├── tools/                        # MCP tool implementations
-│   │   ├── qlc_set_dmx_channel.ts
-│   │   ├── qlc_set_dmx_rgb.ts
+│   │   ├── qlc_get_state.ts
+│   │   ├── qlc_list_widgets.ts
 │   │   ├── qlc_send_osc.ts
-│   │   ├── qlc_button_control.ts
-│   │   ├── qlc_slider_speed.ts
-│   │   ├── qlc_cuelist_scene.ts
-│   │   └── qlc_special.ts
+│   │   └── qlc_button_control.ts
 │   └── transports/
 │       ├── stdio.ts                  # STDIO transport
 │       └── http.ts                   # HTTP transport

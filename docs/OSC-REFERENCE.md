@@ -93,44 +93,6 @@ OSC: /0/dmx/2 [255]    # Blue
 
 ## MCP Tool to OSC Mapping
 
-### qlc_set_dmx_channel
-
-**Input:**
-```typescript
-{
-  universe: 1,
-  channel: 12,
-  value: 255
-}
-```
-
-**OSC Sent:**
-```
-/0/dmx/11 [255]
-```
-
-### qlc_set_dmx_rgb
-
-**Input:**
-```typescript
-{
-  universe: 1,
-  redChannel: 1,
-  greenChannel: 2,
-  blueChannel: 3,
-  r: 255,
-  g: 0,
-  b: 255
-}
-```
-
-**OSC Sent:**
-```
-/0/dmx/0 [255]    # Red
-/0/dmx/1 [0]      # Green
-/0/dmx/2 [255]    # Blue
-```
-
 ### qlc_button_press
 
 **Input:**
@@ -145,54 +107,22 @@ OSC: /0/dmx/2 [255]    # Blue
 /scene_intro [1]
 ```
 
-### qlc_slider_set
+### qlc_send_osc
 
 **Input:**
 ```typescript
 {
-  widgetName: "master_dimmer",
-  value: 0.75
+  path: "/custom_button",
+  args: [1]
 }
 ```
 
 **OSC Sent:**
 ```
-Use a mapped slider widget path, for example /master_dimmer [0.75]
+The configured OSC path and arguments are forwarded as-is when raw OSC is enabled.
 ```
 
-### qlc_set_color_wash
-
-**Input:**
-```typescript
-{
-  color: "red",
-  universe: 1,
-  redChannel: 1,
-  greenChannel: 2,
-  blueChannel: 3
-}
-```
-
-**OSC Sent:**
-```
-/0/dmx/0 [255]    # Red = 255
-/0/dmx/1 [0]      # Green = 0
-/0/dmx/2 [0]      # Blue = 0
-```
-
-## Predefined Colors
-
-| Color | R | G | B | Hex |
-|-------|---|---|---|-----|
-| red | 255 | 0 | 0 | #FF0000 |
-| green | 0 | 255 | 0 | #00FF00 |
-| blue | 0 | 0 | 255 | #0000FF |
-| amber | 255 | 191 | 0 | #FFBF00 |
-| white | 255 | 255 | 255 | #FFFFFF |
-| purple | 128 | 0 | 128 | #800080 |
-| cyan | 0 | 255 | 255 | #00FFFF |
-| magenta | 255 | 0 | 255 | #FF00FF |
-| yellow | 255 | 255 | 0 | #FFFF00 |
+Direct DMX, RGB, slider, speed, scene-launch, and color-wash helper tools are not exposed. Model reusable lighting actions as QLC+ Virtual Console widgets, add them to `config/widgets.json`, and trigger them with `qlc_button_press`.
 
 ## QLC+ Cue List Control
 

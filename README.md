@@ -221,7 +221,7 @@ MCP_AUTH_MODE=bearer MCP_AUTH_TOKEN=my-secret npm run start:http
 curl -X POST http://localhost:8788/mcp \
   -H "Authorization: Bearer my-secret" \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"tools/call","params":{"name":"qlc_set_dmx_channel","arguments":{"universe":1,"channel":1,"value":255}}}'
+  -d '{"jsonrpc":"2.0","method":"tools/call","params":{"name":"qlc_button_press","arguments":{"widgetName":"BLACK"}}}'
 ```
 
 ### Development Mode
@@ -272,41 +272,7 @@ qlc_list_widgets({
 
 Use this to discover available mapped QLC+ widget names and their OSC paths before using named widget tools.
 
-### DMX and OSC
-
-#### `qlc_set_dmx_channel`
-
-Set a DMX channel value.
-
-```typescript
-qlc_set_dmx_channel({
-  universe: 1,
-  channel: 12,
-  value: 255  // 0-255 or 0-1 normalized
-})
-```
-
-**Example:**
-```
-Set Universe 1, Channel 12 to full intensity
-→ Sends OSC: /0/dmx/11 [255]
-```
-
-#### `qlc_set_dmx_rgb`
-
-Set RGB color on three DMX channels.
-
-```typescript
-qlc_set_dmx_rgb({
-  universe: 1,
-  redChannel: 1,
-  greenChannel: 2,
-  blueChannel: 3,
-  r: 255,
-  g: 0,
-  b: 255  // Purple
-})
-```
+### OSC
 
 #### `qlc_send_osc` (Advanced)
 
@@ -323,61 +289,11 @@ qlc_send_osc({
 
 #### `qlc_button_press`
 
-Trigger a mapped QLC+ button by sending value `1` to its OSC path.
+Trigger a mapped QLC+ widget by sending value `1` to its OSC path. Use this for mapped buttons, scenes, cue-list controls, blackout, panic, master actions, or any other Virtual Console action represented in `config/widgets.json`.
 
 ```typescript
 qlc_button_press({
-  widgetName: "BLACK",  // or oscPath: "/black"
-})
-```
-
-#### `qlc_slider_set`
-
-Set slider value (0-1 normalized).
-
-```typescript
-qlc_slider_set({
-  widgetName: "master_dimmer",
-  value: 0.75  // 75% brightness
-})
-```
-
-#### `qlc_speed_set`
-
-Set speed dial value in BPM.
-
-```typescript
-qlc_speed_set({
-  widgetName: "chase_speed",
-  bpm: 120
-})
-```
-
-### Scenes and Cues
-
-#### `qlc_launch_scene`
-
-Launch a scene by logical name.
-
-```typescript
-qlc_launch_scene({
-  sceneName: "scene_chorus"
-})
-```
-
-### Special Functions
-
-#### `qlc_set_color_wash`
-
-Apply a predefined color wash.
-
-```typescript
-qlc_set_color_wash({
-  color: "red",  // red|green|blue|amber|white|purple|cyan|magenta|yellow
-  universe: 1,
-  redChannel: 1,
-  greenChannel: 2,
-  blueChannel: 3
+  widgetName: "BLACK"  // or oscPath: "/black"
 })
 ```
 
@@ -456,10 +372,10 @@ Recommended instructions for Claude / LiveStageAssistant:
    - Always resolve scene names from the available widget mappings
    - If unsure, ask user for exact scene name
 
-2. **Prefer high-level tools**
-   - Use `qlc_launch_scene` instead of raw OSC
-   - Use `qlc_set_dmx_channel` instead of `qlc_send_osc`
-   - Use specific tools for safety and clarity
+2. **Prefer mapped widgets**
+   - Use `qlc_list_widgets` to discover available controls
+   - Use `qlc_button_press` for mapped scenes, buttons, cue-list controls, blackout, panic, and other Virtual Console actions
+   - Avoid `qlc_send_osc` unless the user explicitly asks for raw OSC and it is enabled
 
 3. **Use emergency tools carefully**
    - Use mapped widgets for blackout, panic, master, or any Virtual Console action
@@ -470,9 +386,8 @@ Recommended instructions for Claude / LiveStageAssistant:
    - Ask for complete list if needed
 
 5. **DMX control**
-   - Universe 1: Main rig
-   - Channels 1-3: RGB wash (auto-detected)
-   - Channels 4-15: Individual fixtures
+   - Direct DMX helper tools are not exposed
+   - Map fixture actions in QLC+ Virtual Console and expose them through `config/widgets.json`
 ```
 
 ## Development
@@ -613,13 +528,10 @@ QLCPlus-MCP/
 │   │   ├── widgetResolver.ts       # Widget mapping resolver
 │   │   └── generateWidgets.ts      # CLI for widget generation
 │   ├── tools/
-│   │   ├── qlc_set_dmx_channel.ts
-│   │   ├── qlc_set_dmx_rgb.ts
+│   │   ├── qlc_get_state.ts
+│   │   ├── qlc_list_widgets.ts
 │   │   ├── qlc_send_osc.ts
-│   │   ├── qlc_button_control.ts
-│   │   ├── qlc_slider_speed.ts
-│   │   ├── qlc_cuelist_scene.ts
-│   │   └── qlc_special.ts
+│   │   └── qlc_button_control.ts
 │   └── transports/
 │       ├── stdio.ts                # STDIO MCP transport
 │       └── http.ts                 # HTTP MCP transport

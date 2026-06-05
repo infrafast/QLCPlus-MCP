@@ -10,7 +10,7 @@ export function createSendOscTool(config: Config): ToolDefinition {
   return {
     name: "qlc_send_osc",
     description:
-      "Send arbitrary OSC messages to QLC+. This is a low-level tool - prefer specific tools (qlc_set_dmx_channel, etc.) when available. This tool is disabled if QLC_ALLOW_RAW_OSC=false.",
+      "Send arbitrary OSC messages to QLC+. This is a low-level tool - prefer mapped widgets through qlc_button_press when available. This tool is disabled if QLC_ALLOW_RAW_OSC=false.",
     schema: SendOscInputSchema,
     cb: async (input: any) => {
       logger.debug("Tool: qlc_send_osc", input);

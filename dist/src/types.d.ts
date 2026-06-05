@@ -82,66 +82,12 @@ export declare const WidgetConfigSchema: z.ZodObject<{
     generatedAt: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
 }, z.core.$strip>;
 export type WidgetConfig = z.infer<typeof WidgetConfigSchema>;
-export declare const PredefinedColorsSchema: z.ZodEnum<{
-    red: "red";
-    green: "green";
-    blue: "blue";
-    amber: "amber";
-    white: "white";
-    purple: "purple";
-    cyan: "cyan";
-    magenta: "magenta";
-    yellow: "yellow";
-}>;
-export type PredefinedColor = z.infer<typeof PredefinedColorsSchema>;
-export declare const ColorMappingSchema: z.ZodRecord<z.ZodEnum<{
-    red: "red";
-    green: "green";
-    blue: "blue";
-    amber: "amber";
-    white: "white";
-    purple: "purple";
-    cyan: "cyan";
-    magenta: "magenta";
-    yellow: "yellow";
-}>, z.ZodObject<{
-    r: z.ZodNumber;
-    g: z.ZodNumber;
-    b: z.ZodNumber;
-}, z.core.$strip>>;
-export type ColorMapping = z.infer<typeof ColorMappingSchema>;
-export declare const SetDmxChannelInputSchema: z.ZodObject<{
-    universe: z.ZodNumber;
-    channel: z.ZodNumber;
-    value: z.ZodUnion<readonly [z.ZodNumber, z.ZodNumber]>;
-}, z.core.$strip>;
-export type SetDmxChannelInput = z.infer<typeof SetDmxChannelInputSchema>;
-export declare const SetDmxRgbInputSchema: z.ZodObject<{
-    universe: z.ZodNumber;
-    redChannel: z.ZodNumber;
-    greenChannel: z.ZodNumber;
-    blueChannel: z.ZodNumber;
-    r: z.ZodNumber;
-    g: z.ZodNumber;
-    b: z.ZodNumber;
-}, z.core.$strip>;
-export type SetDmxRgbInput = z.infer<typeof SetDmxRgbInputSchema>;
-export declare const SliderSetInputSchema: z.ZodObject<{
-    widgetName: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
-    oscPath: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
-    value: z.ZodNumber;
-}, z.core.$strip>;
-export type SliderSetInput = z.infer<typeof SliderSetInputSchema>;
 export declare const SendOscInputSchema: z.ZodObject<{
     path: z.ZodString;
     args: z.ZodArray<z.ZodUnion<readonly [z.ZodNumber, z.ZodString, z.ZodBoolean]>>;
     dryRun: z.ZodPreprocess<z.ZodOptional<z.ZodBoolean>>;
 }, z.core.$strip>;
 export type SendOscInput = z.infer<typeof SendOscInputSchema>;
-export declare const LaunchSceneInputSchema: z.ZodObject<{
-    sceneName: z.ZodString;
-}, z.core.$strip>;
-export type LaunchSceneInput = z.infer<typeof LaunchSceneInputSchema>;
 export declare const ButtonPressInputSchema: z.ZodObject<{
     widgetName: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
     oscPath: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
@@ -156,28 +102,4 @@ export declare const SetMasterInputSchema: z.ZodObject<{
     value: z.ZodNumber;
 }, z.core.$strip>;
 export type SetMasterInput = z.infer<typeof SetMasterInputSchema>;
-export declare const SetColorWashInputSchema: z.ZodObject<{
-    color: z.ZodEnum<{
-        red: "red";
-        green: "green";
-        blue: "blue";
-        amber: "amber";
-        white: "white";
-        purple: "purple";
-        cyan: "cyan";
-        magenta: "magenta";
-        yellow: "yellow";
-    }>;
-    universe: z.ZodPreprocess<z.ZodOptional<z.ZodNumber>>;
-    redChannel: z.ZodPreprocess<z.ZodOptional<z.ZodNumber>>;
-    greenChannel: z.ZodPreprocess<z.ZodOptional<z.ZodNumber>>;
-    blueChannel: z.ZodPreprocess<z.ZodOptional<z.ZodNumber>>;
-}, z.core.$strip>;
-export type SetColorWashInput = z.infer<typeof SetColorWashInputSchema>;
-export declare const SetSpeedInputSchema: z.ZodObject<{
-    widgetName: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
-    oscPath: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
-    bpm: z.ZodNumber;
-}, z.core.$strip>;
-export type SetSpeedInput = z.infer<typeof SetSpeedInputSchema>;
 //# sourceMappingURL=types.d.ts.map

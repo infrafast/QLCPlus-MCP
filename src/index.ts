@@ -10,18 +10,10 @@ import { startStdioServer } from "./transports/stdio.js";
 import { startHttpServer } from "./transports/http.js";
 
 // Tools
-import { createSetDmxChannelTool } from "./tools/qlc_set_dmx_channel.js";
-import { createSetDmxRgbTool } from "./tools/qlc_set_dmx_rgb.js";
 import { createSendOscTool } from "./tools/qlc_send_osc.js";
 import { createGetStateTool } from "./tools/qlc_get_state.js";
 import { createListWidgetsTool } from "./tools/qlc_list_widgets.js";
 import { createButtonPressTool } from "./tools/qlc_button_control.js";
-import {
-  createSliderSetTool,
-  createSpeedSetTool,
-} from "./tools/qlc_slider_speed.js";
-import { createLaunchSceneTool } from "./tools/qlc_cuelist_scene.js";
-import { createSetColorWashTool } from "./tools/qlc_special.js";
 import type { ToolDefinition } from "mcp-use/server";
 
 function loadRuntimeEnv(): string | undefined {
@@ -84,24 +76,8 @@ async function main() {
       createAgentPromptTool(),
       createGetStateTool(),
       createListWidgetsTool(),
-
-      // DMX/OSC tools
-      createSetDmxChannelTool(config),
-      createSetDmxRgbTool(config),
       createSendOscTool(config),
-
-      // Button controls
       createButtonPressTool(config),
-
-      // Sliders and speed
-      createSliderSetTool(config),
-      createSpeedSetTool(config),
-
-      // Scenes
-      createLaunchSceneTool(config),
-
-      // DMX helper functions
-      createSetColorWashTool(config),
     ];
 
     logger.info(`Registered ${tools.length} tools`);
