@@ -1,7 +1,6 @@
 import { type ToolDefinition } from "mcp-use/server";
 export declare const PROMPT_RESOURCE_URI = "agent://prompt/system";
 export declare const PROMPT_NAME = "agent_prompt";
-export declare const LEGACY_PROMPT_RESOURCE_URI = "qlcplus://prompt/system";
 export declare const LEGACY_PROMPT_NAME = "qlcplus_lighting_assistant";
 export declare const PROMPT_TOOL_NAME = "get_agent_prompt";
 export declare const PROMPT_FILE: string;
