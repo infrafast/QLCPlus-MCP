@@ -5,7 +5,6 @@ import { z } from "zod";
 
 export const PROMPT_RESOURCE_URI = "agent://prompt/system";
 export const PROMPT_NAME = "agent_prompt";
-export const LEGACY_PROMPT_NAME = "qlcplus_lighting_assistant";
 export const PROMPT_TOOL_NAME = "get_agent_prompt";
 export const PROMPT_FILE = process.env.MCP_PROMPT_FILE
   ? path.resolve(process.env.MCP_PROMPT_FILE)
@@ -66,7 +65,6 @@ function registerPromptResource(server: any, uri: string): void {
 
 export function registerAgentPrompt(server: any): void {
   registerPromptName(server, PROMPT_NAME);
-  registerPromptName(server, LEGACY_PROMPT_NAME);
   registerPromptResource(server, PROMPT_RESOURCE_URI);
 }
 
