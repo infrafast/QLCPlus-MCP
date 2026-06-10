@@ -59,7 +59,7 @@ async function main() {
     logger.info(
       runtimeEnvFile
         ? `Runtime env file: ${runtimeEnvFile}`
-        : "Runtime env file: default dotenv lookup"
+        : "Runtime env file: default dotenv lookup",
     );
 
     // Initialize OSC
@@ -84,7 +84,7 @@ async function main() {
 
     // Start appropriate transport
     if (config.transport === "http") {
-      await startHttpServer(config, tools);
+      await startHttpServer(config, tools, runtimeEnvFile);
     } else {
       await startStdioServer(config, tools);
     }

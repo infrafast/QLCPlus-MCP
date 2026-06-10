@@ -58,6 +58,8 @@ Then check the environment file:
 sudo nano /etc/qlcplusmcp.env
 ```
 
+After the service is running, open `http://<raspberry-ip>:8788/mcp` to view runtime status, tools/resources, and update the QLC+ host/OSC ports from the browser. Changes are saved back to `/etc/qlcplusmcp.env` and the OSC client reconnects immediately.
+
 Start automatically at boot:
 
 ```bash

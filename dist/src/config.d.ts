@@ -33,5 +33,7 @@ export declare const ConfigSchema: z.ZodObject<{
     }>>;
 }, z.core.$strip>;
 export type Config = z.infer<typeof ConfigSchema>;
+export declare function updateRuntimeConfig(config: Config, values: Partial<Pick<Config, "qlcHost" | "qlcOscInputPort" | "qlcOscOutputPort" | "qlcUniverse" | "qlcDryRun">>): Config;
+export declare function persistRuntimeConfig(config: Config, envFile: string | undefined): void;
 export declare function loadConfig(): Config;
 //# sourceMappingURL=config.d.ts.map

@@ -54,6 +54,8 @@ npm run start:http
 
 **Terminal 3: Your client**
 
+Open `http://<qlcplus-mcp-host>:8788/mcp` in a browser to inspect tools/resources, copy the agent config, and adjust the QLC+ host/OSC ports. The admin form persists connection changes to the loaded runtime env file and reconnects OSC immediately.
+
 For LiveStageAssistant, configure the active MCP config to use:
 
 ```json

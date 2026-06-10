@@ -66,7 +66,7 @@ async function main() {
         logger.info(`Registered ${tools.length} tools`);
         // Start appropriate transport
         if (config.transport === "http") {
-            await startHttpServer(config, tools);
+            await startHttpServer(config, tools, runtimeEnvFile);
         }
         else {
             await startStdioServer(config, tools);

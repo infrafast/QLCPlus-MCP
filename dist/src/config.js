@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { z } from "zod";
 export const ConfigSchema = z.object({
     // Transport
@@ -25,11 +26,57 @@ export const ConfigSchema = z.object({
         .default("info"),
     nodeEnv: z.enum(["development", "production"]).default("development"),
 });
+export function updateRuntimeConfig(config, values) {
+    const next = ConfigSchema.parse({ ...config, ...values });
+    Object.assign(config, {
+        qlcHost: next.qlcHost,
+        qlcOscInputPort: next.qlcOscInputPort,
+        qlcOscOutputPort: next.qlcOscOutputPort,
+        qlcUniverse: next.qlcUniverse,
+        qlcDryRun: next.qlcDryRun,
+    });
+    return config;
+}
+function quoteEnvValue(value) {
+    if (/^[A-Za-z0-9_.:/-]+$/.test(value)) {
+        return value;
+    }
+    return JSON.stringify(value);
+}
+export function persistRuntimeConfig(config, envFile) {
+    if (!envFile) {
+        throw new Error("No runtime env file was loaded; cannot persist QLC+ config");
+    }
+    const updates = {
+        QLC_HOST: config.qlcHost,
+        QLC_OSC_INPUT_PORT: String(config.qlcOscInputPort),
+        QLC_OSC_OUTPUT_PORT: String(config.qlcOscOutputPort),
+        QLC_UNIVERSE: String(config.qlcUniverse),
+        QLC_DRY_RUN: String(config.qlcDryRun),
+    };
+    let text = fs.existsSync(envFile) ? fs.readFileSync(envFile, "utf8") : "";
+    for (const [key, value] of Object.entries(updates)) {
+        const line = `${key}=${quoteEnvValue(value)}`;
+        const pattern = new RegExp(`^${key}=.*$`, "m");
+        if (pattern.test(text)) {
+            text = text.replace(pattern, line);
+        }
+        else {
+            if (text && !text.endsWith("\n"))
+                text += "\n";
+            text += `${line}\n`;
+        }
+        process.env[key] = value;
+    }
+    fs.writeFileSync(envFile, text);
+}
 export function loadConfig() {
     const env = {
         transport: process.env.MCP_TRANSPORT,
         httpHost: process.env.HTTP_HOST,
-        httpPort: process.env.HTTP_PORT ? parseInt(process.env.HTTP_PORT, 10) : undefined,
+        httpPort: process.env.HTTP_PORT
+            ? parseInt(process.env.HTTP_PORT, 10)
+            : undefined,
         httpMcpPath: process.env.HTTP_MCP_PATH,
         authMode: process.env.MCP_AUTH_MODE,
         authToken: process.env.MCP_AUTH_TOKEN,

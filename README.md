@@ -167,6 +167,8 @@ Use logical names in tools: `qlc_button_press(widgetName="scene_intro")`
 
 The server exposes the repository `PROMPT.md` as MCP standard prompt `agent_prompt`, standard MCP resource `agent://prompt/system`, and standard fallback tool `get_agent_prompt`. MCP hosts such as LiveStageAssistant can fetch this prompt at startup and append it to the LLM instructions so lighting-specific safety rules, QLC+ widget guidance, and DMX/OSC constraints are available to the model.
 
+When running with `MCP_TRANSPORT=http`, opening `/mcp` in a browser shows the runtime admin page. It displays the current OSC state, tools, resources, and agent HTTP config, and includes a QLC+ connection form for `QLC_HOST`, `QLC_OSC_INPUT_PORT`, `QLC_OSC_OUTPUT_PORT`, `QLC_UNIVERSE`, and `QLC_DRY_RUN`. Saving the form reconnects the OSC client immediately and persists those values back to the loaded runtime env file, such as `config/.env`, `/config/.env`, or the file pointed to by `QLCPLUS_MCP_ENV_FILE`.
+
 Set `MCP_PROMPT_FILE=/absolute/path/to/PROMPT.md` to expose a custom prompt file. If omitted, the server reads `PROMPT.md` from the current working directory.
 
 ### QLC+ Setup
