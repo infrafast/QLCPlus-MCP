@@ -1,6 +1,6 @@
 import { readFile } from "fs/promises";
 import path from "path";
-import { text, type ToolDefinition } from "mcp-use/server";
+import { text, type ToolDefinition } from "./mcpCompat.js";
 import { z } from "zod";
 
 export const PROMPT_RESOURCE_URI = "agent://prompt/system";

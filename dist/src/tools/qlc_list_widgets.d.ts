@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type ToolDefinition } from "mcp-use/server";
+import { type ToolDefinition } from "../mcpCompat.js";
 export declare const ListWidgetsInputSchema: z.ZodObject<{
     type: z.ZodPreprocess<z.ZodOptional<z.ZodEnum<{
         unknown: "unknown";

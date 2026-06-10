@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { text, type ToolDefinition } from "mcp-use/server";
+import { text, type ToolDefinition } from "../mcpCompat.js";
 import { getLogger } from "../logger.js";
 import { getOscRuntimeState } from "../osc/oscClient.js";
 import { optionalInt } from "../types.js";

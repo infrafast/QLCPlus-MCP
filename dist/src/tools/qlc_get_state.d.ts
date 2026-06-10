@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type ToolDefinition } from "mcp-use/server";
+import { type ToolDefinition } from "../mcpCompat.js";
 export declare const GetStateInputSchema: z.ZodObject<{
     freshnessSeconds: z.ZodPreprocess<z.ZodOptional<z.ZodNumber>>;
 }, z.core.$strip>;

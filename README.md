@@ -1,6 +1,6 @@
 # QLCPlus-MCP
 
-A TypeScript MCP (Model Context Protocol) server for controlling QLC+ lighting software through OSC (Open Sound Control). Enables AI agents to send lighting commands to QLC+ for dynamic scene control, DMX manipulation, and interactive lighting design.
+A lightweight TypeScript MCP (Model Context Protocol) server for controlling QLC+ lighting software through OSC (Open Sound Control). Enables AI agents to send lighting commands to QLC+ for dynamic scene control, DMX manipulation, and interactive lighting design.
 
 **QLCPlus-MCP is a sister project of [XMSeries-MCP](https://github.com/infrafast/XMSeries-MCP), designed specifically for QLC+ integration.**
 
@@ -16,6 +16,8 @@ QLCPlus-MCP provides a set of MCP tools that allow LLM agents to control:
 - **Special Functions** - Blackout and panic (emergency stop)
 
 All communication happens through **native QLC+ OSC support** — the MCP server sends OSC commands to QLC+, which remains the lighting engine.
+
+QLCPlus-MCP uses the official Model Context Protocol SDK directly for STDIO and streamable HTTP transports. The runtime server does not depend on `mcp-use`, keeping Raspberry Pi installations significantly lighter.
 
 ## Architecture
 
@@ -65,7 +67,7 @@ All communication happens through **native QLC+ OSC support** — the MCP server
 
 ### Prerequisites
 
-- **Node.js** ≥ 20.0.0
+- **Node.js** ≥ 20.20.0 (Node 22 LTS recommended on Raspberry Pi)
 - **QLC+ 4.x** - installed and running with OSC plugin enabled
 - **npm** or **yarn**
 
@@ -74,7 +76,7 @@ All communication happens through **native QLC+ OSC support** — the MCP server
 ```bash
 git clone https://github.com/infrafast/QLCPlus-MCP.git
 cd QLCPlus-MCP
-npm install
+npm ci
 npm run build
 ```
 
@@ -406,11 +408,6 @@ Compiles TypeScript to `dist/`.
 npm test
 ```
 
-Run with UI:
-
-```bash
-npm run test:ui
-```
 
 ### Linting
 
@@ -695,7 +692,6 @@ MIT
 - [QLC+ Documentation](https://docs.qlcplus.org/)
 - [OSC Specification](https://opensoundcontrol.org/)
 - [MCP Protocol](https://modelcontextprotocol.io/)
-- [mcp-use](https://github.com/mcp-use/mcp-use)
 - [XMSeries-MCP](https://github.com/infrafast/XMSeries-MCP)
 
 ## Support

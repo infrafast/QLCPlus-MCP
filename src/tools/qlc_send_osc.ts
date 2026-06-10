@@ -1,4 +1,4 @@
-import { error, text, type ToolDefinition } from "mcp-use/server";
+import { error, text, type ToolDefinition } from "../mcpCompat.js";
 import { sendOsc, validateOscPath } from "../osc/oscClient.js";
 import { getLogger } from "../logger.js";
 import { Config } from "../config.js";

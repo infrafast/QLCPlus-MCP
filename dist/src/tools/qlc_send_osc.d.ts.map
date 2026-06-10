@@ -1,1 +1,1 @@
-{"version":3,"file":"qlc_send_osc.d.ts","sourceRoot":"","sources":["../../../src/tools/qlc_send_osc.ts"],"names":[],"mappings":"AAAA,OAAO,EAAe,KAAK,cAAc,EAAE,MAAM,gBAAgB,CAAC;AAGlE,OAAO,EAAE,MAAM,EAAE,MAAM,cAAc,CAAC;AAGtC,wBAAgB,iBAAiB,CAAC,MAAM,EAAE,MAAM,GAAG,cAAc,CA0ChE"}
+{"version":3,"file":"qlc_send_osc.d.ts","sourceRoot":"","sources":["../../../src/tools/qlc_send_osc.ts"],"names":[],"mappings":"AAAA,OAAO,EAAe,KAAK,cAAc,EAAE,MAAM,iBAAiB,CAAC;AAGnE,OAAO,EAAE,MAAM,EAAE,MAAM,cAAc,CAAC;AAGtC,wBAAgB,iBAAiB,CAAC,MAAM,EAAE,MAAM,GAAG,cAAc,CA0ChE"}

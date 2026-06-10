@@ -34,7 +34,7 @@ Install and build:
 ```bash
 git clone https://github.com/infrafast/QLCPlus-MCP.git
 cd QLCPlus-MCP
-npm install
+npm ci
 npm run build
 ```
 

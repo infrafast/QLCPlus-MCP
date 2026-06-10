@@ -14,7 +14,7 @@ import { createSendOscTool } from "./tools/qlc_send_osc.js";
 import { createGetStateTool } from "./tools/qlc_get_state.js";
 import { createListWidgetsTool } from "./tools/qlc_list_widgets.js";
 import { createButtonPressTool } from "./tools/qlc_button_control.js";
-import type { ToolDefinition } from "mcp-use/server";
+import type { ToolDefinition } from "./mcpCompat.js";
 
 function loadRuntimeEnv(): string | undefined {
   const candidates = [

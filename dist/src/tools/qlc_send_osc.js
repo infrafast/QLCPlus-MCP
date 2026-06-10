@@ -1,4 +1,4 @@
-import { error, text } from "mcp-use/server";
+import { error, text } from "../mcpCompat.js";
 import { sendOsc, validateOscPath } from "../osc/oscClient.js";
 import { getLogger } from "../logger.js";
 import { SendOscInputSchema } from "../types.js";

@@ -214,14 +214,12 @@ npm run start:http
 - `npm run start:stdio` - STDIO transport
 - `npm run start:http` - HTTP transport
 - `npm run test` - Run tests
-- `npm run test:ui` - Interactive test UI
 - `npm run lint` - ESLint
 - `npm run format` - Prettier
 - `npm run generate:widgets` - Widget generation CLI
 
 #### Dependencies
-- **mcp-use**: MCP framework
-- **@modelcontextprotocol/sdk**: Official MCP SDK
+- **@modelcontextprotocol/sdk**: Official MCP SDK used directly for STDIO and streamable HTTP transports
 - **zod**: Runtime validation
 - **dotenv**: Environment variables
 - **pino**: Logging
@@ -373,7 +371,7 @@ MCP_TRANSPORT=http npm run start:http
 FROM node:20-alpine
 WORKDIR /app
 COPY . .
-RUN npm install && npm run build
+RUN npm ci && npm run build
 CMD ["npm", "run", "start:http"]
 ```
 
@@ -389,7 +387,7 @@ CMD ["npm", "run", "start:http"]
 
 ## Next Steps for Users
 
-1. **Install**: `npm install && npm run build`
+1. **Install**: `npm ci && npm run build`
 2. **Configure**: `cp .env.example .env && edit .env`
 3. **Test**: `npm run start:stdio` with dry-run mode
 4. **Integrate**: Connect to Claude/LiveStageAssistant

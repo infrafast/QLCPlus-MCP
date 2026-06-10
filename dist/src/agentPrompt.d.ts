@@ -1,4 +1,4 @@
-import { type ToolDefinition } from "mcp-use/server";
+import { type ToolDefinition } from "./mcpCompat.js";
 export declare const PROMPT_RESOURCE_URI = "agent://prompt/system";
 export declare const PROMPT_NAME = "agent_prompt";
 export declare const PROMPT_TOOL_NAME = "get_agent_prompt";

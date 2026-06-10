@@ -1,1 +1,1 @@
-{"version":3,"file":"qlc_button_control.d.ts","sourceRoot":"","sources":["../../../src/tools/qlc_button_control.ts"],"names":[],"mappings":"AAAA,OAAO,EAAe,KAAK,cAAc,EAAE,MAAM,gBAAgB,CAAC;AAIlE,OAAO,EAAE,MAAM,EAAE,MAAM,cAAc,CAAC;AAGtC,wBAAgB,qBAAqB,CAAC,MAAM,EAAE,MAAM,GAAG,cAAc,CAwCpE"}
+{"version":3,"file":"qlc_button_control.d.ts","sourceRoot":"","sources":["../../../src/tools/qlc_button_control.ts"],"names":[],"mappings":"AAAA,OAAO,EAAe,KAAK,cAAc,EAAE,MAAM,iBAAiB,CAAC;AAInE,OAAO,EAAE,MAAM,EAAE,MAAM,cAAc,CAAC;AAGtC,wBAAgB,qBAAqB,CAAC,MAAM,EAAE,MAAM,GAAG,cAAc,CAwCpE"}

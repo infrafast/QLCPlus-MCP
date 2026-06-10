@@ -1,4 +1,4 @@
-import { error, text } from "mcp-use/server";
+import { error, text } from "../mcpCompat.js";
 import { sendOsc } from "../osc/oscClient.js";
 import { resolveWidgetOrPath, findClosestMatches } from "../qlc/widgetResolver.js";
 import { getLogger } from "../logger.js";

@@ -33,11 +33,15 @@ and has already been built:
 
 ```bash
 cd /home/pi/QLCPlus-MCP
-npm ci
+npm ci --no-audit --no-fund
 npm run build
 ```
 
 Node.js must be >= 20.20.0. Node 22 LTS is recommended when installing both QLCPlus-MCP and XMSeries-MCP on the same Raspberry Pi.
+
+The runtime no longer depends on `mcp-use`; installation is intentionally kept close to XMSeries-MCP and uses the official MCP SDK directly.
+
+If `dist/src/index.js` is already present from a previous build or deployment package, a runtime-only Raspberry Pi install can use `npm ci --omit=dev --omit=optional --no-audit --no-fund` to avoid installing TypeScript/test tooling. Use the full `npm ci --no-audit --no-fund` form when you need to rebuild on the Pi.
 
 ## Install
 

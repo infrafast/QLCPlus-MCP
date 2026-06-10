@@ -4,7 +4,7 @@ Get QLCPlus-MCP up and running in 5 minutes.
 
 ## Prerequisites
 
-- Node.js 20+
+- Node.js >= 20.20.0, Node 22 LTS recommended
 - QLC+ 4.x with OSC plugin enabled
 - npm
 
@@ -14,7 +14,7 @@ Get QLCPlus-MCP up and running in 5 minutes.
 # Clone and install
 git clone https://github.com/infrafast/QLCPlus-MCP.git
 cd QLCPlus-MCP
-npm install
+npm ci
 npm run build
 
 # Setup environment
