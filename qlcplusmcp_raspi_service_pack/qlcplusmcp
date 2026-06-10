@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SERVICE="qlcplusmcp.service"
+HEALTH_URL="http://127.0.0.1:8788/health"
+MCP_URL="http://127.0.0.1:8788/mcp"
+
+cmd="${1:-}"
+
+case "$cmd" in
+  start)
+    sudo systemctl start "$SERVICE"
+    ;;
+
+  stop)
+    sudo systemctl stop "$SERVICE"
+    ;;
+
+  restart)
+    sudo systemctl restart "$SERVICE"
+    ;;
+
+  status)
+    systemctl status "$SERVICE" --no-pager
+    ;;
+
+  logs)
+    journalctl -u "$SERVICE" -f
+    ;;
+
+  auto)
+    sudo systemctl enable "$SERVICE"
+    sudo systemctl start "$SERVICE"
+    echo "QLCPlus-MCP auto-start enabled and service started."
+    ;;
+
+  noauto)
+    sudo systemctl disable "$SERVICE"
+    echo "QLCPlus-MCP auto-start disabled."
+    ;;
+
+  last-state)
+    echo "Enabled: $(systemctl is-enabled "$SERVICE" 2>/dev/null || true)"
+    echo "Active : $(systemctl is-active "$SERVICE" 2>/dev/null || true)"
+    ;;
+
+  health)
+    if curl -fsS "$HEALTH_URL"; then
+      echo
+    else
+      echo "Health endpoint did not respond at $HEALTH_URL"
+      echo "Trying MCP endpoint headers:"
+      curl -I "$MCP_URL" || true
+    fi
+    ;;
+
+  test-remote)
+    IP="$(tailscale ip -4 2>/dev/null | head -n 1)"
+    if [ -z "$IP" ]; then
+      echo "No Tailscale IPv4 found."
+      exit 1
+    fi
+    echo "Local MCP:  $MCP_URL"
+    echo "Remote MCP: http://$IP:8788/mcp"
+    echo "Testing remote TCP connection..."
+    curl -I "http://$IP:8788/mcp" || true
+    ;;
+
+  config)
+    sudo nano /etc/qlcplusmcp.env
+    ;;
+
+  *)
+    echo "Usage: qlcplusmcp {start|stop|restart|status|logs|auto|noauto|last-state|health|test-remote|config}"
+    exit 1
+    ;;
+esac
