@@ -33,11 +33,11 @@ and has already been built:
 
 ```bash
 cd /home/pi/QLCPlus-MCP
-npm install
+npm ci
 npm run build
 ```
 
-Node.js must be >= 20.19.0.
+Node.js must be >= 20.20.0. Node 22 LTS is recommended when installing both QLCPlus-MCP and XMSeries-MCP on the same Raspberry Pi.
 
 ## Install
 
