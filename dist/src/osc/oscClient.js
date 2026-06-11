@@ -1,3 +1,4 @@
+import { createSocket } from "node:dgram";
 import OSC from "osc-js";
 import { getLogger } from "../logger.js";
 let oscInstance = null;
@@ -168,12 +169,29 @@ export async function sendOsc(message, options, config) {
         };
     }
     try {
-        const osc = getOsc();
         const MessageClass = OSC.Message;
         const oscMsg = new MessageClass(message.path, ...message.args);
-        await osc.send(oscMsg, {
-            host: targetHost,
-            port: targetPort,
+        const packet = Buffer.from(oscMsg.pack());
+        if (typeof targetPort !== "number") {
+            throw new Error("OSC target port is unknown");
+        }
+        if (!targetHost || targetHost === "unknown") {
+            throw new Error("OSC target host is unknown");
+        }
+        await new Promise((resolve, reject) => {
+            const socket = createSocket("udp4");
+            socket.once("error", (error) => {
+                socket.close();
+                reject(error);
+            });
+            socket.send(packet, targetPort, targetHost, (error) => {
+                socket.close();
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                resolve();
+            });
         });
         runtimeState.sendCount += 1;
         runtimeState.lastSentAt = nowIso();
