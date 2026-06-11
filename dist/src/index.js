@@ -16,6 +16,7 @@ import { createButtonPressTool } from "./tools/qlc_button_control.js";
 function loadRuntimeEnv() {
     const candidates = [
         process.env.QLCPLUS_MCP_ENV_FILE,
+        "/etc/qlcplusmcp.env",
         "/config/.env",
         "config/.env",
         ".env",

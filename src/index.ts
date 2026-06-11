@@ -19,6 +19,7 @@ import type { ToolDefinition } from "./mcpCompat.js";
 function loadRuntimeEnv(): string | undefined {
   const candidates = [
     process.env.QLCPLUS_MCP_ENV_FILE,
+    "/etc/qlcplusmcp.env",
     "/config/.env",
     "config/.env",
     ".env",

@@ -60,6 +60,8 @@ sudo nano /etc/qlcplusmcp.env
 
 After the service is running, open `http://<raspberry-ip>:8788/mcp` to view runtime status, tools/resources, and update the QLC+ host/OSC ports from the browser. Changes are saved back to `/etc/qlcplusmcp.env` and the OSC client reconnects immediately.
 
+The installer makes `/etc/qlcplusmcp.env` writable by the `pi` service user. QLCPlus-MCP also checks `/etc/qlcplusmcp.env` as a Raspberry Pi runtime config location, so the web configuration page persists changes to the same file loaded by systemd.
+
 Start automatically at boot:
 
 ```bash

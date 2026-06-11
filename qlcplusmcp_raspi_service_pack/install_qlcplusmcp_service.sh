@@ -2,6 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SERVICE_USER="pi"
 
 require_node_stack() {
   if ! command -v node >/dev/null 2>&1; then
@@ -33,6 +34,7 @@ sudo cp "$SCRIPT_DIR/qlcplusmcp.env" /etc/qlcplusmcp.env
 sudo cp "$SCRIPT_DIR/qlcplusmcp.service" /etc/systemd/system/qlcplusmcp.service
 sudo cp "$SCRIPT_DIR/qlcplusmcp" /usr/local/bin/qlcplusmcp
 
+sudo chown "$SERVICE_USER:$SERVICE_USER" /etc/qlcplusmcp.env
 sudo chmod 644 /etc/qlcplusmcp.env
 sudo chmod 644 /etc/systemd/system/qlcplusmcp.service
 sudo chmod +x /usr/local/bin/qlcplusmcp
