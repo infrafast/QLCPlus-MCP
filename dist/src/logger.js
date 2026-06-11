@@ -34,8 +34,12 @@ function formatLogLine(raw) {
                             : entry.level === 60
                                 ? "fatal"
                                 : String(entry.level ?? "log");
+        const metadata = Object.fromEntries(Object.entries(entry).filter(([key]) => !["level", "time", "pid", "hostname", "msg", "err"].includes(key)));
+        const details = Object.keys(metadata).length
+            ? ` ${JSON.stringify(metadata)}`
+            : "";
         const suffix = entry.err?.message ? ` (${entry.err.message})` : "";
-        return `${time} ${level.toUpperCase()} ${entry.msg ?? raw}${suffix}`;
+        return `${time} ${level.toUpperCase()} ${entry.msg ?? raw}${details}${suffix}`;
     }
     catch {
         return raw;

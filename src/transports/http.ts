@@ -118,6 +118,8 @@ function runtimeConfig(config: Config, envFile: string | undefined): unknown {
     qlcDryRun: config.qlcDryRun,
     qlcWidgetsFile: config.qlcWidgetsFile,
     qlcAllowRawOsc: config.qlcAllowRawOsc,
+    logLevel: config.logLevel,
+    nodeEnv: config.nodeEnv,
     envFile: envFile || null,
   };
 }
@@ -420,6 +422,7 @@ export async function startHttpServer(
         if (!sessionId && isInitializeRequest(parsedBody)) {
           transport = new StreamableHTTPServerTransport({
             sessionIdGenerator: () => randomUUID(),
+            enableJsonResponse: true,
             onsessioninitialized: (sid) => {
               transports[sid] = transport!;
             },

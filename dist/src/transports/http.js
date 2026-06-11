@@ -90,6 +90,8 @@ function runtimeConfig(config, envFile) {
         qlcDryRun: config.qlcDryRun,
         qlcWidgetsFile: config.qlcWidgetsFile,
         qlcAllowRawOsc: config.qlcAllowRawOsc,
+        logLevel: config.logLevel,
+        nodeEnv: config.nodeEnv,
         envFile: envFile || null,
     };
 }
@@ -331,6 +333,7 @@ export async function startHttpServer(config, tools, runtimeEnvFile) {
                 if (!sessionId && isInitializeRequest(parsedBody)) {
                     transport = new StreamableHTTPServerTransport({
                         sessionIdGenerator: () => randomUUID(),
+                        enableJsonResponse: true,
                         onsessioninitialized: (sid) => {
                             transports[sid] = transport;
                         },
