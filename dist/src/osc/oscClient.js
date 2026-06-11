@@ -1,7 +1,6 @@
 import { createSocket } from "node:dgram";
 import OSC from "osc-js";
 import { getLogger } from "../logger.js";
-let oscInstance = null;
 let feedbackOscInstance = null;
 const RECENT_FEEDBACK_LIMIT = 25;
 const runtimeState = {
@@ -105,21 +104,9 @@ export async function initOsc(config) {
     runtimeState.dryRun = config.qlcDryRun;
     runtimeState.commandSendHost = config.qlcHost;
     runtimeState.commandSendPort = config.qlcOscInputPort;
-    const plugin = new OSC.DatagramPlugin();
-    oscInstance = new OSC({ plugin });
-    await oscInstance.open({
-        host: config.qlcHost,
-        port: config.qlcOscInputPort,
-    });
     runtimeState.initialized = true;
     await initFeedbackListener(config);
     logger.info(`OSC initialized - Command target: ${config.qlcHost}:${config.qlcOscInputPort}, Feedback listener: ${runtimeState.feedbackListenHost}:${config.qlcOscOutputPort}`);
-}
-export function getOsc() {
-    if (!oscInstance) {
-        throw new Error("OSC not initialized. Call initOsc() first.");
-    }
-    return oscInstance;
 }
 export async function closeOsc() {
     if (feedbackOscInstance) {
@@ -127,10 +114,6 @@ export async function closeOsc() {
         feedbackOscInstance = null;
     }
     runtimeState.feedbackListening = false;
-    if (oscInstance) {
-        await oscInstance.close();
-        oscInstance = null;
-    }
     runtimeState.initialized = false;
 }
 export function getOscRuntimeState(freshnessSeconds = 10) {

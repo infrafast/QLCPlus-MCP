@@ -1,11 +1,5 @@
 import { Config } from "../config.js";
 import { OscMessage, OscSendOptions } from "../types.js";
-type OscInstance = {
-    open(options?: object): Promise<any> | any;
-    close(): Promise<any> | any;
-    send(packet: any, options?: object): Promise<any> | any;
-    on?(eventName: string, cb: (...args: any[]) => void): void;
-};
 export interface OscSendResult {
     success: boolean;
     message: string;
@@ -47,7 +41,6 @@ export interface OscRuntimeState {
     feedbackFreshnessSeconds: number;
 }
 export declare function initOsc(config: Config): Promise<void>;
-export declare function getOsc(): OscInstance;
 export declare function closeOsc(): Promise<void>;
 export declare function getOscRuntimeState(freshnessSeconds?: number): OscRuntimeState;
 export declare function sendOsc(message: OscMessage, options?: OscSendOptions, config?: Config): Promise<OscSendResult>;
@@ -58,5 +51,4 @@ export declare function validateDmxPath(universe: number, channel: number): {
     path: string;
 };
 export declare function normalizeDmxValue(value: number): number;
-export {};
 //# sourceMappingURL=oscClient.d.ts.map

@@ -7,11 +7,9 @@ import { OscMessage, OscSendOptions } from "../types.js";
 type OscInstance = {
   open(options?: object): Promise<any> | any;
   close(): Promise<any> | any;
-  send(packet: any, options?: object): Promise<any> | any;
   on?(eventName: string, cb: (...args: any[]) => void): void;
 };
 
-let oscInstance: OscInstance | null = null;
 let feedbackOscInstance: OscInstance | null = null;
 
 const RECENT_FEEDBACK_LIMIT = 25;
@@ -176,14 +174,6 @@ export async function initOsc(config: Config): Promise<void> {
   runtimeState.commandSendHost = config.qlcHost;
   runtimeState.commandSendPort = config.qlcOscInputPort;
 
-  const plugin = new (OSC as any).DatagramPlugin();
-  oscInstance = new (OSC as any)({ plugin });
-
-  await oscInstance!.open({
-    host: config.qlcHost,
-    port: config.qlcOscInputPort,
-  });
-
   runtimeState.initialized = true;
   await initFeedbackListener(config);
 
@@ -192,24 +182,12 @@ export async function initOsc(config: Config): Promise<void> {
   );
 }
 
-export function getOsc() {
-  if (!oscInstance) {
-    throw new Error("OSC not initialized. Call initOsc() first.");
-  }
-  return oscInstance;
-}
-
 export async function closeOsc(): Promise<void> {
   if (feedbackOscInstance) {
     await feedbackOscInstance.close();
     feedbackOscInstance = null;
   }
   runtimeState.feedbackListening = false;
-
-  if (oscInstance) {
-    await oscInstance.close();
-    oscInstance = null;
-  }
   runtimeState.initialized = false;
 }
 
