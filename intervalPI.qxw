@@ -10,11 +10,13 @@
   <InputOutputMap>
    <BeatGenerator BeatType="Disabled" BPM="0"/>
    <Universe Name="Universe 1" ID="0">
-    <Input Plugin="OSC" UID="192.168.100.10" Line="1"/>
+    <Input Plugin="OSC" UID="127.0.0.1" Line="1"/>
     <Output Plugin="DMX USB" UID="FT232R USB UART (S/N: A50285BI)" Line="0">
      <PluginParameters UniverseChannels="300"/>
     </Output>
-    <Feedback Plugin="OSC" UID="192.168.100.10" Line="1"/>
+    <Feedback Plugin="OSC" UID="127.0.0.1" Line="1">
+     <PluginParameters feedbackIP="192.168.100.1" outputIP="192.168.100.1"/>
+    </Feedback>
    </Universe>
    <Universe Name="Universe 2" ID="1">
     <Input Plugin="ArtNet" UID="None" Line="7"/>
@@ -101,6 +103,34 @@
    <Address>264</Address>
    <Channels>36</Channels>
   </Fixture>
+  <FixtureGroup ID="0">
+   <Name>MultiFX Bar 1</Name>
+   <Size X="4" Y="1"/>
+   <Head X="0" Y="0" Fixture="9">0</Head>
+   <Head X="1" Y="0" Fixture="9">1</Head>
+   <Head X="2" Y="0" Fixture="9">2</Head>
+   <Head X="3" Y="0" Fixture="9">3</Head>
+   <Head X="0" Y="1" Fixture="9">4</Head>
+   <Head X="1" Y="1" Fixture="9">5</Head>
+   <Head X="2" Y="1" Fixture="9">6</Head>
+   <Head X="3" Y="1" Fixture="9">7</Head>
+   <Head X="0" Y="2" Fixture="9">8</Head>
+   <Head X="1" Y="2" Fixture="9">9</Head>
+  </FixtureGroup>
+  <FixtureGroup ID="1">
+   <Name>MultiFX Bar 2</Name>
+   <Size X="4" Y="1"/>
+   <Head X="0" Y="0" Fixture="10">3</Head>
+   <Head X="1" Y="0" Fixture="10">2</Head>
+   <Head X="2" Y="0" Fixture="10">1</Head>
+   <Head X="3" Y="0" Fixture="10">0</Head>
+   <Head X="0" Y="1" Fixture="10">4</Head>
+   <Head X="1" Y="1" Fixture="10">5</Head>
+   <Head X="2" Y="1" Fixture="10">6</Head>
+   <Head X="3" Y="1" Fixture="10">7</Head>
+   <Head X="0" Y="2" Fixture="10">8</Head>
+   <Head X="1" Y="2" Fixture="10">9</Head>
+  </FixtureGroup>
   <FixtureGroup ID="2">
    <Name>Ledbar Left Horizontal Matrix</Name>
    <Size X="8" Y="1"/>
@@ -156,6 +186,14 @@
    <Head X="0" Y="5" Fixture="3">5</Head>
    <Head X="0" Y="6" Fixture="3">6</Head>
    <Head X="0" Y="7" Fixture="3">7</Head>
+   <Head X="0" Y="8" Fixture="2">0</Head>
+   <Head X="0" Y="9" Fixture="2">1</Head>
+   <Head X="0" Y="10" Fixture="2">2</Head>
+   <Head X="0" Y="11" Fixture="2">3</Head>
+   <Head X="0" Y="12" Fixture="2">4</Head>
+   <Head X="0" Y="13" Fixture="2">5</Head>
+   <Head X="0" Y="14" Fixture="2">6</Head>
+   <Head X="0" Y="15" Fixture="2">7</Head>
   </FixtureGroup>
   <FixtureGroup ID="6">
    <Name>Ledbar Right Vertical matrix</Name>
@@ -168,6 +206,14 @@
    <Head X="0" Y="5" Fixture="2">5</Head>
    <Head X="0" Y="6" Fixture="2">6</Head>
    <Head X="0" Y="7" Fixture="2">7</Head>
+   <Head X="0" Y="8" Fixture="3">0</Head>
+   <Head X="0" Y="9" Fixture="3">1</Head>
+   <Head X="0" Y="10" Fixture="3">2</Head>
+   <Head X="0" Y="11" Fixture="3">3</Head>
+   <Head X="0" Y="12" Fixture="3">4</Head>
+   <Head X="0" Y="13" Fixture="3">5</Head>
+   <Head X="0" Y="14" Fixture="3">6</Head>
+   <Head X="0" Y="15" Fixture="3">7</Head>
   </FixtureGroup>
   <FixtureGroup ID="7">
    <Name>ledBar TOPR horizontal matrix</Name>
@@ -254,10 +300,10 @@
    <Head X="1" Y="0" Fixture="9">1</Head>
    <Head X="2" Y="0" Fixture="9">2</Head>
    <Head X="3" Y="0" Fixture="9">3</Head>
-   <Head X="4" Y="0" Fixture="10">0</Head>
-   <Head X="5" Y="0" Fixture="10">1</Head>
-   <Head X="6" Y="0" Fixture="10">2</Head>
-   <Head X="7" Y="0" Fixture="10">3</Head>
+   <Head X="4" Y="0" Fixture="10">3</Head>
+   <Head X="5" Y="0" Fixture="10">2</Head>
+   <Head X="6" Y="0" Fixture="10">1</Head>
+   <Head X="7" Y="0" Fixture="10">0</Head>
    <Head X="0" Y="1" Fixture="9">8</Head>
    <Head X="1" Y="1" Fixture="9">9</Head>
   </FixtureGroup>
@@ -1976,10 +2022,25 @@
    <FixtureVal ID="1">0,64,2,61,4,100,5,255,6,0,7,255,8,255,9,255</FixtureVal>
    <FixtureVal ID="0">0,190,2,183,4,100,5,255,6,0,7,255,8,255,9,255</FixtureVal>
   </Function>
+  <Function ID="148" Type="Scene" Name="Ledbar Left Vertical matrix" Hidden="True">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="3">6,0,7,0,8,0,10,0,11,0,12,0,14,0,15,0,16,0,18,0,19,0,20,0,22,0,23,0,24,0,26,0,27,0,28,0,30,0,31,0,32,0,34,0,35,0,36,0</FixtureVal>
+  </Function>
   <Function ID="149" Type="Audio" Name="shape clic R.mp3" Path="_clic">
    <Speed FadeIn="0" FadeOut="0" Duration="278588"/>
    <RunOrder>SingleShot</RunOrder>
    <Source>SceneSoundTrack/clic/shape clic R.mp3</Source>
+  </Function>
+  <Function ID="150" Type="Sequence" Name="ledbar vumetre left Sequence" BoundScene="148">
+   <Speed FadeIn="0" FadeOut="0" Duration="80"/>
+   <Direction>Forward</Direction>
+   <RunOrder>Loop</RunOrder>
+   <SpeedModes FadeIn="Default" FadeOut="Default" Duration="PerStep"/>
+   <Step Number="0" FadeIn="0" Hold="80" FadeOut="0" Values="24">3:6,255,10,219,11,36,14,183,15,72,18,147,19,108,22,111,23,144,26,75,27,180,30,39,31,216,34,3,35,252</Step>
+  </Function>
+  <Function ID="151" Type="Scene" Name="Ledbar Left Vertical matrix" Hidden="True">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="3">6,0,7,0,8,0,10,0,11,0,12,0,14,0,15,0,16,0,18,0,19,0,20,0,22,0,23,0,24,0,26,0,27,0,28,0,30,0,31,0,32,0,34,0,35,0,36,0</FixtureVal>
   </Function>
   <Function ID="152" Type="Show" Name="shape">
    <TimeDivision Type="Time" BPM="120"/>
@@ -2148,6 +2209,39 @@
    <Track ID="6" Name="vocal do" isMute="0"/>
    <Track ID="7" Name="drum" isMute="0"/>
   </Function>
+  <Function ID="162" Type="Sequence" Name="ledbar vumetre left Sequence" BoundScene="151">
+   <Speed FadeIn="0" FadeOut="0" Duration="80"/>
+   <Direction>Forward</Direction>
+   <RunOrder>Loop</RunOrder>
+   <SpeedModes FadeIn="Default" FadeOut="Default" Duration="PerStep"/>
+   <Step Number="0" FadeIn="0" Hold="80" FadeOut="0" Values="24">3:6,255,10,219,11,36,14,183,15,72,18,147,19,108,22,111,23,144,26,75,27,180,30,39,31,216,34,3,35,252</Step>
+  </Function>
+  <Function ID="163" Type="RGBMatrix" Name="MultiFX PAR red-green spectrum LEFT">
+   <Speed FadeIn="0" FadeOut="0" Duration="43"/>
+   <Direction>Forward</Direction>
+   <RunOrder>Loop</RunOrder>
+   <Algorithm Type="Audio"/>
+   <Color Index="0">4278255360</Color>
+   <Color Index="1">4294901760</Color>
+   <Color Index="2">4278190080</Color>
+   <Color Index="3">4278190080</Color>
+   <Color Index="4">4278190080</Color>
+   <ControlMode>RGB</ControlMode>
+   <FixtureGroup>0</FixtureGroup>
+  </Function>
+  <Function ID="164" Type="RGBMatrix" Name="MultiFX PAR red-green spectrum RIGHT">
+   <Speed FadeIn="0" FadeOut="0" Duration="43"/>
+   <Direction>Forward</Direction>
+   <RunOrder>Loop</RunOrder>
+   <Algorithm Type="Audio"/>
+   <Color Index="0">4294901760</Color>
+   <Color Index="1">4278255360</Color>
+   <Color Index="2">4278190080</Color>
+   <Color Index="3">4278190080</Color>
+   <Color Index="4">4278190080</Color>
+   <ControlMode>RGB</ControlMode>
+   <FixtureGroup>1</FixtureGroup>
+  </Function>
   <Function ID="165" Type="Audio" Name="il suffira clic R.mp3" Path="_clic">
    <Speed FadeIn="0" FadeOut="0" Duration="252999"/>
    <RunOrder>SingleShot</RunOrder>
@@ -2182,6 +2276,21 @@
    <FixtureVal ID="9">0,0,1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,9,0,10,0,11,0,12,0,13,0,14,0,15,0,16,0,17,0,18,0,19,0,20,0,21,0,22,0,23,0,24,0,25,0,26,0,27,0,28,0,29,0,30,0,31,0,32,0,33,0,34,0,35,0</FixtureVal>
    <FixtureVal ID="0">5,0</FixtureVal>
    <FixtureVal ID="1">5,0</FixtureVal>
+  </Function>
+  <Function ID="170" Type="Audio" Name="qlcblack.mp3" Path="_voiceAI">
+   <Speed FadeIn="0" FadeOut="0" Duration="2379"/>
+   <RunOrder>SingleShot</RunOrder>
+   <Source>Samples/assistant/qlcblack.mp3</Source>
+  </Function>
+  <Function ID="171" Type="Audio" Name="qlcreset.mp3" Path="_voiceAI">
+   <Speed FadeIn="0" FadeOut="0" Duration="2856"/>
+   <RunOrder>SingleShot</RunOrder>
+   <Source>Samples/assistant/qlcreset.mp3</Source>
+  </Function>
+  <Function ID="172" Type="Audio" Name="quelvolume.mp3" Path="_voiceAI">
+   <Speed FadeIn="0" FadeOut="0" Duration="2203"/>
+   <RunOrder>SingleShot</RunOrder>
+   <Source>Samples/assistant/quelvolume.mp3</Source>
   </Function>
   <Function ID="173" Type="Audio" Name="the man clic R.mp3" Path="_clic">
    <Speed FadeIn="0" FadeOut="0" Duration="219632"/>
@@ -2295,6 +2404,21 @@
    <Track ID="5" Name="vocal" isMute="0"/>
    <Track ID="6" Name="drum" isMute="0"/>
   </Function>
+  <Function ID="179" Type="Audio" Name="qlcrouge.mp3" Path="_voiceAI">
+   <Speed FadeIn="0" FadeOut="0" Duration="2689"/>
+   <RunOrder>SingleShot</RunOrder>
+   <Source>Samples/assistant/qlcrouge.mp3</Source>
+  </Function>
+  <Function ID="180" Type="Audio" Name="qlcvert.mp3" Path="_voiceAI">
+   <Speed FadeIn="0" FadeOut="0" Duration="868"/>
+   <RunOrder>SingleShot</RunOrder>
+   <Source>Samples/assistant/qlcvert.mp3</Source>
+  </Function>
+  <Function ID="181" Type="Audio" Name="stop.mp3" Path="_voiceAI">
+   <Speed FadeIn="0" FadeOut="0" Duration="598"/>
+   <RunOrder>SingleShot</RunOrder>
+   <Source>Samples/assistant/stop.mp3</Source>
+  </Function>
   <Function ID="182" Type="Audio" Name="nothin clic R.mp3" Path="_clic">
    <Speed FadeIn="0" FadeOut="0" Duration="384331"/>
    <RunOrder>SingleShot</RunOrder>
@@ -2394,15 +2518,12 @@
    <Step Number="0" FadeIn="0" Hold="0" FadeOut="0">83</Step>
   </Function>
   <Function ID="192" Type="RGBMatrix" Name="ledbar vumetre left">
-   <Speed FadeIn="0" FadeOut="0" Duration="80"/>
+   <Speed FadeIn="0" FadeOut="0" Duration="51"/>
    <Direction>Forward</Direction>
    <RunOrder>Loop</RunOrder>
    <Algorithm Type="Audio"/>
    <Color Index="0">4294901760</Color>
    <Color Index="1">4278255360</Color>
-   <Color Index="2">4278190080</Color>
-   <Color Index="3">4278190080</Color>
-   <Color Index="4">4278190080</Color>
    <ControlMode>RGB</ControlMode>
    <FixtureGroup>5</FixtureGroup>
   </Function>
@@ -2902,10 +3023,11 @@
   </Function>
   <Function ID="227" Type="Collection" Name="FX ledbar vumetre">
    <Step Number="0">41</Step>
-   <Step Number="1">466</Step>
-   <Step Number="2">192</Step>
-   <Step Number="3">226</Step>
-   <Step Number="4">456</Step>
+   <Step Number="1">192</Step>
+   <Step Number="2">226</Step>
+   <Step Number="3">456</Step>
+   <Step Number="4">163</Step>
+   <Step Number="5">164</Step>
   </Function>
   <Function ID="228" Type="Chaser" Name="MATRIX vumetre">
    <Speed FadeIn="0" FadeOut="0" Duration="10000"/>
@@ -5279,10 +5401,10 @@
    <Property Name="windchill" Value="Yes"/>
   </Function>
   <Function ID="466" Type="RGBMatrix" Name="MultiFX PAR red-green spectrum">
-   <Speed FadeIn="0" FadeOut="0" Duration="63"/>
+   <Speed FadeIn="0" FadeOut="0" Duration="43"/>
    <Direction>Forward</Direction>
    <RunOrder>Loop</RunOrder>
-   <Algorithm Type="Script">Fill</Algorithm>
+   <Algorithm Type="Audio"/>
    <Color Index="0">4278255360</Color>
    <Color Index="1">4294901760</Color>
    <Color Index="2">4278190080</Color>
@@ -5290,6 +5412,7 @@
    <Color Index="4">4278190080</Color>
    <ControlMode>RGB</ControlMode>
    <FixtureGroup>11</FixtureGroup>
+   <Property Name="StarsAmount" Value="50"/>
   </Function>
   <Function ID="467" Type="RGBMatrix" Name="MultiFX PAR slow red-white">
    <Speed FadeIn="0" FadeOut="0" Duration="350"/>
@@ -6186,7 +6309,7 @@
      <Mixing>False</Mixing>
      <Collapsed>False</Collapsed>
      <Disabled>False</Disabled>
-     <Button Caption="lecteur stop" ID="7" Icon="">
+     <Button Caption="lecture pause" ID="7" Icon="">
       <WindowState Visible="True" X="150" Y="0" Width="50" Height="50"/>
       <Appearance>
        <FrameStyle>None</FrameStyle>
@@ -6198,7 +6321,7 @@
       <Function ID="135"/>
       <Action>Toggle</Action>
       <Intensity Adjust="False">100</Intensity>
-      <Input Universe="0" Channel="10295"/>
+      <Input Universe="0" Channel="15635"/>
      </Button>
      <Button Caption="lecture play" ID="8" Icon="">
       <WindowState Visible="True" X="100" Y="0" Width="50" Height="50"/>
@@ -6298,6 +6421,71 @@
       <Intensity Adjust="False">100</Intensity>
      </Button>
     </SoloFrame>
+    <Button Caption="Voice Black" ID="54" Icon="">
+     <WindowState Visible="True" X="280" Y="130" Width="145" Height="35"/>
+     <Appearance>
+      <FrameStyle>None</FrameStyle>
+      <ForegroundColor>Default</ForegroundColor>
+      <BackgroundColor>Default</BackgroundColor>
+      <BackgroundImage>None</BackgroundImage>
+      <Font>Default</Font>
+     </Appearance>
+     <Function ID="170"/>
+     <Action>Toggle</Action>
+     <Intensity Adjust="False">100</Intensity>
+    </Button>
+    <Button Caption="Voice Rouge" ID="55" Icon="">
+     <WindowState Visible="True" X="280" Y="200" Width="145" Height="35"/>
+     <Appearance>
+      <FrameStyle>None</FrameStyle>
+      <ForegroundColor>Default</ForegroundColor>
+      <BackgroundColor>Default</BackgroundColor>
+      <BackgroundImage>None</BackgroundImage>
+      <Font>Default</Font>
+     </Appearance>
+     <Function ID="179"/>
+     <Action>Toggle</Action>
+     <Intensity Adjust="False">100</Intensity>
+    </Button>
+    <Button Caption="Voice Volume" ID="56" Icon="">
+     <WindowState Visible="True" X="280" Y="235" Width="145" Height="35"/>
+     <Appearance>
+      <FrameStyle>None</FrameStyle>
+      <ForegroundColor>Default</ForegroundColor>
+      <BackgroundColor>Default</BackgroundColor>
+      <BackgroundImage>None</BackgroundImage>
+      <Font>Default</Font>
+     </Appearance>
+     <Function ID="172"/>
+     <Action>Toggle</Action>
+     <Intensity Adjust="False">100</Intensity>
+    </Button>
+    <Button Caption="Voice Reset" ID="57" Icon="">
+     <WindowState Visible="True" X="280" Y="165" Width="145" Height="35"/>
+     <Appearance>
+      <FrameStyle>None</FrameStyle>
+      <ForegroundColor>Default</ForegroundColor>
+      <BackgroundColor>Default</BackgroundColor>
+      <BackgroundImage>None</BackgroundImage>
+      <Font>Default</Font>
+     </Appearance>
+     <Function ID="171"/>
+     <Action>Toggle</Action>
+     <Intensity Adjust="False">100</Intensity>
+    </Button>
+    <Button Caption="Voice Stop" ID="58" Icon="">
+     <WindowState Visible="True" X="280" Y="270" Width="145" Height="35"/>
+     <Appearance>
+      <FrameStyle>None</FrameStyle>
+      <ForegroundColor>Default</ForegroundColor>
+      <BackgroundColor>Default</BackgroundColor>
+      <BackgroundImage>None</BackgroundImage>
+      <Font>Default</Font>
+     </Appearance>
+     <Function ID="181"/>
+     <Action>Toggle</Action>
+     <Intensity Adjust="False">100</Intensity>
+    </Button>
    </SoloFrame>
    <SoloFrame Caption="" ID="79">
     <Appearance>
@@ -7153,7 +7341,7 @@
      <Intensity Adjust="False">100</Intensity>
     </Button>
     <Button Caption="LOL1.mp3" ID="33" Icon="">
-     <WindowState Visible="True" X="5" Y="80" Width="70" Height="70"/>
+     <WindowState Visible="True" X="5" Y="75" Width="70" Height="70"/>
      <Appearance>
       <FrameStyle>None</FrameStyle>
       <ForegroundColor>Default</ForegroundColor>

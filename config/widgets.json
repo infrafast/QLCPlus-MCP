@@ -79,10 +79,10 @@
     },
     {
       "id": "7",
-      "name": "lecteur stop",
-      "path": "/lecteur_stop",
+      "name": "lecture pause",
+      "path": "/lecture_pause",
       "type": "button",
-      "description": "Button: lecteur stop (Input Universe 0, Channel 10295)"
+      "description": "Button: lecture pause (Input Universe 0, Channel 15635)"
     },
     {
       "id": "8",
@@ -212,5 +212,5 @@
     }
   ],
   "generated": true,
-  "generatedAt": "2026-06-04T14:33:05.595Z"
+  "generatedAt": "2026-06-21T14:42:39.566Z"
 }
