@@ -173,6 +173,9 @@ In QLC+, edit the widget, put its external input in **Auto Detect**, then send t
 
 ```bash
 oscsend localhost 7700 /lecture_pause i 1
+or
+oscsend 192.168.2.4 7700 /lecture_pause i 1
+
 ```
 
 The OSC command name should match the widget label, with spaces replaced by underscores: `lecture pause` becomes `/lecture_pause`. Keep the same label/path convention when generating or editing `config/widgets.json`, so the MCP can expose that Virtual Console control through `qlc_button_press`.
