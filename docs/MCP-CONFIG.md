@@ -405,7 +405,10 @@ QLC_OSC_OUTPUT_PORT=9001
 1. **Add Button:**
    - Right-click Virtual Console → **Add Button**
    - Name: "scene_intro"
-   - Optional: use Auto Detect so QLC+ learns the desired widget OSC path, for example `/scene_intro`
+   - On Raspberry Pi, install OSC command-line tools if needed: `sudo apt install liblo-tools`
+   - In the widget external input settings, choose **Auto Detect**
+   - Send the OSC address QLC+ should learn, for example: `oscsend localhost 7700 /scene_intro i 1`
+   - The OSC command name is the widget label with spaces replaced by underscores. A widget labelled `lecture pause` should learn `/lecture_pause` with `oscsend localhost 7700 /lecture_pause i 1`
 
 2. **Add Slider:**
    - Right-click Virtual Console → **Add Slider**

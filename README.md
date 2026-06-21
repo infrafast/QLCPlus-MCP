@@ -163,6 +163,20 @@ Widget mappings define logical names for QLC+ controls. Create `config/widgets.j
 
 Use logical names in tools: `qlc_button_press(widgetName="scene_intro")`
 
+To add a new QLC+ Virtual Console widget under MCP control on Raspberry Pi, install OSC command-line tools first:
+
+```bash
+sudo apt install liblo-tools
+```
+
+In QLC+, edit the widget, put its external input in **Auto Detect**, then send the OSC address and value you want QLC+ to learn. For a widget labelled `lecture pause`, send:
+
+```bash
+oscsend localhost 7700 /lecture_pause i 1
+```
+
+The OSC command name should match the widget label, with spaces replaced by underscores: `lecture pause` becomes `/lecture_pause`. Keep the same label/path convention when generating or editing `config/widgets.json`, so the MCP can expose that Virtual Console control through `qlc_button_press`.
+
 ### Agent Prompt
 
 The server exposes the repository `PROMPT.md` as MCP standard prompt `agent_prompt`, standard MCP resource `agent://prompt/system`, and standard fallback tool `get_agent_prompt`. MCP hosts such as LiveStageAssistant can fetch this prompt at startup and append it to the LLM instructions so lighting-specific safety rules, QLC+ widget guidance, and DMX/OSC constraints are available to the model.

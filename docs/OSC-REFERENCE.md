@@ -160,14 +160,20 @@ Or use direct paths with different universe numbers in tool arguments.
 
 ### Using oscdump
 
-Install osc-tools:
+Install OSC command-line tools:
 
 ```bash
 # macOS
 brew install osc-tools
 
-# Linux
-apt-get install osc-tools
+# Raspberry Pi / Debian / Ubuntu
+sudo apt install liblo-tools
+```
+
+To teach QLC+ a Virtual Console widget path, put the widget external input in **Auto Detect** and send the desired OSC address and value to the QLC+ input port. The OSC command name should match the widget label, replacing spaces with underscores. For a widget labelled `lecture pause`:
+
+```bash
+oscsend localhost 7700 /lecture_pause i 1
 ```
 
 Monitor incoming OSC:

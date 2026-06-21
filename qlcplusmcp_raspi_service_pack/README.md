@@ -110,6 +110,20 @@ If QLC+ runs on the Raspberry, keep:
 QLC_HOST=127.0.0.1
 ```
 
+To add QLC+ Virtual Console widgets under MCP control, install OSC command-line tools on the Raspberry Pi:
+
+```bash
+sudo apt install liblo-tools
+```
+
+Then edit the QLC+ widget, set its external input to **Auto Detect**, and send the OSC command you want the widget to learn. The OSC command name is the widget label with spaces replaced by underscores. For a widget labelled `lecture pause`:
+
+```bash
+oscsend localhost 7700 /lecture_pause i 1
+```
+
+After QLC+ has learned the widget path, regenerate or update `config/widgets.json` so QLCPlus-MCP can expose it through `qlc_button_press`.
+
 If QLC+ runs on another machine in the rack, use its LAN IP, for example:
 
 ```env
