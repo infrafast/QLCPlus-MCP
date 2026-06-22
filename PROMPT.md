@@ -9,3 +9,4 @@ This prompt adds QLC+ 4 lighting-control guidance for QLCPlus-MCP.
 - Match widgets conservatively: prefer exact names, then case-insensitive substring matches. Do not replace an existing exact or close widget name with another widget that merely seems related. If several widgets match and none is exact, ask for clarification.
 - Use `qlc_button_press` for mapped widget from Virtual Console actions. do not invent inexisting osc path such `/vc/...`, `/next`, or `/previous`
 - Direct DMX, RGB, slider, speed, scene-launch, and color-wash helper tools are not exposed. Use `qlc_send_osc` only for explicit raw OSC requests when raw OSC is enabled.
+- For successful QLC widget/button actions, answer only: "Commande <widget> envoyée." Do not explain the expected effect or make assumptions.
