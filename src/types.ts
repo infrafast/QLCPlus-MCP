@@ -79,18 +79,21 @@ export const SendOscInputSchema = z.object({
   path: z.string().describe("OSC path"),
   args: z.array(OscValueSchema).describe("OSC arguments"),
   dryRun: optionalBoolean().describe("Dry run mode"),
+  speaker: optionalString().describe("Optional recognized speaker name supplied by the voice agent; ignored by QLCPlus-MCP."),
 });
 export type SendOscInput = z.infer<typeof SendOscInputSchema>;
 
 export const ButtonPressInputSchema = z.object({
   widgetName: optionalString().describe("Logical widget name"),
   oscPath: optionalString().describe("Direct OSC path"),
+  speaker: optionalString().describe("Optional recognized speaker name supplied by the voice agent; ignored by QLCPlus-MCP."),
 });
 export type ButtonPressInput = z.infer<typeof ButtonPressInputSchema>;
 
 export const CueListInputSchema = z.object({
   widgetName: optionalString().describe("Logical widget name"),
   oscPath: optionalString().describe("Direct OSC path"),
+  speaker: optionalString().describe("Optional recognized speaker name supplied by the voice agent; ignored by QLCPlus-MCP."),
 });
 export type CueListInput = z.infer<typeof CueListInputSchema>;
 

@@ -19,6 +19,8 @@ All communication happens through **native QLC+ OSC support** — the MCP server
 
 QLCPlus-MCP uses the official Model Context Protocol SDK directly for STDIO and streamable HTTP transports. The runtime server does not depend on `mcp-use`, keeping Raspberry Pi installations significantly lighter.
 
+For compatibility with voice agents that recognize speakers, QLCPlus-MCP accepts an optional `speaker` field on direct OSC/button/cue-list tools. The field is ignored by this server: lighting intent still comes from explicit widget, cue, scene, or OSC command names.
+
 ## Architecture
 
 ```

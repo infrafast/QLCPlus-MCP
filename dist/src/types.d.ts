@@ -86,16 +86,19 @@ export declare const SendOscInputSchema: z.ZodObject<{
     path: z.ZodString;
     args: z.ZodArray<z.ZodUnion<readonly [z.ZodNumber, z.ZodString, z.ZodBoolean]>>;
     dryRun: z.ZodPreprocess<z.ZodOptional<z.ZodBoolean>>;
+    speaker: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
 }, z.core.$strip>;
 export type SendOscInput = z.infer<typeof SendOscInputSchema>;
 export declare const ButtonPressInputSchema: z.ZodObject<{
     widgetName: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
     oscPath: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
+    speaker: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
 }, z.core.$strip>;
 export type ButtonPressInput = z.infer<typeof ButtonPressInputSchema>;
 export declare const CueListInputSchema: z.ZodObject<{
     widgetName: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
     oscPath: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
+    speaker: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
 }, z.core.$strip>;
 export type CueListInput = z.infer<typeof CueListInputSchema>;
 export declare const SetMasterInputSchema: z.ZodObject<{
