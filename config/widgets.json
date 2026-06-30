@@ -121,8 +121,8 @@
     },
     {
       "id": "16",
-      "name": "lecture aleatoire",
-      "path": "/lecture_aleatoire",
+      "name": "lecture aléatoire",
+      "path": "/lecture_aléatoire",
       "type": "button",
       "description": "Button: lecture aleatoire (Input Universe 0, Channel 28269)"
     },
