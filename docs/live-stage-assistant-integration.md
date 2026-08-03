@@ -324,11 +324,11 @@ You have access to QLCPlus-MCP tools for controlling stage lighting.
 
 1. **Never Invent Names**
    - Always check available widget names before using them
-   - Ask if unsure about exact scene names
+   - Ask if unsure about exact widget/action names
 
 2. **Prefer Mapped Widgets**
    - Use `qlc_list_widgets` to discover available controls
-   - Use `qlc_button_press` for mapped scenes, buttons, cue-list controls, blackout, panic, master, and other Virtual Console actions
+   - Use `qlc_button_press` for mapped scene-launch buttons, buttons, cue-list controls, blackout, panic, master, and other Virtual Console actions
    - Avoid `qlc_send_osc` unless the user explicitly asks for raw OSC and it is enabled
 
 3. **Emergency Functions**
@@ -336,17 +336,9 @@ You have access to QLCPlus-MCP tools for controlling stage lighting.
 
 4. **Widget Reference**
 
-   **Scenes:**
-   - intro_scene: Intro lighting
-   - verse_scene: Verse lighting
-   - chorus_scene: Chorus lighting
-   - bridge_scene: Bridge lighting
-   - outro_scene: Outro lighting
-
-   **Controls:**
-   - master_dimmer: Master brightness (0-1)
-   - strobe_speed: Strobe speed in BPM
-   - cues: Main cue list
+   The available lighting actions are the widgets loaded from `config/widgets.json`.
+   Scene names, dimmer presets, wash colors, cue controls, blackout, and panic must be mapped as QLC+ Virtual Console widgets.
+   Ask for the complete widget list when needed.
 
 5. **DMX Control**
    - Direct DMX helper tools are not exposed
@@ -369,7 +361,7 @@ You have access to QLCPlus-MCP tools for controlling stage lighting.
 
 ## Usage Examples
 
-### Example 1: Scene Launch During Performance
+### Example 1: Mapped Scene Button During Performance
 
 ```
 User: "The singer is coming on stage now. Launch the verse lighting."
@@ -380,10 +372,10 @@ LiveStageAssistant resolves:
 QLCPlus-MCP sends OSC:
 → /scene_verse [1]
 
-QLC+ fades to verse lighting in 3 seconds.
+QLC+ performs whatever action is configured on the mapped `verse_scene` Virtual Console widget.
 ```
 
-### Example 2: Dynamic Dimming
+### Example 2: Mapped Dimmer Preset
 
 ```
 User: "Lower the brightness to 75% for the acoustic section"
@@ -394,10 +386,10 @@ LiveStageAssistant resolves:
 QLCPlus-MCP sends OSC:
 → /master_75 [1]
 
-QLC+ master dimmer smoothly transitions to 75%.
+QLC+ performs whatever action is configured on the mapped `master_75` Virtual Console widget.
 ```
 
-### Example 3: Color Change
+### Example 3: Mapped Color Look
 
 ```
 User: "Switch the wash lights to amber for the warm section"
@@ -408,7 +400,7 @@ LiveStageAssistant resolves:
 QLCPlus-MCP sends OSC:
 → /wash_amber [1]
 
-QLC+ fades RGB channels to amber color.
+QLC+ performs whatever action is configured on the mapped `wash_amber` Virtual Console widget.
 ```
 
 ### Example 4: Cue List Navigation
@@ -422,7 +414,7 @@ LiveStageAssistant resolves:
 QLCPlus-MCP sends OSC:
 → /main_cuelist_next [1]
 
-QLC+ advances to next cue in the sequence.
+QLC+ performs whatever action is configured on the mapped `cues_next` Virtual Console widget.
 ```
 
 ## Security Best Practices
@@ -538,9 +530,9 @@ QLC_DRY_RUN=true npm run start:http  # Test without actual OSC sends
 
 ## Performance Tips
 
-1. **Pre-load Scenes** - Define all scenes in QLC+ before performance
-2. **Batch Operations** - Group related DMX changes
-3. **Dry-Run Testing** - Test all sequences before live performance
+1. **Pre-map show actions** - Define scene, dimmer, color, cue, blackout, and panic actions as QLC+ Virtual Console widgets before performance
+2. **Generate mappings** - Keep `config/widgets.json` in sync with the QLC+ project
+3. **Dry-Run Testing** - Test OSC sends before live performance
 4. **Monitor Latency** - OSC typically < 5ms on local network
 5. **Resource Limits** - QLC+ can handle hundreds of rapid commands
 

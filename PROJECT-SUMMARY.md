@@ -2,7 +2,7 @@
 
 ## Overview
 
-QLCPlus-MCP is a complete, production-ready TypeScript MCP (Model Context Protocol) server for controlling QLC+ lighting software through OSC. It enables AI agents like Claude to dynamically control stage lighting during live performances.
+QLCPlus-MCP is a lightweight, production-ready TypeScript MCP (Model Context Protocol) server for controlling QLC+ lighting software through OSC. It enables AI agents to trigger mapped QLC+ Virtual Console actions during live performances.
 
 **Status:** ✅ Complete  
 **Version:** 1.0.0  
@@ -21,7 +21,7 @@ QLCPlus-MCP is a complete, production-ready TypeScript MCP (Model Context Protoc
 #### Type System (`src/types.ts`)
 - Complete Zod schemas for all MCP tool inputs
 - OSC message types and validation
-- DMX channel types and normalization
+- Internal DMX path/value utility types
 - Widget mapping and configuration types
 - 15+ type definitions with runtime validation
 
@@ -35,8 +35,7 @@ QLCPlus-MCP is a complete, production-ready TypeScript MCP (Model Context Protoc
 
 **Key Features:**
 - Native UDP OSC client using osc-js library
-- DMX path generation (universe/channel to OSC path conversion)
-- DMX value normalization (0-255 ↔ 0-1)
+- Internal DMX path generation and value normalization utilities for raw OSC support
 - OSC message validation
 - Dry-run mode for testing without actual sends
 - Batch operation support
@@ -46,8 +45,8 @@ QLCPlus-MCP is a complete, production-ready TypeScript MCP (Model Context Protoc
 - `initOsc()` - Initialize OSC connection
 - `sendOsc()` - Send individual OSC messages
 - `sendOscBatch()` - Send multiple messages efficiently
-- `validateDmxPath()` - Validate DMX addressing
-- `normalizeDmxValue()` - Convert between value ranges
+- `validateDmxPath()` - Validate and format DMX OSC paths internally
+- `normalizeDmxValue()` - Convert DMX value ranges internally
 - `validateOscPath()` - Validate OSC path format
 
 ### 3. Widget Management System
@@ -105,7 +104,7 @@ QLCPlus-MCP is a complete, production-ready TypeScript MCP (Model Context Protoc
    - For advanced use cases
 
 5. **`qlc_button_press`**
-   - Trigger mapped scenes, buttons, cue-list controls, blackout, panic, master, and other Virtual Console actions
+   - Trigger mapped buttons, scene-launch buttons, cue-list controls, blackout, panic, master, and other Virtual Console actions
    - Widget name or direct path support
 
 ### 5. Transport Modes
@@ -147,7 +146,7 @@ npm run start:http
 
 ### 6. Documentation (5 Files)
 
-1. **README.md** (16,000+ lines)
+1. **README.md**
    - Complete project documentation
    - Architecture overview
    - Installation and configuration
@@ -190,8 +189,8 @@ npm run start:http
 #### Test Suite (`tests/osc.test.ts`)
 - Vitest configuration
 - OSC utility tests
-- DMX path validation
-- Value normalization
+- Internal DMX path validation utilities
+- Internal value normalization utilities
 - Type validation
 
 #### Configuration Validation
@@ -274,8 +273,8 @@ QLCPlus-MCP/
 ✅ **Authentication** - Optional bearer token for HTTP  
 ✅ **Widget Mapping** - Logical names mapped to OSC paths  
 ✅ **QXW Parser** - Auto-generate mappings from QLC+ projects  
-✅ **14 MCP Tools** - Complete lighting control suite  
-✅ **DMX Support** - Full channel and RGB control  
+✅ **5 MCP Tools** - Prompt, state, widget discovery, raw OSC, and widget triggering\
+✅ **Virtual Console Control** - Model show actions as QLC+ widgets and trigger their mapped OSC paths\
 ✅ **Dry-Run Mode** - Test without sending OSC  
 ✅ **Error Handling** - Comprehensive validation and feedback  
 ✅ **Logging** - Configurable pino logger  
@@ -317,7 +316,6 @@ Multiple validation points ensure safety:
 1. **Config Validation** - Environment variables validated on startup
 2. **Tool Input Validation** - Zod schemas validate all MCP tool inputs
 3. **OSC Validation** - OSC paths and values validated before sending
-4. **DMX Validation** - Universe/channel bounds checked
 
 ## Usage Patterns
 

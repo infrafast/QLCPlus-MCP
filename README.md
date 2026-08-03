@@ -1,25 +1,25 @@
 # QLCPlus-MCP
 
-A lightweight TypeScript MCP (Model Context Protocol) server for controlling QLC+ lighting software through OSC (Open Sound Control). Enables AI agents to send lighting commands to QLC+ for dynamic scene control, DMX manipulation, and interactive lighting design.
+A lightweight TypeScript MCP (Model Context Protocol) server for controlling QLC+ lighting software through OSC (Open Sound Control). Enables AI agents to trigger mapped QLC+ Virtual Console actions, inspect OSC state, and optionally send explicit raw OSC messages.
 
 **QLCPlus-MCP is a sister project of [XMSeries-MCP](https://github.com/infrafast/XMSeries-MCP), designed specifically for QLC+ integration.**
 
 ## Overview
 
-QLCPlus-MCP provides a set of MCP tools that allow LLM agents to control:
+QLCPlus-MCP provides a small set of MCP tools that allow LLM agents to control:
 
-- **Virtual Console Widgets** - Buttons, sliders, speed dials, cue lists
-- **Scenes** - Launch predefined lighting scenes by logical name
-- **DMX Channels** - Direct control of individual DMX channels (0-255 or normalized 0-1)
-- **RGB Color Washes** - Apply predefined colors to RGB fixtures
-- **Master Dimmer** - Control grand master brightness
-- **Special Functions** - Blackout and panic (emergency stop)
+- **Virtual Console Widgets** - Trigger mapped QLC+ widgets by logical name or OSC path
+- **Widget Discovery** - List the widgets loaded from `config/widgets.json`
+- **Runtime State** - Inspect OSC connection state and recent QLC+ feedback
+- **Raw OSC** - Optionally send explicit OSC messages when `QLC_ALLOW_RAW_OSC=true`
+
+Scenes, cue controls, color looks, dimmers, blackout, panic, or other show actions are controlled by mapping the corresponding QLC+ Virtual Console widget in `config/widgets.json`, then triggering it with `qlc_button_press`. Direct DMX, RGB, scene-launch, color-wash, slider, and speed helper tools are not exposed.
 
 All communication happens through **native QLC+ OSC support** — the MCP server sends OSC commands to QLC+, which remains the lighting engine.
 
 QLCPlus-MCP uses the official Model Context Protocol SDK directly for STDIO and streamable HTTP transports. The runtime server does not depend on `mcp-use`, keeping Raspberry Pi installations significantly lighter.
 
-For compatibility with voice agents that recognize speakers, QLCPlus-MCP accepts an optional `speaker` field on direct OSC/button/cue-list tools. The field is ignored by this server: lighting intent still comes from explicit widget, cue, scene, or OSC command names.
+For compatibility with voice agents that recognize speakers, QLCPlus-MCP accepts an optional `speaker` field on direct OSC/button tools. The field is ignored by this server: lighting intent still comes from explicit widget or OSC command names.
 
 ## Architecture
 
@@ -48,7 +48,7 @@ For compatibility with voice agents that recognize speakers, QLCPlus-MCP accepts
 ├────────────────────────┤
 │ • Virtual Console       │
 │ • DMX Output           │
-│ • Scenes / Functions   │
+│ • Virtual Console      │
 └────────────────────────┘
 ```
 
@@ -58,7 +58,7 @@ For compatibility with voice agents that recognize speakers, QLCPlus-MCP accepts
 ✅ **HTTP Transport** - For remote MCP servers with bearer token auth  
 ✅ **OSC Client** - Native UDP OSC communication with QLC+  
 ✅ **Widget Mapping** - Logical names mapped to OSC paths  
-✅ **DMX Control** - Direct channel and RGB color control  
+✅ **Virtual Console Control** - Trigger mapped QLC+ widgets by name or OSC path\
 ✅ **QXW Parser** - Extract widgets from QLC+ project files  
 ✅ **Zod Validation** - Type-safe tool inputs  
 ✅ **Dry-Run Mode** - Log OSC commands without sending  
@@ -312,7 +312,7 @@ qlc_send_osc({
 
 #### `qlc_button_press`
 
-Trigger a mapped QLC+ widget by sending value `1` to its OSC path. Use this for mapped buttons, scenes, cue-list controls, blackout, panic, master actions, or any other Virtual Console action represented in `config/widgets.json`.
+Trigger a mapped QLC+ widget by sending value `1` to its OSC path. Use this for mapped buttons, scene-launch buttons, cue-list controls, blackout, panic, master actions, or any other Virtual Console action represented in `config/widgets.json`.
 
 ```typescript
 qlc_button_press({
@@ -392,21 +392,21 @@ Recommended instructions for Claude / LiveStageAssistant:
 ## QLC+ Control Rules
 
 1. **Never invent widget names**
-   - Always resolve scene names from the available widget mappings
-   - If unsure, ask user for exact scene name
+   - Always resolve requested lighting actions from the available widget mappings
+   - If unsure, ask user for the exact widget/action name
 
 2. **Prefer mapped widgets**
    - Use `qlc_list_widgets` to discover available controls
-   - Use `qlc_button_press` for mapped scenes, buttons, cue-list controls, blackout, panic, and other Virtual Console actions
+   - Use `qlc_button_press` for mapped scene-launch buttons, buttons, cue-list controls, blackout, panic, and other Virtual Console actions
    - Avoid `qlc_send_osc` unless the user explicitly asks for raw OSC and it is enabled
 
 3. **Use emergency tools carefully**
    - Use mapped widgets for blackout, panic, master, or any Virtual Console action
 
 4. **Widget mappings**
-   - Available scenes: intro, verse, chorus, bridge, outro
-   - Available sliders: master_dimmer, wash_intensity
-   - Ask for complete list if needed
+   - Available actions depend entirely on `config/widgets.json`
+   - Scene names, dimmer presets, wash colors, cue controls, blackout, and panic must be mapped as QLC+ Virtual Console widgets
+   - Ask for the complete widget list if needed
 
 5. **DMX control**
    - Direct DMX helper tools are not exposed
