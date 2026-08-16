@@ -1,7 +1,7 @@
 import net from "node:net";
 import { getLogger } from "../logger.js";
 import { NativeFrameDecoder, makeNativePacket, nativeBoolean, nativeByteArray, nativeInt, nativeSessionKey, nativeString, parseNativeSections, } from "./nativeCodec.js";
-import { parseNativeProjectInventory, } from "./nativeInventory.js";
+import { exactNativeCaptionKey, parseNativeProjectInventory, } from "./nativeInventory.js";
 export const NET_AUTHENTICATION = 0xff02;
 export const NET_AUTHENTICATION_REPLY = 0xff03;
 export const NET_PROJECT_TRANSFER = 0xff06;
@@ -97,17 +97,16 @@ export class QlcNativeClient {
         if (this.state.state !== "ready" || !socket || socket.destroyed) {
             throw new Error(`QLC+ native session is not ready (state: ${this.state.state})`);
         }
-        const normalized = caption
-            .normalize("NFKD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .toLowerCase()
-            .replace(/[\s_-]+/g, "");
-        const widget = this.inventory.buttons.get(normalized);
+        const exactCaption = exactNativeCaptionKey(caption);
+        const widget = this.inventory.widgets.find((candidate) => candidate.kind === "button" &&
+            exactNativeCaptionKey(candidate.caption) === exactCaption);
         if (!widget) {
-            if (this.inventory.sliders.has(normalized)) {
+            const wrongKind = this.inventory.widgets.some((candidate) => candidate.kind === "slider" &&
+                exactNativeCaptionKey(candidate.caption) === exactCaption);
+            if (wrongKind) {
                 throw new Error(`QLC+ widget '${caption}' is a slider, not a button`);
             }
-            throw new Error(`QLC+ button '${caption}' was not found in the current project`);
+            throw new Error(`Exact QLC+ button caption '${caption}' was not found in the current project. Call qlc_list_widgets and use one complete caption exactly; partial and fuzzy matches are not allowed.`);
         }
         await this.writePacket(socket, widget, true);
         if (widget.actionType === "flash") {

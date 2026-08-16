@@ -178,6 +178,8 @@ Tasks:
 - make `qlc_list_widgets` return the live native inventory;
 - make `qlc_button_press` resolve captions and send native Virtual Console
   button actions;
+- require one complete caption match (case-insensitive only); do not apply
+  substring, separator-insensitive, semantic, closest, or fuzzy substitution;
 - preserve QLC+ button semantics: press-only for Toggle, Blackout, StopAll,
   absent/default, and unknown future actions; press/release only for Flash;
 - let QLC+ Frame/SoloFrame behavior own layering and exclusivity;

@@ -138,12 +138,53 @@ describe("QLC+ native client lifecycle", () => {
     const internals = client as any;
     internals.socket = { destroyed: false };
     internals.state.state = "ready";
+    const slider = {
+      id: 1,
+      caption: "Master",
+      normalizedCaption: "master",
+      kind: "slider",
+      framePath: [],
+    };
     internals.inventory = {
       buttons: new Map(),
-      sliders: new Map([["master", { id: 1 }]]),
-      widgets: [],
+      sliders: new Map([["master", slider]]),
+      widgets: [slider],
     };
     await expect(client.pressButton("Master")).rejects.toThrow(/slider/);
+    internals.socket = null;
+  });
+
+  it("rejects partial and separator-insensitive button names", async () => {
+    const widget: NativeWidget = {
+      id: 7,
+      caption: "DISCOBRAIN",
+      normalizedCaption: "discobrain",
+      kind: "button",
+      actionType: "toggle",
+      framePath: [],
+    };
+    const client = new QlcNativeClient({
+      enabled: true,
+      host: "127.0.0.1",
+      port: 9998,
+      encryptionKey: "",
+      reconnectMs: 20,
+      connectTimeoutMs: 100,
+      maximumProjectSize: 1024,
+      clientName: "test",
+      dryRun: false,
+    });
+    clients.push(client);
+    const internals = client as any;
+    internals.socket = { destroyed: false };
+    internals.state.state = "ready";
+    internals.inventory = {
+      buttons: new Map([["discobrain", widget]]),
+      sliders: new Map(),
+      widgets: [widget],
+    };
+    await expect(client.pressButton("disco")).rejects.toThrow(/Exact/);
+    await expect(client.pressButton("disco brain")).rejects.toThrow(/Exact/);
     internals.socket = null;
   });
 

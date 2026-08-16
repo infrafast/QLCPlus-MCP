@@ -6,6 +6,9 @@ export function normalizeNativeCaption(value) {
         .toLowerCase()
         .replace(/[\s_-]+/g, "");
 }
+export function exactNativeCaptionKey(value) {
+    return value.trim().normalize("NFC").toLowerCase();
+}
 function localName(value) {
     return value.split(":").at(-1)?.toLowerCase() ?? value.toLowerCase();
 }

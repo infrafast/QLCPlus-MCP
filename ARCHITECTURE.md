@@ -128,6 +128,10 @@ not ready until authentication and complete project validation succeed. Socket
 closure/error events and TCP keepalive trigger bounded reconnects; QLC+
 `NetPoll`/`NetPollReply` are declared upstream but not implemented.
 
+Button execution uses strict full-caption lookup. Case is ignored, but spaces,
+accents, punctuation, and the complete caption must match the current inventory.
+Partial and fuzzy names are rejected before any native packet is sent.
+
 Enable the migration client with:
 
 ```text

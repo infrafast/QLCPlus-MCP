@@ -20,5 +20,6 @@ export interface NativeInventory {
     widgets: NativeWidget[];
 }
 export declare function normalizeNativeCaption(value: string): string;
+export declare function exactNativeCaptionKey(value: string): string;
 export declare function parseNativeProjectInventory(xml: Buffer, maximumSize?: number): Promise<NativeInventory>;
 //# sourceMappingURL=nativeInventory.d.ts.map
