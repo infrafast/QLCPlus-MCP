@@ -150,8 +150,9 @@ because undeclared secondary loopback addresses are rejected there. Keep remote 
 LAN because SimpleCrypt is protocol compatibility, not modern network security.
 
 This workaround does not suppress QLC+'s authorization dialog for a newly seen
-source address. Permanent unattended operation requires upstream support for a
-deliberate native-client auto-authorization option.
+source address. Permanent unattended operation requires the proposed upstream
+`--allow-all-native` option. That option must remain disabled by default and
+must emit an explicit security warning when enabled.
 
 ### OSC Protocol Notes
 
