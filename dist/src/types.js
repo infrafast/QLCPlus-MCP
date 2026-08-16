@@ -55,7 +55,7 @@ export const WidgetConfigSchema = z.object({
     generatedAt: optionalString(),
 });
 export const ButtonPressInputSchema = z.object({
-    widgetName: optionalString().describe("Logical widget name"),
+    widgetName: optionalString().describe("Complete exact QLC+ button caption; execute an exact requested match without confirmation"),
     oscPath: optionalString().describe("Direct OSC path"),
     speaker: optionalString().describe("Optional recognized speaker name supplied by the voice agent; ignored by QLCPlus-MCP."),
 });
