@@ -17,6 +17,7 @@ import {
   type NativeInventory,
   type NativeWidget,
 } from "./nativeInventory.js";
+import { resolveNativeHost } from "./nativeHost.js";
 
 export const NET_AUTHENTICATION = 0xff02;
 export const NET_AUTHENTICATION_REPLY = 0xff03;
@@ -225,8 +226,25 @@ export class QlcNativeClient {
     this.setConnectionState("connecting");
     this.decoder.reset();
     this.resetProjectTransfer();
+    let host: string;
+    try {
+      host = resolveNativeHost(this.options.host);
+      this.state.host = host;
+      if (this.options.host === "auto") {
+        logger.info(`QLC+ native auto-selected LAN address: ${host}`);
+      }
+    } catch (error) {
+      this.recordError(error);
+      this.setConnectionState("disconnected");
+      this.state.reconnectCount += 1;
+      this.reconnectTimer = setTimeout(() => {
+        this.reconnectTimer = null;
+        this.connect();
+      }, this.options.reconnectMs);
+      return;
+    }
     const socket = net.createConnection({
-      host: this.options.host,
+      host,
       port: this.options.port,
     });
     this.socket = socket;

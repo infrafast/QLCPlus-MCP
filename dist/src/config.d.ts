@@ -17,11 +17,7 @@ export declare const ConfigSchema: z.ZodObject<{
     qlcOscOutputPort: z.ZodDefault<z.ZodNumber>;
     qlcUniverse: z.ZodDefault<z.ZodNumber>;
     qlcNativeEnabled: z.ZodDefault<z.ZodBoolean>;
-    qlcNativeHost: z.ZodDefault<z.ZodEnum<{
-        "127.0.0.1": "127.0.0.1";
-        localhost: "localhost";
-        "::1": "::1";
-    }>>;
+    qlcNativeHost: z.ZodDefault<z.ZodString>;
     qlcNativePort: z.ZodDefault<z.ZodNumber>;
     qlcNativeEncryptionKey: z.ZodDefault<z.ZodString>;
     qlcNativeReconnectMs: z.ZodDefault<z.ZodNumber>;

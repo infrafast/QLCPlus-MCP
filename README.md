@@ -122,11 +122,13 @@ not send lighting actions yet:
 
 ```bash
 QLC_NATIVE_ENABLED=true
-QLC_NATIVE_HOST=127.0.0.1
+QLC_NATIVE_HOST=auto
 QLC_NATIVE_PORT=9998
 ```
 
-It requires a QLC+ build containing commit `984f0e7` or equivalent native
+`auto` selects the Raspberry Pi private LAN IPv4 address so QLC+ sees this TCP
+session as a different host from another client connected through loopback. It
+requires a QLC+ build containing commit `984f0e7` or equivalent native
 protocol behavior. QLC+ may ask the operator to authorize `QLCPlus-MCP`. The
 client then downloads the active project, reports its connection/inventory state
 through `qlc_get_state` and `/mcp/status`, and reconnects after QLC+ restarts.

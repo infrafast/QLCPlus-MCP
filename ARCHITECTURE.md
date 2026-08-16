@@ -117,8 +117,8 @@ Current OSC mode sends commands to QLC+ input port `QLC_OSC_INPUT_PORT` and list
 [src/qlc/nativeInventory.ts](src/qlc/nativeInventory.ts), and
 [src/qlc/nativeClient.ts](src/qlc/nativeClient.ts)
 
-The native client connects only to
-localhost TCP port `9998`, performs QLC+ native authentication, receives the
+The native client connects to TCP port `9998`, performs QLC+ native
+authentication, receives the
 current project through `NetProjectTransfer`, atomically builds an in-memory
 Virtual Console inventory, and sends validated `VCButtonSetPressed` actions.
 
@@ -136,14 +136,16 @@ Enable the migration client with:
 
 ```text
 QLC_NATIVE_ENABLED=true
-QLC_NATIVE_HOST=127.0.0.1
+QLC_NATIVE_HOST=auto
 QLC_NATIVE_PORT=9998
 ```
 
-The supported native build must contain QLC+ commit `984f0e7` or equivalent
-grouped action codes and protocol behavior. Native access is localhost-only in
-the first release because SimpleCrypt is protocol compatibility, not modern
-network security.
+`auto` selects a private IPv4 address from a physical Ethernet interface first,
+then Wi-Fi. This makes the kernel use that LAN address as the TCP source and
+avoids QLC+'s one-session-per-source-address collision with a loopback client.
+Tailscale/CGNAT and non-private addresses are deliberately excluded. An explicit
+host remains supported. Keep native access on a trusted LAN because SimpleCrypt
+is protocol compatibility, not modern network security.
 
 ### OSC Protocol Notes
 
