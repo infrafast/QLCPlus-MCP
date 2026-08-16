@@ -16,6 +16,18 @@ export declare const ConfigSchema: z.ZodObject<{
     qlcOscInputPort: z.ZodDefault<z.ZodNumber>;
     qlcOscOutputPort: z.ZodDefault<z.ZodNumber>;
     qlcUniverse: z.ZodDefault<z.ZodNumber>;
+    qlcNativeEnabled: z.ZodDefault<z.ZodBoolean>;
+    qlcNativeHost: z.ZodDefault<z.ZodEnum<{
+        "127.0.0.1": "127.0.0.1";
+        localhost: "localhost";
+        "::1": "::1";
+    }>>;
+    qlcNativePort: z.ZodDefault<z.ZodNumber>;
+    qlcNativeEncryptionKey: z.ZodDefault<z.ZodString>;
+    qlcNativeReconnectMs: z.ZodDefault<z.ZodNumber>;
+    qlcNativeConnectTimeoutMs: z.ZodDefault<z.ZodNumber>;
+    qlcNativeMaximumProjectSize: z.ZodDefault<z.ZodNumber>;
+    qlcNativeClientName: z.ZodDefault<z.ZodString>;
     qlcWidgetsFile: z.ZodDefault<z.ZodString>;
     qlcAllowRawOsc: z.ZodDefault<z.ZodBoolean>;
     qlcDryRun: z.ZodDefault<z.ZodBoolean>;

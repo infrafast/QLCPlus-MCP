@@ -20,6 +20,7 @@ import {
   toolSummaries,
 } from "../mcpServer.js";
 import type { ToolDefinition } from "../mcpCompat.js";
+import { getNativeRuntimeState } from "../qlc/nativeClient.js";
 
 function getConnectableHost(host: string): string {
   if (host === "0.0.0.0" || host === "::") {
@@ -118,6 +119,13 @@ function runtimeConfig(config: Config, envFile: string | undefined): unknown {
     qlcDryRun: config.qlcDryRun,
     qlcWidgetsFile: config.qlcWidgetsFile,
     qlcAllowRawOsc: config.qlcAllowRawOsc,
+    qlcNativeEnabled: config.qlcNativeEnabled,
+    qlcNativeHost: config.qlcNativeHost,
+    qlcNativePort: config.qlcNativePort,
+    qlcNativeReconnectMs: config.qlcNativeReconnectMs,
+    qlcNativeConnectTimeoutMs: config.qlcNativeConnectTimeoutMs,
+    qlcNativeMaximumProjectSize: config.qlcNativeMaximumProjectSize,
+    qlcNativeClientName: config.qlcNativeClientName,
     logLevel: config.logLevel,
     nodeEnv: config.nodeEnv,
     envFile: envFile || null,
@@ -137,6 +145,7 @@ function statusPayload(
     uptime: process.uptime(),
     runtimeConfig: runtimeConfig(config, envFile),
     osc: getOscRuntimeState(),
+    native: getNativeRuntimeState(),
     widgets: {
       count: listWidgets().length,
     },

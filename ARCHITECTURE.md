@@ -18,7 +18,12 @@ MCP client
 
 The runtime server uses the official MCP SDK directly for both STDIO and streamable HTTP transports. It does not depend on `mcp-use` at runtime.
 
-The project is migrating toward WebSocket runtime discovery. Until that migration is validated, OSC and `config/widgets.json` remain the production path.
+Until the native migration is validated, OSC and `config/widgets.json` remain the
+production path. The migration target was revised after validation work in OculizerQLC: QLCPlus-MCP
+is now moving directly to the QLC+ 5 native network protocol. WebSocket is no
+longer an implementation target. During milestone 1, OSC remains the production
+command path while the optional native client validates connection lifecycle and
+runtime inventory.
 
 ## Entry Point
 
@@ -109,6 +114,37 @@ Responsibilities:
 
 Current OSC mode sends commands to QLC+ input port `QLC_OSC_INPUT_PORT` and listens for feedback on `QLC_OSC_OUTPUT_PORT`.
 
+## QLC+ 5 Native Migration Client
+
+[src/qlc/nativeCodec.ts](src/qlc/nativeCodec.ts),
+[src/qlc/nativeInventory.ts](src/qlc/nativeInventory.ts), and
+[src/qlc/nativeClient.ts](src/qlc/nativeClient.ts)
+
+Milestone 1 provides an opt-in, observational native client. It connects only to
+localhost TCP port `9998`, performs QLC+ native authentication, receives the
+current project through `NetProjectTransfer`, and atomically builds an in-memory
+Virtual Console inventory. It does not yet send lighting actions; OSC remains the
+temporary command path until the critical native inventory/reconnect gate passes.
+
+The native client reports `connecting`, `waiting-for-authorization`,
+`downloading-project`, `ready`, `disconnected`, and `stopped`. A TCP connection is
+not ready until authentication and complete project validation succeed. Socket
+closure/error events and TCP keepalive trigger bounded reconnects; QLC+
+`NetPoll`/`NetPollReply` are declared upstream but not implemented.
+
+Enable the migration client with:
+
+```text
+QLC_NATIVE_ENABLED=true
+QLC_NATIVE_HOST=127.0.0.1
+QLC_NATIVE_PORT=9998
+```
+
+The supported native build must contain QLC+ commit `984f0e7` or equivalent
+grouped action codes and protocol behavior. Native access is localhost-only in
+the first release because SimpleCrypt is protocol compatibility, not modern
+network security.
+
 ### OSC Protocol Notes
 
 Transport: UDP.
@@ -169,7 +205,8 @@ Responsibilities:
 - list available widgets;
 - return closest matches for failed lookups.
 
-Current runtime behavior depends on this mapping. The WebSocket migration will replace it with runtime discovery when `QLC_CONTROL_TRANSPORT=websocket`.
+Current runtime behavior depends on this mapping. Native-only control will replace
+it with the inventory transferred by the active QLC+ project.
 
 ### Mapping File Shape
 
@@ -222,7 +259,8 @@ Responsibilities:
 - derive names from `Name` or `Caption`;
 - generate `config/widgets.json` starter mappings.
 
-This is an offline helper for OSC mode. It should become optional once WebSocket runtime discovery is validated.
+This is an offline helper for OSC mode. It becomes an optional diagnostic after
+native runtime discovery is validated.
 
 ## MCP Tools
 
@@ -427,7 +465,7 @@ qlcplusmcp config
 
 The HTTP admin page at `/mcp` can persist QLC+ connection changes back to `/etc/qlcplusmcp.env` when that file is the loaded runtime config.
 
-## WebSocket Migration Target
+## Native Protocol Migration Target
 
 The intended future architecture:
 
@@ -435,16 +473,18 @@ The intended future architecture:
 MCP client
   -> QLCPlus-MCP tools
   -> QLC transport abstraction
-  -> QLC+ WebSocket / runtime widget discovery
+  -> QLC+ 5 native TCP session / transferred project inventory
   -> QLC+ Virtual Console / lighting engine
 ```
 
 Discovery strategy:
 
-- Prefer `GET /vc.json` when available.
-- If QLC+ 4 does not expose `/vc.json`, fallback to `QLC+API|getWidgetsList` over `ws://host:port/qlcplusWS`.
-- Resolve widgets by normalized QLC+ caption.
-- Keep IDs in memory only.
+- authenticate with the QLC+ Native Server on localhost TCP `9998`;
+- reassemble and validate the bounded `NetProjectTransfer` workspace XML;
+- resolve widgets by normalized QLC+ caption;
+- keep IDs in memory only and invalidate them after every disconnect;
+- redownload the current project before returning to `ready` after reconnect;
+- provide no WebSocket fallback.
 
 The staged migration plan and validation gates are in [ROADMAP.md](ROADMAP.md).
 

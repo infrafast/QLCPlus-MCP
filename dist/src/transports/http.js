@@ -7,6 +7,7 @@ import { persistRuntimeConfig, updateRuntimeConfig, } from "../config.js";
 import { closeOsc, getOscRuntimeState, initOsc } from "../osc/oscClient.js";
 import { listWidgets } from "../qlc/widgetResolver.js";
 import { createQlcMcpServer, resourceSummaries, toolSummaries, } from "../mcpServer.js";
+import { getNativeRuntimeState } from "../qlc/nativeClient.js";
 function getConnectableHost(host) {
     if (host === "0.0.0.0" || host === "::") {
         return "127.0.0.1";
@@ -90,6 +91,13 @@ function runtimeConfig(config, envFile) {
         qlcDryRun: config.qlcDryRun,
         qlcWidgetsFile: config.qlcWidgetsFile,
         qlcAllowRawOsc: config.qlcAllowRawOsc,
+        qlcNativeEnabled: config.qlcNativeEnabled,
+        qlcNativeHost: config.qlcNativeHost,
+        qlcNativePort: config.qlcNativePort,
+        qlcNativeReconnectMs: config.qlcNativeReconnectMs,
+        qlcNativeConnectTimeoutMs: config.qlcNativeConnectTimeoutMs,
+        qlcNativeMaximumProjectSize: config.qlcNativeMaximumProjectSize,
+        qlcNativeClientName: config.qlcNativeClientName,
         logLevel: config.logLevel,
         nodeEnv: config.nodeEnv,
         envFile: envFile || null,
@@ -104,6 +112,7 @@ function statusPayload(config, tools, envFile) {
         uptime: process.uptime(),
         runtimeConfig: runtimeConfig(config, envFile),
         osc: getOscRuntimeState(),
+        native: getNativeRuntimeState(),
         widgets: {
             count: listWidgets().length,
         },

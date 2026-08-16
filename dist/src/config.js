@@ -15,6 +15,25 @@ export const ConfigSchema = z.object({
     qlcOscInputPort: z.number().int().min(1).max(65535).default(7700),
     qlcOscOutputPort: z.number().int().min(1).max(65535).default(9000),
     qlcUniverse: z.number().int().min(1).default(1),
+    // QLC+ 5 Native Server (localhost-only during migration)
+    qlcNativeEnabled: z.boolean().default(false),
+    qlcNativeHost: z.enum(["127.0.0.1", "localhost", "::1"]).default("127.0.0.1"),
+    qlcNativePort: z.number().int().min(1).max(65535).default(9998),
+    qlcNativeEncryptionKey: z.string().default(""),
+    qlcNativeReconnectMs: z.number().int().min(100).max(60_000).default(2_000),
+    qlcNativeConnectTimeoutMs: z
+        .number()
+        .int()
+        .min(100)
+        .max(60_000)
+        .default(10_000),
+    qlcNativeMaximumProjectSize: z
+        .number()
+        .int()
+        .min(1024)
+        .max(128 * 1024 * 1024)
+        .default(16 * 1024 * 1024),
+    qlcNativeClientName: z.string().min(1).max(100).default("QLCPlus-MCP"),
     // Widget Configuration
     qlcWidgetsFile: z.string().default("config/widgets.json"),
     qlcAllowRawOsc: z.boolean().default(false),
@@ -90,6 +109,22 @@ export function loadConfig() {
         qlcUniverse: process.env.QLC_UNIVERSE
             ? parseInt(process.env.QLC_UNIVERSE, 10)
             : undefined,
+        qlcNativeEnabled: process.env.QLC_NATIVE_ENABLED === "true",
+        qlcNativeHost: process.env.QLC_NATIVE_HOST,
+        qlcNativePort: process.env.QLC_NATIVE_PORT
+            ? parseInt(process.env.QLC_NATIVE_PORT, 10)
+            : undefined,
+        qlcNativeEncryptionKey: process.env.QLC_NATIVE_ENCRYPTION_KEY,
+        qlcNativeReconnectMs: process.env.QLC_NATIVE_RECONNECT_MS
+            ? parseInt(process.env.QLC_NATIVE_RECONNECT_MS, 10)
+            : undefined,
+        qlcNativeConnectTimeoutMs: process.env.QLC_NATIVE_CONNECT_TIMEOUT_MS
+            ? parseInt(process.env.QLC_NATIVE_CONNECT_TIMEOUT_MS, 10)
+            : undefined,
+        qlcNativeMaximumProjectSize: process.env.QLC_NATIVE_MAX_PROJECT_SIZE
+            ? parseInt(process.env.QLC_NATIVE_MAX_PROJECT_SIZE, 10)
+            : undefined,
+        qlcNativeClientName: process.env.QLC_NATIVE_CLIENT_NAME,
         qlcWidgetsFile: process.env.QLC_WIDGETS_FILE,
         qlcAllowRawOsc: process.env.QLC_ALLOW_RAW_OSC === "true",
         qlcDryRun: process.env.QLC_DRY_RUN === "true",

@@ -6,6 +6,7 @@ import { createAgentPromptTool } from "./agentPrompt.js";
 import { initLogger, getLogger } from "./logger.js";
 import { initOsc } from "./osc/oscClient.js";
 import { loadWidgetConfig } from "./qlc/widgetResolver.js";
+import { initNativeClient } from "./qlc/nativeClient.js";
 import { startStdioServer } from "./transports/stdio.js";
 import { startHttpServer } from "./transports/http.js";
 // Tools
@@ -55,6 +56,19 @@ async function main() {
         // Load widget configuration
         logger.info("Loading widget configuration...");
         await loadWidgetConfig(config.qlcWidgetsFile);
+        // Native migration client. It is observational during milestone 1: OSC
+        // remains the command path until native inventory/lifecycle validation.
+        initNativeClient({
+            enabled: config.qlcNativeEnabled,
+            host: config.qlcNativeHost,
+            port: config.qlcNativePort,
+            encryptionKey: config.qlcNativeEncryptionKey,
+            reconnectMs: config.qlcNativeReconnectMs,
+            connectTimeoutMs: config.qlcNativeConnectTimeoutMs,
+            maximumProjectSize: config.qlcNativeMaximumProjectSize,
+            clientName: config.qlcNativeClientName,
+            dryRun: config.qlcDryRun,
+        });
         // Create tools
         logger.info("Registering MCP tools...");
         const tools = [

@@ -1,237 +1,270 @@
-# QLC+ WebSocket Migration Roadmap
+# QLC+ 5 Native Protocol Migration Roadmap
+
+## Product Decision
+
+QLCPlus-MCP will become a QLC+ 5 native-network-protocol server. The supported
+production control path will use the QLC+ Native Server, not OSC and not the
+QLC+ WebSocket/Web API.
+
+This is an intentional breaking migration:
+
+- QLC+ 4 support is not a target for the native-only release;
+- runtime widget discovery comes from the project transferred by QLC+;
+- QLC+ numeric widget IDs remain session-only data;
+- MCP tool names remain stable while their implementation moves to native control;
+- OSC is retained only as a short-lived rollback path and is removed after the
+  native acceptance gate.
+
+## Evidence Reused From OculizerQLC
+
+This plan incorporates the implementation and live-test experience recorded in
+[`OculizerQLC/DEVELOPMENT.md`](https://github.com/infrafast/OculizerQLC/blob/main/DEVELOPMENT.md),
+the [native protocol reference](https://github.com/infrafast/OculizerQLC/blob/main/docs/QLC%2B%205%20native%20network%20protocol%20reference.md),
+and the [early native tests](https://github.com/infrafast/OculizerQLC/blob/main/docs/QLC5%20native%20network%20protocol%20early%20tests%20summary.md).
+
+The following behavior is already proven in OculizerQLC and should be ported,
+not rediscovered from scratch:
+
+- UDP discovery on port `9997` and TCP sessions on port `9998`;
+- QLC+ native authentication and SimpleCrypt compatibility;
+- bounded TCP framing for fragmented and coalesced packets;
+- complete, bounded `NetProjectTransfer` reassembly;
+- safe parsing of the transferred workspace XML;
+- runtime discovery of buttons, sliders, captions, types, actions, ranges,
+  function associations, and Frame/SoloFrame hierarchy;
+- grouped live action codes, notably `VCButtonSetPressed = 0xF200` and
+  `VCSliderSetValue = 0xF300`, for compatible QLC+ builds;
+- asynchronous authorization wait, connection loss detection, bounded retry,
+  fresh project download, atomic inventory replacement, and recovery without
+  restarting the application;
+- bounded/coalesced pending intentions while QLC+ is unavailable;
+- strict framing, decryption, allocation, and required-field checks combined
+  with forward-compatible handling of unknown opcodes and trailing sections.
+
+OculizerQLC validated these behaviors against a QLC+ build containing upstream
+commit [`984f0e7`](https://github.com/mcallegari/qlcplus/commit/984f0e75e48c7c19a56581b82c5e5895285135c7).
+The exact opcode and authentication contract remains a QLC+ version compatibility
+boundary and must be checked against the QLC+ build selected for QLCPlus-MCP.
 
 ## Rollback Anchor
 
-- Reference commit: `e54e0f1`
-- Baseline state: clean worktree when this roadmap was created
-- Current runtime architecture: OSC transport, `config/widgets.json`, `widgetResolver`, QXW parser
+- OSC rollback commit: `dc3fc87`
+- Baseline verification: `npm run build` and `npx vitest run` pass with 14 tests.
+- Do not mix native and OSC commands in one runtime session.
+- Do not extend the OSC implementation during migration except for a blocking
+  production defect.
 
-Rule: do not remove OSC or `widgets.json` until the WebSocket path has passed the validation milestones below. OSC remains the rollback transport throughout the migration.
+If a native milestone fails for a fundamental protocol reason, restore the whole
+rollback commit instead of keeping a partially mixed transport architecture.
 
-## Goal
+## Target Architecture
 
-Replace the current OSC-first control path with a QLC+ WebSocket-first control path that discovers Virtual Console widgets dynamically at runtime.
+```text
+MCP client
+  -> existing QLCPlus-MCP tools
+  -> QLC+ native client and session state machine
+  -> TCP 9998 authentication and project transfer
+  -> in-memory Virtual Console inventory
+  -> native button/slider/live actions
+  -> QLC+ 5 lighting engine
+```
 
-The target behavior is:
+The native session exposes an explicit state such as:
 
-- no manually maintained `widgets.json` for normal operation;
-- widget lookup by QLC+ caption, case-insensitive;
-- runtime rediscovery after QLC+ project reload or reconnect;
-- compatibility with QLC+ 4 and QLC+ 5;
-- OSC kept as legacy/fallback until WebSocket has been validated in real use.
+```text
+disabled
+  -> connecting
+  -> waiting-for-authorization
+  -> downloading-project
+  -> ready
+  -> disconnected
+  -> reconnecting
+```
 
-## Phase 0 - Baseline Preservation
+`qlc_get_state` must distinguish server-process health, TCP connectivity,
+authorization, inventory readiness, last successful native action, last error,
+and reconnect activity. A connected TCP socket alone is not reported as ready.
 
-Purpose: keep a known-good recovery point.
+## Milestone 0 — Freeze The OSC Baseline
 
-Tasks:
-
-- Record commit `e54e0f1` as rollback anchor.
-- Keep current OSC code and docs intact.
-- Keep `widgets.json` and QXW parsing available during migration.
-- Ensure existing build and tests still pass before starting transport work.
-
-Validation:
-
-- `npm run build`
-- `npx vitest run`
-- Existing OSC-based tools still compile.
-
-## Phase 1 - Isolated QLC+ WebSocket Client
-
-Purpose: introduce WebSocket without changing existing MCP tools.
-
-Tasks:
-
-- Add a dedicated QLC+ WebSocket client module.
-- Support configuration:
-  - `QLC_CONTROL_TRANSPORT=osc|websocket`
-  - `QLC_WS_HOST=127.0.0.1`
-  - `QLC_WS_PORT=9999`
-  - `QLC_WS_PATH=/qlcplusWS`
-  - WebSocket request/connect timeout settings
-- Connect to `ws://host:port/qlcplusWS`.
-- Send and receive QLC+ pipe-separated messages.
-- Handle timeout, malformed replies, disconnect, and close.
-- Add tests with fake socket/client plumbing.
-
-Validation:
-
-- Unit tests prove send/receive behavior without a real QLC+ instance.
-- WebSocket client errors are explicit and actionable.
-- Existing OSC path remains unchanged.
-
-## Phase 2 - Runtime Widget Discovery For QLC+ 4 And QLC+ 5
-
-Purpose: replace `widgets.json` as source of truth, while proving the discovery mechanism across QLC+ versions.
-
-Important compatibility rule:
-
-- First verify whether QLC+ 4 responds to `GET /vc.json`.
-- If QLC+ 4 supports `/vc.json`, implement `/vc.json` as the single discovery mechanism.
-- If QLC+ 4 does not support `/vc.json`, implement both:
-  - `/vc.json` discovery for QLC+ 5 and future QLC+ versions;
-  - WebSocket `QLC+API|getWidgetsList` fallback for QLC+ 4.
+Purpose: preserve a small, verified rollback point before native implementation.
 
 Tasks:
 
-- Add an inventory model containing:
-  - widget ID;
-  - caption;
-  - normalized caption;
-  - widget type when available;
-  - current value/status when requested;
-  - slider range when available;
-  - button/action metadata when available.
-- Implement caption normalization:
-  - case-insensitive;
-  - ignore common separators such as spaces, `_`, and `-`;
-  - no fuzzy matching in this phase.
-- Implement duplicate detection after normalization.
-- Implement missing-widget errors with available nearby/contextual inventory details.
-- Implement rediscovery method for reconnect/project reload.
+- keep commit `dc3fc87` as the rollback anchor;
+- record the current MCP tool names and schemas as compatibility fixtures;
+- keep `config/widgets.json` and the QXW generator unchanged during native work;
+- add no WebSocket migration layer.
 
-`/vc.json` path:
+Automated gate:
 
-- Fetch `http://host:port/vc.json`.
-- Parse the Virtual Console layout recursively.
-- Prefer language-independent fields such as `typeId` when available.
-- Extract button and slider metadata from the richer JSON payload.
+- `npm run build`;
+- `npx vitest run`;
+- schema fixtures prove current MCP tools have not changed unexpectedly.
 
-Fallback `getWidgetsList` path:
+Operator involvement: none.
 
-- Open `ws://host:port/qlcplusWS`.
-- Send `QLC+API|getWidgetsList`.
-- Parse flat `id|caption` pairs.
-- Optionally call `QLC+API|getWidgetType|<id>` for each candidate when type filtering is needed.
-- Use direct widget commands such as `<id>|255`, `<id>|0`, `<id>|NEXT`.
+## Milestone 1 — Native Client, Inventory, And Connection Lifecycle
 
-Validation:
+Status: **automated foundation implemented; critical live QLC+ gate pending**
 
-- Manual test against QLC+ 4:
-  - confirm whether `/vc.json` exists;
-  - confirm `getWidgetsList` behavior if `/vc.json` is absent.
-- Manual test against QLC+ 5 or documented fixture:
-  - confirm `/vc.json` parsing.
-- Unit tests:
-  - nested `/vc.json` inventory;
-  - flat `getWidgetsList` inventory;
-  - case-insensitive lookup;
-  - separator-insensitive lookup;
-  - duplicate caption collision;
-  - missing caption failure.
+Purpose: replace the former WebSocket Phase 1 with the complete native foundation
+needed by all subsequent work.
 
-## Phase 3 - Transport Abstraction
+Implementation scope:
 
-Purpose: avoid coupling MCP tools directly to OSC or WebSocket details.
+- add isolated packet, section, SimpleCrypt, TCP framing, and session modules;
+- default to configured direct TCP connection at `127.0.0.1:9998`;
+- keep UDP discovery optional for diagnostics or non-local deployments rather
+  than making startup depend on broadcast discovery;
+- authenticate and represent authorization wait/refusal explicitly;
+- reassemble `NetProjectTransfer` within a configured maximum size;
+- safely parse only required Virtual Console XML metadata;
+- normalize captions case-insensitively while ignoring spaces, `_`, and `-`;
+- reject duplicate normalized captions and wrong widget kinds explicitly;
+- replace the inventory atomically only after complete validation;
+- invalidate all session IDs immediately on disconnect;
+- reconnect asynchronously with bounded backoff and rate-limited logs;
+- redownload and validate the project before returning to `ready`;
+- enable TCP keepalive and consume socket close/error events for idle connection
+  loss detection; `NetPoll`/`NetPollReply` cannot be used because QLC+ declares
+  but does not implement them;
+- expose the full lifecycle through `qlc_get_state` and the HTTP status page;
+- keep dry-run completely network-free.
 
-Tasks:
+Safety requirements:
 
-- Define a common QLC transport interface:
-  - `listWidgets()`
-  - `resolveWidget(captionOrName)`
-  - `pressButton(captionOrName)`
-  - `setSlider(captionOrName, value)`
-  - `cueListNext(captionOrName)`
-  - `cueListPrevious(captionOrName)`
-  - `getWidgetState(captionOrName)`
-  - direct DMX/global controls where supported
-- Implement `OscQlcTransport` using the current code.
-- Implement `WebSocketQlcTransport` using runtime discovery.
-- Keep existing MCP tool signatures stable.
+- bound packet, decrypted payload, project, inventory, and pending-command sizes;
+- never scan encrypted data for an apparent packet header after malformed input;
+- close and reconnect on framing, cryptographic, or required-field failure;
+- reject unsafe XML declarations and external entities while accepting the
+  standard inert `<!DOCTYPE Workspace>` marker used by QLC+;
+- ignore unknown opcodes and trailing extension sections when safe;
+- bind/use the native endpoint only on localhost or a trusted show network.
 
-Validation:
+Automated gate:
 
-- Existing tools pass through `OscQlcTransport` unchanged.
-- New tests prove the same high-level calls route correctly through fake WebSocket transport.
+- fixed binary codec vectors;
+- fragmented, coalesced, truncated, malformed, and oversized packet tests;
+- authentication success, refusal, and delayed approval tests;
+- exact-multiple and multi-chunk project-transfer tests;
+- corrupt/oversized/unsafe XML tests;
+- nested inventory, caption normalization, collision, type, action, range, and
+  Frame/SoloFrame tests;
+- disconnect, backoff, log suppression, state reset, inventory invalidation,
+  fresh-project-before-ready, and idle liveness tests;
+- proof that dry-run opens no UDP or TCP socket.
 
-## Phase 4 - WebSocket Tool Migration
+Critical operator gate — one short session:
 
-Purpose: make WebSocket usable by real MCP calls while OSC remains available.
+1. Start the selected production QLC+ 5 build with Native Server enabled.
+2. Approve the QLCPlus-MCP client if QLC+ requests authorization.
+3. Confirm transition to `ready` and confirm that the reported widget inventory
+   matches the currently loaded project.
+4. Restart QLC+ once and confirm automatic recovery to `ready` without restarting
+   QLCPlus-MCP or retaining stale widget IDs.
 
-Tasks:
+No lighting-action validation is required in this milestone.
 
-- Route tools through the common transport interface.
-- Update `qlc_list_widgets` to return runtime WebSocket inventory when selected.
-- Update button tools to resolve by caption and send direct widget values.
-- Update slider tools to resolve by caption and send mapped values.
-- Update cue list tools to send `NEXT`, `PREV`, `PLAY`, or `STEP` commands by widget ID.
-- Update state tools to use `QLC+API|getWidgetStatus|<id>` where applicable.
+## Milestone 2 — Native-Only MCP Control
 
-Validation:
-
-- With QLC+ launched using web access, asking for a caption such as `Rouge` triggers the matching widget.
-- Matching works for casing variants like `rouge`, `ROUGE`, `RoUge`.
-- Missing and ambiguous captions fail loudly.
-- OSC mode still works.
-
-## Phase 5 - Make `widgets.json` Optional
-
-Purpose: stop relying on a maintained static mapping.
+Purpose: route the existing MCP contract through the validated native session.
 
 Tasks:
 
-- Do not load `widgets.json` when `QLC_CONTROL_TRANSPORT=websocket`.
-- Allow server startup without `config/widgets.json` in WebSocket mode.
-- Keep QXW generation command as legacy/offline diagnostic tooling.
-- Update docs to explain runtime discovery.
+- make `qlc_list_widgets` return the live native inventory;
+- make `qlc_button_press` resolve captions and send native Virtual Console
+  button actions;
+- preserve QLC+ button semantics: press-only for Toggle, Blackout, StopAll,
+  absent/default, and unknown future actions; press/release only for Flash;
+- let QLC+ Frame/SoloFrame behavior own layering and exclusivity;
+- report a command as successful only after it is written through a `ready`
+  native session;
+- keep one bounded discrete-action queue and reject or expire unsafe stale button
+  actions across a disconnect rather than blindly replaying toggles;
+- replace `qlc_send_osc` with a native-specific advanced tool or remove it in the
+  same breaking release; do not preserve a raw-OSC-shaped compatibility shim;
+- make native configuration and state available on the HTTP admin page;
+- stop loading `config/widgets.json` in normal runtime;
+- retain QXW parsing only as an offline diagnostic tool.
 
-Validation:
+Automated gate:
 
-- Temporarily rename or remove `config/widgets.json`.
-- Start the MCP in WebSocket mode.
-- List and trigger widgets from QLC+ runtime inventory.
+- all current MCP tool schema compatibility tests, except the explicitly decided
+  raw OSC change;
+- exact lookup, missing caption, collision, wrong kind, and inventory replacement;
+- button-action semantics and no accidental double-toggle;
+- command behavior in every connection state;
+- stale-command suppression across reconnect;
+- HTTP status/config and MCP STDIO/HTTP regressions;
+- `npm run build` and the complete test suite.
 
-## Phase 6 - WebSocket As Default, OSC As Legacy
+Critical operator gate — one short lighting session:
 
-Purpose: move the project to the intended long-term transport.
+1. Trigger representative Toggle, Flash, Blackout/StopAll if present, ordinary
+   Frame, and SoloFrame buttons through MCP.
+2. Reload or switch the QLC+ project and confirm rediscovery before the next action.
+3. Restart QLC+ and confirm the first post-reconnect action targets the new
+   inventory correctly.
+
+This is the only required live lighting-control parity test before native-only
+cutover.
+
+## Milestone 3 — Remove OSC And Release Native-Only
+
+Purpose: ship a simpler QLC+ 5 product rather than maintain two protocol stacks.
 
 Tasks:
 
-- Set WebSocket as recommended/default transport.
-- Document QLC+ startup:
-  - QLC+ 4: `qlcplus -w`
-  - QLC+ 5: `qlcplus -w -wp 9999` where supported by installed version
-- Keep OSC documented as legacy/fallback.
-- Add troubleshooting for:
-  - QLC+ web interface disabled;
-  - wrong host/port;
-  - authentication;
-  - duplicate captions;
-  - unsupported widget types.
+- make native control the only runtime transport;
+- remove OSC runtime code, dependencies, ports, feedback state, raw OSC tool,
+  OSC admin fields, Docker UDP exposure, and service configuration;
+- remove `config/widgets.json` from runtime requirements;
+- delete transport-selection branches that no longer represent product choices;
+- preserve the rollback commit/tag rather than compatibility code;
+- update README, ARCHITECTURE, PROMPT, Docker, and Raspberry Pi service guidance;
+- document QLC+ Native Server setup, authorization, trusted-network constraint,
+  connection states, project discovery, and recovery behavior.
 
-Validation:
+Automated gate:
 
-- Fresh setup works without OSC enabled in QLC+.
-- README path for new users uses WebSocket.
-- Legacy OSC path is still available through configuration.
+- repository search finds no active OSC/WebSocket runtime path;
+- clean install, build, full tests, STDIO, HTTP, Docker, and service-pack checks;
+- startup without QLC+ remains healthy and reports `reconnecting`;
+- late QLC+ start reaches `ready` without restarting QLCPlus-MCP;
+- malformed or incompatible peers never reach `ready` and never receive actions.
 
-## Phase 7 - Optional OSC Removal
+Critical operator release gate:
 
-Purpose: remove OSC only after WebSocket has been proven in real use.
+- one sustained Raspberry Pi/service session with QLC+ late start or restart,
+  authorization if prompted, inventory refresh, representative MCP button
+  actions, bounded logs, and acceptable CPU/RSS usage.
 
-Tasks:
+After this gate passes, native-only is the supported release and OSC survives
+only in repository history at the rollback anchor.
 
-- Decide whether OSC still has value as a fallback.
-- If removing:
-  - remove OSC client;
-  - remove raw OSC tool;
-  - remove OSC-specific config;
-  - remove `widgets.json` runtime dependency;
-  - update docs and tests.
-- If keeping:
-  - mark OSC as maintenance-only.
+## Decisions Needed Before Milestone 2
 
-Validation:
+1. **Supported QLC+ build — decided:** require QLC+ commit `984f0e7` or a release
+   containing its grouped native action codes and protocol behavior.
+2. **Raw advanced tool — decided:** remove `qlc_send_osc` at native-only cutover;
+   do not replace it with a raw native editing/action tool in the first release.
+3. **Authorization policy:** confirm whether the production QLC+ deployment retains
+   client authorization across restart. The client must still tolerate a fresh
+   approval request without blocking the MCP server.
+4. **Network scope — decided:** support localhost only in the native-only release.
 
-- Complete test suite passes.
-- Real QLC+ 4/5 WebSocket validation is complete.
-- No normal workflow requires `widgets.json`.
+## Deferred Work
 
-## Open Questions
+The first native-only release does not need:
 
-- Does the target QLC+ 4 build expose `GET /vc.json`?
-- Which exact QLC+ 4 and QLC+ 5 versions must be supported in production?
-- Should WebSocket auth (`-wa`) be supported in the first WebSocket release or after the basic migration?
-- Should direct DMX channel tools use `CH|<absoluteAddress>|<value>` in WebSocket mode, or should they remain OSC-only until separately validated?
-- Should the QXW parser remain as an offline inspection tool after runtime discovery replaces `widgets.json`?
+- QLC+ 4 compatibility;
+- WebSocket or `/vc.json` fallback;
+- live workspace-edit action tracking while a project is being edited;
+- fixture/function/workspace editing;
+- semantic caption/color/font updates;
+- fuzzy caption matching;
+- direct native DMX control;
+- slider/cue-list expansion unless required by an existing stable MCP tool.
+
+These can be evaluated after the native-only button-control release is stable.

@@ -4,7 +4,10 @@ QLCPlus-MCP is a TypeScript Model Context Protocol server for controlling QLC+ l
 
 The current stable transport is OSC: the server sends OSC messages to QLC+, and QLC+ remains the lighting engine. Show actions are modeled as QLC+ Virtual Console widgets, mapped in `config/widgets.json`, then triggered through MCP tools.
 
-The project is migrating toward QLC+ WebSocket runtime discovery so widget IDs can be resolved dynamically from QLC+ captions instead of maintaining a static mapping file. Track that migration in [ROADMAP.md](ROADMAP.md).
+The project is migrating directly to the QLC+ 5 native network protocol so
+widget IDs can be discovered from the active project and connection state can be
+verified and recovered cleanly. WebSocket is no longer the migration target.
+Track the native-only migration in [ROADMAP.md](ROADMAP.md).
 
 ## What It Does
 
@@ -113,6 +116,20 @@ LOG_LEVEL=info
 NODE_ENV=development
 ```
 
+Milestone 1 also provides an opt-in observational QLC+ 5 native client. It does
+not send lighting actions yet:
+
+```bash
+QLC_NATIVE_ENABLED=true
+QLC_NATIVE_HOST=127.0.0.1
+QLC_NATIVE_PORT=9998
+```
+
+It requires a QLC+ build containing commit `984f0e7` or equivalent native
+protocol behavior. QLC+ may ask the operator to authorize `QLCPlus-MCP`. The
+client then downloads the active project, reports its connection/inventory state
+through `qlc_get_state` and `/mcp/status`, and reconnects after QLC+ restarts.
+
 The complete configuration reference is maintained in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Widget Mapping
@@ -148,7 +165,8 @@ Generate a mapping from a QLC+ project:
 npm run generate:widgets intervalPI.qxw config/widgets.json
 ```
 
-`widgets.json` is planned to become optional in WebSocket mode. Until that migration is validated, keep it as the stable OSC source of truth.
+`widgets.json` will cease to be a runtime requirement after native-only control is
+validated. Until then, keep it as the stable OSC source of truth.
 
 ## Usage Scenarios
 
@@ -318,7 +336,7 @@ Check `MCP_AUTH_MODE`, `MCP_AUTH_TOKEN`, and the client `Authorization: Bearer .
 
 - [README.md](README.md): user-facing installation, scenarios, and configuration overview.
 - [ARCHITECTURE.md](ARCHITECTURE.md): technical architecture, modules, tools, and validation.
-- [ROADMAP.md](ROADMAP.md): staged WebSocket migration plan and rollback anchor.
+- [ROADMAP.md](ROADMAP.md): staged native-protocol migration and rollback anchor.
 - [AGENTS.md](AGENTS.md): documentation and development guidance for Codex/automation agents.
 
 ## License
