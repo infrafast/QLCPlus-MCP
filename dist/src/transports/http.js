@@ -5,7 +5,6 @@ import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { getLogger, getRecentLogLines, subscribeLogLines } from "../logger.js";
 import { persistRuntimeConfig, updateRuntimeConfig, } from "../config.js";
 import { closeOsc, getOscRuntimeState, initOsc } from "../osc/oscClient.js";
-import { listWidgets } from "../qlc/widgetResolver.js";
 import { createQlcMcpServer, resourceSummaries, toolSummaries, } from "../mcpServer.js";
 import { getNativeRuntimeState } from "../qlc/nativeClient.js";
 function getConnectableHost(host) {
@@ -111,10 +110,9 @@ function statusPayload(config, tools, envFile) {
         transport: "http",
         uptime: process.uptime(),
         runtimeConfig: runtimeConfig(config, envFile),
-        osc: getOscRuntimeState(),
         native: getNativeRuntimeState(),
         widgets: {
-            count: listWidgets().length,
+            count: getNativeRuntimeState()?.widgetCount ?? 0,
         },
         resources: resourceSummaries(),
         tools: toolSummaries(tools),
@@ -297,16 +295,9 @@ export async function startHttpServer(config, tools, runtimeEnvFile) {
                 return;
             }
             if (url.pathname === "/mcp/config" && req.method === "POST") {
-                const payload = await readJsonBody(req);
-                try {
-                    const update = await applyConfigUpdate(config, payload, runtimeEnvFile);
-                    sendJson(res, 200, update);
-                }
-                catch (error) {
-                    sendJson(res, 400, {
-                        error: error instanceof Error ? error.message : String(error),
-                    });
-                }
+                sendJson(res, 410, {
+                    error: "The legacy OSC runtime configuration endpoint is disabled. Configure the localhost QLC+ native connection through environment variables and restart QLCPlus-MCP.",
+                });
                 return;
             }
             if (url.pathname === "/mcp/tools" && req.method === "GET") {

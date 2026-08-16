@@ -5,10 +5,10 @@ export declare const ListWidgetsInputSchema: z.ZodObject<{
         unknown: "unknown";
         button: "button";
         slider: "slider";
+        frame: "frame";
         speed: "speed";
         cuelist: "cuelist";
         chaser: "chaser";
-        frame: "frame";
         label: "label";
     }>>>;
     query: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;

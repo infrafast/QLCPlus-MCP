@@ -2,6 +2,7 @@ import { type NativeWidget } from "./nativeInventory.js";
 export declare const NET_AUTHENTICATION = 65282;
 export declare const NET_AUTHENTICATION_REPLY = 65283;
 export declare const NET_PROJECT_TRANSFER = 65286;
+export declare const VC_BUTTON_SET_PRESSED = 61952;
 export type NativeConnectionState = "disabled" | "connecting" | "waiting-for-authorization" | "downloading-project" | "ready" | "disconnected" | "stopped";
 export interface NativeClientOptions {
     enabled: boolean;
@@ -32,6 +33,10 @@ export interface NativeRuntimeState {
     lastDisconnectedAt: string | null;
     lastErrorAt: string | null;
     lastError: string | null;
+    sentCount: number;
+    lastSentAt: string | null;
+    lastSentWidgetId: number | null;
+    lastSentCaption: string | null;
 }
 export declare class QlcNativeClient {
     private readonly options;
@@ -53,6 +58,8 @@ export declare class QlcNativeClient {
     stop(): void;
     getState(): NativeRuntimeState;
     listWidgets(): NativeWidget[];
+    pressButton(caption: string): Promise<NativeWidget>;
+    private writePacket;
     private connect;
     private onData;
     private handleFrame;

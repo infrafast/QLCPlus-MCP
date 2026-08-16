@@ -16,7 +16,7 @@ export const ConfigSchema = z.object({
     qlcOscOutputPort: z.number().int().min(1).max(65535).default(9000),
     qlcUniverse: z.number().int().min(1).default(1),
     // QLC+ 5 Native Server (localhost-only during migration)
-    qlcNativeEnabled: z.boolean().default(false),
+    qlcNativeEnabled: z.boolean().default(true),
     qlcNativeHost: z.enum(["127.0.0.1", "localhost", "::1"]).default("127.0.0.1"),
     qlcNativePort: z.number().int().min(1).max(65535).default(9998),
     qlcNativeEncryptionKey: z.string().default(""),

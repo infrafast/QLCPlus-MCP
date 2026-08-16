@@ -1,4 +1,3 @@
 import { type ToolDefinition } from "../mcpCompat.js";
-import { Config } from "../config.js";
-export declare function createButtonPressTool(config: Config): ToolDefinition;
+export declare function createButtonPressTool(): ToolDefinition;
 //# sourceMappingURL=qlc_button_control.d.ts.map

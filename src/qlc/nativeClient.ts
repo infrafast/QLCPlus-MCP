@@ -3,7 +3,9 @@ import { getLogger } from "../logger.js";
 import {
   NativeFrameDecoder,
   makeNativePacket,
+  nativeBoolean,
   nativeByteArray,
+  nativeInt,
   nativeSessionKey,
   nativeString,
   parseNativeSections,
@@ -18,6 +20,7 @@ import {
 export const NET_AUTHENTICATION = 0xff02;
 export const NET_AUTHENTICATION_REPLY = 0xff03;
 export const NET_PROJECT_TRANSFER = 0xff06;
+export const VC_BUTTON_SET_PRESSED = 0xf200;
 
 export type NativeConnectionState =
   | "disabled"
@@ -58,6 +61,10 @@ export interface NativeRuntimeState {
   lastDisconnectedAt: string | null;
   lastErrorAt: string | null;
   lastError: string | null;
+  sentCount: number;
+  lastSentAt: string | null;
+  lastSentWidgetId: number | null;
+  lastSentCaption: string | null;
 }
 
 const EMPTY_INVENTORY: NativeInventory = {
@@ -106,6 +113,10 @@ export class QlcNativeClient {
       lastDisconnectedAt: null,
       lastErrorAt: null,
       lastError: null,
+      sentCount: 0,
+      lastSentAt: null,
+      lastSentWidgetId: null,
+      lastSentCaption: null,
     };
   }
 
@@ -135,6 +146,71 @@ export class QlcNativeClient {
       ...widget,
       framePath: [...widget.framePath],
     }));
+  }
+
+  async pressButton(caption: string): Promise<NativeWidget> {
+    if (this.options.dryRun) {
+      return {
+        id: 0,
+        caption,
+        normalizedCaption: caption,
+        kind: "button",
+        actionType: "dry-run",
+        framePath: [],
+      };
+    }
+    const socket = this.socket;
+    if (this.state.state !== "ready" || !socket || socket.destroyed) {
+      throw new Error(
+        `QLC+ native session is not ready (state: ${this.state.state})`,
+      );
+    }
+    const normalized = caption
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[\s_-]+/g, "");
+    const widget = this.inventory.buttons.get(normalized);
+    if (!widget) {
+      if (this.inventory.sliders.has(normalized)) {
+        throw new Error(`QLC+ widget '${caption}' is a slider, not a button`);
+      }
+      throw new Error(
+        `QLC+ button '${caption}' was not found in the current project`,
+      );
+    }
+    await this.writePacket(socket, widget, true);
+    if (widget.actionType === "flash") {
+      await new Promise<void>((resolve) => setTimeout(resolve, 100));
+      if (
+        this.socket !== socket ||
+        this.state.state !== "ready" ||
+        socket.destroyed
+      ) {
+        throw new Error("QLC+ native session changed before Flash release");
+      }
+      await this.writePacket(socket, widget, false);
+    }
+    this.state.sentCount += 1;
+    this.state.lastSentAt = isoNow();
+    this.state.lastSentWidgetId = widget.id;
+    this.state.lastSentCaption = widget.caption;
+    return { ...widget, framePath: [...widget.framePath] };
+  }
+
+  private async writePacket(
+    socket: Socket,
+    widget: NativeWidget,
+    pressed: boolean,
+  ): Promise<void> {
+    const packet = makeNativePacket(
+      VC_BUTTON_SET_PRESSED,
+      nativeSessionKey(this.options.encryptionKey),
+      [nativeInt(widget.id), nativeBoolean(pressed)],
+    );
+    await new Promise<void>((resolve, reject) => {
+      socket.write(packet, (error) => (error ? reject(error) : resolve()));
+    });
   }
 
   private connect(): void {

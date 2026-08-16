@@ -1,17 +1,24 @@
 import { z } from "zod";
 import { text, type ToolDefinition } from "../mcpCompat.js";
 import { getLogger } from "../logger.js";
-import { listWidgets } from "../qlc/widgetResolver.js";
-import { optionalInt, optionalString, nullToUndefined, WidgetTypeSchema } from "../types.js";
+import { getNativeClient } from "../qlc/nativeClient.js";
+import {
+  optionalInt,
+  optionalString,
+  nullToUndefined,
+  WidgetTypeSchema,
+} from "../types.js";
 
 export const ListWidgetsInputSchema = z.object({
-  type: z.preprocess(
-    nullToUndefined,
-    WidgetTypeSchema.optional(),
-  ).describe("Only return widgets of this type."),
-  query: optionalString().describe("Case-insensitive text filter on widget name or OSC path."),
-  limit: optionalInt(z.number().int().min(1).max(200))
-    .describe("Maximum number of widgets to return."),
+  type: z
+    .preprocess(nullToUndefined, WidgetTypeSchema.optional())
+    .describe("Only return widgets of this type."),
+  query: optionalString().describe(
+    "Case-insensitive text filter on widget caption or containing Frame path.",
+  ),
+  limit: optionalInt(z.number().int().min(1).max(200)).describe(
+    "Maximum number of widgets to return.",
+  ),
 });
 
 export function createListWidgetsTool(): ToolDefinition {
@@ -20,23 +27,39 @@ export function createListWidgetsTool(): ToolDefinition {
   return {
     name: "qlc_list_widgets",
     description:
-      "List QLC+ widgets loaded from config/widgets.json, including logical names, OSC paths, types, and descriptions. Use this to discover available mapped widgets before controlling named QLC+ scenes or buttons.",
+      "List widgets discovered from the current QLC+ 5 native project inventory. Numeric IDs are session-only and refresh after reconnect.",
     schema: ListWidgetsInputSchema,
     cb: async (input: any) => {
       logger.debug("Tool: qlc_list_widgets", input);
 
-      const query = typeof input?.query === "string" ? input.query.toLowerCase() : "";
+      const query =
+        typeof input?.query === "string" ? input.query.toLowerCase() : "";
       const type = input?.type;
       const limit = input?.limit ?? 100;
 
-      const widgets = listWidgets()
-        .filter((widget) => !type || widget.type === type)
+      const client = getNativeClient();
+      const nativeState = client?.getState();
+      if (!client || !nativeState?.ready) {
+        return text(
+          JSON.stringify(
+            {
+              count: 0,
+              state: nativeState?.state ?? "not-initialized",
+              widgets: [],
+            },
+            null,
+            2,
+          ),
+        );
+      }
+      const widgets = client
+        .listWidgets()
+        .filter((widget) => !type || widget.kind === type)
         .filter((widget) => {
           if (!query) return true;
           return (
-            widget.name.toLowerCase().includes(query) ||
-            widget.path.toLowerCase().includes(query) ||
-            widget.description?.toLowerCase().includes(query)
+            widget.caption.toLowerCase().includes(query) ||
+            widget.framePath.join(" / ").toLowerCase().includes(query)
           );
         })
         .slice(0, limit);
@@ -45,12 +68,12 @@ export function createListWidgetsTool(): ToolDefinition {
         count: widgets.length,
         widgets: widgets.map((widget) => ({
           id: widget.id,
-          name: widget.name,
-          path: widget.path,
-          type: widget.type,
-          description: widget.description,
-          minValue: widget.minValue,
-          maxValue: widget.maxValue,
+          name: widget.caption,
+          type: widget.kind,
+          actionType: widget.actionType,
+          minValue: widget.low,
+          maxValue: widget.high,
+          framePath: widget.framePath,
         })),
       };
 

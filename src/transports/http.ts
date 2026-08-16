@@ -144,10 +144,9 @@ function statusPayload(
     transport: "http",
     uptime: process.uptime(),
     runtimeConfig: runtimeConfig(config, envFile),
-    osc: getOscRuntimeState(),
     native: getNativeRuntimeState(),
     widgets: {
-      count: listWidgets().length,
+      count: getNativeRuntimeState()?.widgetCount ?? 0,
     },
     resources: resourceSummaries(),
     tools: toolSummaries(tools),
@@ -377,19 +376,10 @@ export async function startHttpServer(
       }
 
       if (url.pathname === "/mcp/config" && req.method === "POST") {
-        const payload = await readJsonBody(req);
-        try {
-          const update = await applyConfigUpdate(
-            config,
-            payload,
-            runtimeEnvFile,
-          );
-          sendJson(res, 200, update);
-        } catch (error) {
-          sendJson(res, 400, {
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
+        sendJson(res, 410, {
+          error:
+            "The legacy OSC runtime configuration endpoint is disabled. Configure the localhost QLC+ native connection through environment variables and restart QLCPlus-MCP.",
+        });
         return;
       }
 

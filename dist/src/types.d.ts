@@ -33,10 +33,10 @@ export declare const WidgetTypeSchema: z.ZodEnum<{
     unknown: "unknown";
     button: "button";
     slider: "slider";
+    frame: "frame";
     speed: "speed";
     cuelist: "cuelist";
     chaser: "chaser";
-    frame: "frame";
     label: "label";
 }>;
 export type WidgetType = z.infer<typeof WidgetTypeSchema>;
@@ -48,10 +48,10 @@ export declare const WidgetMappingSchema: z.ZodObject<{
         unknown: "unknown";
         button: "button";
         slider: "slider";
+        frame: "frame";
         speed: "speed";
         cuelist: "cuelist";
         chaser: "chaser";
-        frame: "frame";
         label: "label";
     }>;
     description: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
@@ -68,10 +68,10 @@ export declare const WidgetConfigSchema: z.ZodObject<{
             unknown: "unknown";
             button: "button";
             slider: "slider";
+            frame: "frame";
             speed: "speed";
             cuelist: "cuelist";
             chaser: "chaser";
-            frame: "frame";
             label: "label";
         }>;
         description: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
@@ -82,13 +82,6 @@ export declare const WidgetConfigSchema: z.ZodObject<{
     generatedAt: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
 }, z.core.$strip>;
 export type WidgetConfig = z.infer<typeof WidgetConfigSchema>;
-export declare const SendOscInputSchema: z.ZodObject<{
-    path: z.ZodString;
-    args: z.ZodArray<z.ZodUnion<readonly [z.ZodNumber, z.ZodString, z.ZodBoolean]>>;
-    dryRun: z.ZodPreprocess<z.ZodOptional<z.ZodBoolean>>;
-    speaker: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
-}, z.core.$strip>;
-export type SendOscInput = z.infer<typeof SendOscInputSchema>;
 export declare const ButtonPressInputSchema: z.ZodObject<{
     widgetName: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;
     oscPath: z.ZodPreprocess<z.ZodOptional<z.ZodString>>;

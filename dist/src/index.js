@@ -4,13 +4,10 @@ import path from "node:path";
 import { loadConfig } from "./config.js";
 import { createAgentPromptTool } from "./agentPrompt.js";
 import { initLogger, getLogger } from "./logger.js";
-import { initOsc } from "./osc/oscClient.js";
-import { loadWidgetConfig } from "./qlc/widgetResolver.js";
 import { initNativeClient } from "./qlc/nativeClient.js";
 import { startStdioServer } from "./transports/stdio.js";
 import { startHttpServer } from "./transports/http.js";
 // Tools
-import { createSendOscTool } from "./tools/qlc_send_osc.js";
 import { createGetStateTool } from "./tools/qlc_get_state.js";
 import { createListWidgetsTool } from "./tools/qlc_list_widgets.js";
 import { createButtonPressTool } from "./tools/qlc_button_control.js";
@@ -50,14 +47,7 @@ async function main() {
         logger.info(runtimeEnvFile
             ? `Runtime env file: ${runtimeEnvFile}`
             : "Runtime env file: default dotenv lookup");
-        // Initialize OSC
-        logger.info("Initializing OSC client...");
-        await initOsc(config);
-        // Load widget configuration
-        logger.info("Loading widget configuration...");
-        await loadWidgetConfig(config.qlcWidgetsFile);
-        // Native migration client. It is observational during milestone 1: OSC
-        // remains the command path until native inventory/lifecycle validation.
+        // QLC+ 5 native-only runtime.
         initNativeClient({
             enabled: config.qlcNativeEnabled,
             host: config.qlcNativeHost,
@@ -75,8 +65,7 @@ async function main() {
             createAgentPromptTool(),
             createGetStateTool(),
             createListWidgetsTool(),
-            createSendOscTool(config),
-            createButtonPressTool(config),
+            createButtonPressTool(),
         ];
         logger.info(`Registered ${tools.length} tools`);
         // Start appropriate transport

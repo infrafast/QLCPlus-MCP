@@ -54,13 +54,6 @@ export const WidgetConfigSchema = z.object({
     generated: optionalBoolean(),
     generatedAt: optionalString(),
 });
-// Tool Input Schemas
-export const SendOscInputSchema = z.object({
-    path: z.string().describe("OSC path"),
-    args: z.array(OscValueSchema).describe("OSC arguments"),
-    dryRun: optionalBoolean().describe("Dry run mode"),
-    speaker: optionalString().describe("Optional recognized speaker name supplied by the voice agent; ignored by QLCPlus-MCP."),
-});
 export const ButtonPressInputSchema = z.object({
     widgetName: optionalString().describe("Logical widget name"),
     oscPath: optionalString().describe("Direct OSC path"),
@@ -72,6 +65,10 @@ export const CueListInputSchema = z.object({
     speaker: optionalString().describe("Optional recognized speaker name supplied by the voice agent; ignored by QLCPlus-MCP."),
 });
 export const SetMasterInputSchema = z.object({
-    value: z.number().min(0).max(1).describe("Master dimmer value (0-1 normalized)"),
+    value: z
+        .number()
+        .min(0)
+        .max(1)
+        .describe("Master dimmer value (0-1 normalized)"),
 });
 //# sourceMappingURL=types.js.map

@@ -106,7 +106,8 @@ Operator involvement: none.
 
 ## Milestone 1 — Native Client, Inventory, And Connection Lifecycle
 
-Status: **automated foundation implemented; critical live QLC+ gate pending**
+Status: **complete — automated coverage and Raspberry Pi live authorization,
+project inventory, QLC+ restart, reconnect, and fresh inventory accepted**
 
 Purpose: replace the former WebSocket Phase 1 with the complete native foundation
 needed by all subsequent work.
@@ -168,6 +169,8 @@ No lighting-action validation is required in this milestone.
 
 ## Milestone 2 — Native-Only MCP Control
 
+Status: **implemented; critical live QLC+ button-control gate pending**
+
 Purpose: route the existing MCP contract through the validated native session.
 
 Tasks:
@@ -182,8 +185,8 @@ Tasks:
   native session;
 - keep one bounded discrete-action queue and reject or expire unsafe stale button
   actions across a disconnect rather than blindly replaying toggles;
-- replace `qlc_send_osc` with a native-specific advanced tool or remove it in the
-  same breaking release; do not preserve a raw-OSC-shaped compatibility shim;
+- remove `qlc_send_osc`; do not preserve a raw-OSC-shaped compatibility shim or
+  expose unrestricted native editing/action codes;
 - make native configuration and state available on the HTTP admin page;
 - stop loading `config/widgets.json` in normal runtime;
 - retain QXW parsing only as an offline diagnostic tool.

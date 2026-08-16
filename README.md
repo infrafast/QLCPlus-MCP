@@ -2,7 +2,9 @@
 
 QLCPlus-MCP is a TypeScript Model Context Protocol server for controlling QLC+ lighting from an AI agent.
 
-The current stable transport is OSC: the server sends OSC messages to QLC+, and QLC+ remains the lighting engine. Show actions are modeled as QLC+ Virtual Console widgets, mapped in `config/widgets.json`, then triggered through MCP tools.
+The current control transport is the QLC+ 5 native network protocol. QLCPlus-MCP
+authenticates with the localhost Native Server, downloads the active project,
+discovers Virtual Console widgets by caption, and sends native button actions.
 
 The project is migrating directly to the QLC+ 5 native network protocol so
 widget IDs can be discovered from the active project and connection state can be
@@ -13,10 +15,9 @@ Track the native-only migration in [ROADMAP.md](ROADMAP.md).
 
 - Exposes QLC+ lighting controls as MCP tools.
 - Supports local `stdio` clients and remote streamable HTTP clients.
-- Triggers mapped Virtual Console widgets by logical name or direct OSC path.
-- Lists mapped widgets for agent-side discovery.
-- Reports OSC runtime state and recent QLC+ feedback freshness.
-- Optionally sends raw OSC messages when explicitly enabled.
+- Triggers discovered Virtual Console buttons by caption.
+- Lists the live project inventory for agent-side discovery.
+- Reports native authorization, inventory, connection, and reconnect state.
 - Exposes the repository [PROMPT.md](PROMPT.md) as an MCP prompt/resource/tool for lighting-specific agent instructions.
 
 For technical internals, see [ARCHITECTURE.md](ARCHITECTURE.md).
@@ -272,10 +273,9 @@ The HTTP admin page at `/mcp` includes runtime QLC+ connection controls when acc
 Current tools:
 
 - `get_agent_prompt`: returns the recommended lighting-agent prompt.
-- `qlc_get_state`: reports OSC client state and feedback freshness.
-- `qlc_list_widgets`: lists mapped widgets from `config/widgets.json`.
-- `qlc_button_press`: triggers a mapped widget by name or direct OSC path.
-- `qlc_send_osc`: sends raw OSC when `QLC_ALLOW_RAW_OSC=true`.
+- `qlc_get_state`: reports native connection, authorization, inventory, and reconnect state.
+- `qlc_list_widgets`: lists widgets discovered from the active QLC+ project.
+- `qlc_button_press`: presses a discovered Virtual Console button by caption.
 
 Agents should list widgets before triggering named controls and must not invent widget names.
 

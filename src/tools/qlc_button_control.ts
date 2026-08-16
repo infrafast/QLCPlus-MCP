@@ -1,43 +1,33 @@
 import { error, text, type ToolDefinition } from "../mcpCompat.js";
-import { sendOsc } from "../osc/oscClient.js";
-import { resolveWidgetOrPath, findClosestMatches } from "../qlc/widgetResolver.js";
 import { getLogger } from "../logger.js";
-import { Config } from "../config.js";
 import { ButtonPressInputSchema } from "../types.js";
+import { getNativeClient } from "../qlc/nativeClient.js";
 
-export function createButtonPressTool(config: Config): ToolDefinition {
+export function createButtonPressTool(): ToolDefinition {
   const logger = getLogger();
 
   return {
     name: "qlc_button_press",
     description:
-      "Trigger a QLC+ button widget by sending value 1 to its mapped OSC path. Specify either the logical widget name or direct OSC path.",
+      "Press a QLC+ 5 Virtual Console button resolved from the current native project inventory. Use widgetName; legacy oscPath is no longer supported.",
     schema: ButtonPressInputSchema,
     cb: async (input: any) => {
       logger.debug("Tool: qlc_button_press", input);
 
       const { widgetName, oscPath } = input;
-
-      const resolution = resolveWidgetOrPath(widgetName, oscPath);
-
-      if (!resolution.resolved) {
-        const suggestions = widgetName
-          ? findClosestMatches(widgetName, 3)
-          : [];
-
+      if (!widgetName) {
         return error(
-          `Could not resolve widget. Name: "${widgetName}", Path: "${oscPath}"`
+          oscPath
+            ? "oscPath is no longer supported; provide the QLC+ button caption in widgetName."
+            : "widgetName is required.",
         );
       }
+      const client = getNativeClient();
+      if (!client) return error("QLC+ native client is not initialized.");
 
       try {
-        await sendOsc(
-          { path: resolution.path, args: [1] },
-          { dryRun: config.qlcDryRun },
-          config
-        );
-
-        return text("Button press sent");
+        const widget = await client.pressButton(widgetName);
+        return text(`Button press sent: ${widget.caption}`);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         logger.error(`Failed to press button: ${message}`);

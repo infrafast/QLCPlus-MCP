@@ -6,24 +6,21 @@ This document describes the technical structure of QLCPlus-MCP. User installatio
 
 QLCPlus-MCP is a TypeScript MCP server that lets AI agents control QLC+ lighting.
 
-Current stable architecture:
+Current architecture:
 
 ```text
 MCP client
   -> QLCPlus-MCP tools
-  -> widget resolver / OSC client
-  -> QLC+ OSC input
+  -> native client / runtime project inventory
+  -> QLC+ 5 Native Server on localhost TCP 9998
   -> QLC+ Virtual Console / lighting engine
 ```
 
 The runtime server uses the official MCP SDK directly for both STDIO and streamable HTTP transports. It does not depend on `mcp-use` at runtime.
 
-Until the native migration is validated, OSC and `config/widgets.json` remain the
-production path. The migration target was revised after validation work in OculizerQLC: QLCPlus-MCP
-is now moving directly to the QLC+ 5 native network protocol. WebSocket is no
-longer an implementation target. During milestone 1, OSC remains the production
-command path while the optional native client validates connection lifecycle and
-runtime inventory.
+QLCPlus-MCP now uses the QLC+ 5 native protocol for widget inventory and button
+control. OSC is no longer initialized and `config/widgets.json` is not loaded at
+runtime. Historical OSC code remains only until the final cleanup milestone.
 
 ## Entry Point
 
@@ -120,11 +117,10 @@ Current OSC mode sends commands to QLC+ input port `QLC_OSC_INPUT_PORT` and list
 [src/qlc/nativeInventory.ts](src/qlc/nativeInventory.ts), and
 [src/qlc/nativeClient.ts](src/qlc/nativeClient.ts)
 
-Milestone 1 provides an opt-in, observational native client. It connects only to
+The native client connects only to
 localhost TCP port `9998`, performs QLC+ native authentication, receives the
-current project through `NetProjectTransfer`, and atomically builds an in-memory
-Virtual Console inventory. It does not yet send lighting actions; OSC remains the
-temporary command path until the critical native inventory/reconnect gate passes.
+current project through `NetProjectTransfer`, atomically builds an in-memory
+Virtual Console inventory, and sends validated `VCButtonSetPressed` actions.
 
 The native client reports `connecting`, `waiting-for-authorization`,
 `downloading-project`, `ready`, `disconnected`, and `stopped`. A TCP connection is
