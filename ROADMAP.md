@@ -115,8 +115,8 @@ needed by all subsequent work.
 Implementation scope:
 
 - add isolated packet, section, SimpleCrypt, TCP framing, and session modules;
-- default to automatic private LAN address selection on TCP port `9998`, while
-  retaining an explicit-host override;
+- default to a localhost target with a per-process `127/8` source identity on
+  TCP port `9998`, while retaining an explicit-host override;
 - keep UDP discovery optional for diagnostics or non-local deployments rather
   than making startup depend on broadcast discovery;
 - authenticate and represent authorization wait/refusal explicitly;

@@ -1,7 +1,8 @@
-import os from "node:os";
-type NetworkInterfaces = ReturnType<typeof os.networkInterfaces>;
-/** Resolve a stable RFC1918 address and avoid loopback, Tailscale and containers. */
-export declare function resolveAutomaticNativeHost(interfaces?: NetworkInterfaces): string;
-export declare function resolveNativeHost(host: string): string;
-export {};
+export interface NativeEndpoint {
+    host: string;
+    localAddress?: string;
+}
+/** Give every STDIO process a distinct QLC+ key without exposing TCP 9998. */
+export declare function loopbackAddressForProcess(pid: number): string;
+export declare function resolveNativeEndpoint(host: string, pid?: number, platform?: NodeJS.Platform): NativeEndpoint;
 //# sourceMappingURL=nativeHost.d.ts.map

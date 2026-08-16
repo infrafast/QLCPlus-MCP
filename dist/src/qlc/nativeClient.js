@@ -2,7 +2,7 @@ import net from "node:net";
 import { getLogger } from "../logger.js";
 import { NativeFrameDecoder, makeNativePacket, nativeBoolean, nativeByteArray, nativeInt, nativeSessionKey, nativeString, parseNativeSections, } from "./nativeCodec.js";
 import { exactNativeCaptionKey, parseNativeProjectInventory, } from "./nativeInventory.js";
-import { resolveNativeHost } from "./nativeHost.js";
+import { resolveNativeEndpoint } from "./nativeHost.js";
 export const NET_AUTHENTICATION = 0xff02;
 export const NET_AUTHENTICATION_REPLY = 0xff03;
 export const NET_PROJECT_TRANSFER = 0xff06;
@@ -28,6 +28,7 @@ export class QlcNativeClient {
     projectStarted = false;
     state;
     lastLoggedError = null;
+    lastLoggedEndpoint = null;
     stateLogTimes = new Map();
     constructor(options) {
         this.options = options;
@@ -37,6 +38,7 @@ export class QlcNativeClient {
             state: options.enabled ? "disconnected" : "disabled",
             ready: false,
             host: options.host,
+            localAddress: null,
             port: options.port,
             clientName: options.clientName,
             connectedAt: null,
@@ -138,12 +140,17 @@ export class QlcNativeClient {
         this.setConnectionState("connecting");
         this.decoder.reset();
         this.resetProjectTransfer();
-        let host;
+        let endpoint;
         try {
-            host = resolveNativeHost(this.options.host);
-            this.state.host = host;
-            if (this.options.host === "auto") {
-                logger.info(`QLC+ native auto-selected LAN address: ${host}`);
+            endpoint = resolveNativeEndpoint(this.options.host);
+            this.state.host = endpoint.host;
+            this.state.localAddress = endpoint.localAddress ?? null;
+            const endpointDescription = endpoint.localAddress
+                ? `QLC+ native loopback identity: ${endpoint.localAddress}`
+                : `QLC+ native target: ${endpoint.host}`;
+            if (endpointDescription !== this.lastLoggedEndpoint) {
+                logger.info(endpointDescription);
+                this.lastLoggedEndpoint = endpointDescription;
             }
         }
         catch (error) {
@@ -157,8 +164,9 @@ export class QlcNativeClient {
             return;
         }
         const socket = net.createConnection({
-            host,
+            host: endpoint.host,
             port: this.options.port,
+            localAddress: endpoint.localAddress,
         });
         this.socket = socket;
         socket.setNoDelay(true);

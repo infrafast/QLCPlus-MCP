@@ -20,6 +20,7 @@ export interface NativeRuntimeState {
     state: NativeConnectionState;
     ready: boolean;
     host: string;
+    localAddress: string | null;
     port: number;
     clientName: string;
     connectedAt: string | null;
@@ -52,6 +53,7 @@ export declare class QlcNativeClient {
     private projectStarted;
     private state;
     private lastLoggedError;
+    private lastLoggedEndpoint;
     private stateLogTimes;
     constructor(options: NativeClientOptions);
     start(): void;

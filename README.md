@@ -122,13 +122,14 @@ not send lighting actions yet:
 
 ```bash
 QLC_NATIVE_ENABLED=true
-QLC_NATIVE_HOST=auto
+QLC_NATIVE_HOST=127.0.0.1
 QLC_NATIVE_PORT=9998
 ```
 
-`auto` selects the Raspberry Pi private LAN IPv4 address so QLC+ sees this TCP
-session as a different host from another client connected through loopback. It
-requires a QLC+ build containing commit `984f0e7` or equivalent native
+On Linux/Raspberry Pi, each STDIO process automatically binds a distinct address inside the local
+`127.0.0.0/8` block. This works around QLC+'s source-IP session key without
+exposing the native server to the LAN. It requires a QLC+ build containing
+commit `984f0e7` or equivalent native
 protocol behavior. QLC+ may ask the operator to authorize `QLCPlus-MCP`. The
 client then downloads the active project, reports its connection/inventory state
 through `qlc_get_state` and `/mcp/status`, and reconnects after QLC+ restarts.

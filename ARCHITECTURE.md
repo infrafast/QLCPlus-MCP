@@ -136,16 +136,22 @@ Enable the migration client with:
 
 ```text
 QLC_NATIVE_ENABLED=true
-QLC_NATIVE_HOST=auto
+QLC_NATIVE_HOST=127.0.0.1
 QLC_NATIVE_PORT=9998
 ```
 
-`auto` selects a private IPv4 address from a physical Ethernet interface first,
-then Wi-Fi. This makes the kernel use that LAN address as the TCP source and
-avoids QLC+'s one-session-per-source-address collision with a loopback client.
-Tailscale/CGNAT and non-private addresses are deliberately excluded. An explicit
-host remains supported. Keep native access on a trusted LAN because SimpleCrypt
-is protocol compatibility, not modern network security.
+On Linux/Raspberry Pi, for a loopback target, every QLCPlus-MCP process derives a distinct source
+address in `127.0.0.0/8` from its PID and binds the TCP socket to it. QLC+ keys
+native sessions only by source address, so startup probes and concurrent STDIO
+servers no longer replace one another or OculizerQLC at `127.0.0.1`. PID reuse
+is safe after the preceding process has exited. An explicit remote host remains
+supported without forced source binding. macOS uses its normal loopback source
+because undeclared secondary loopback addresses are rejected there. Keep remote native access on a trusted
+LAN because SimpleCrypt is protocol compatibility, not modern network security.
+
+This workaround does not suppress QLC+'s authorization dialog for a newly seen
+source address. Permanent unattended operation requires upstream support for a
+deliberate native-client auto-authorization option.
 
 ### OSC Protocol Notes
 
