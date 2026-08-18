@@ -7,8 +7,6 @@ import { initLogger, getLogger } from "./logger.js";
 import { initNativeClient } from "./qlc/nativeClient.js";
 import { startStdioServer } from "./transports/stdio.js";
 import { startHttpServer } from "./transports/http.js";
-
-// Tools
 import { createGetStateTool } from "./tools/qlc_get_state.js";
 import { createListWidgetsTool } from "./tools/qlc_list_widgets.js";
 import { createButtonPressTool } from "./tools/qlc_button_control.js";
@@ -27,12 +25,6 @@ function loadRuntimeEnv(): string | undefined {
     const envPath = path.resolve(candidate);
     if (fs.existsSync(envPath)) {
       dotenv.config({ path: envPath });
-      if (
-        envPath === "/config/.env" &&
-        process.env.QLC_WIDGETS_FILE === "config/widgets.json"
-      ) {
-        process.env.QLC_WIDGETS_FILE = "/config/widgets.json";
-      }
       return envPath;
     }
   }
@@ -43,17 +35,16 @@ function loadRuntimeEnv(): string | undefined {
 
 const runtimeEnvFile = loadRuntimeEnv();
 
-async function main() {
+async function main(): Promise<void> {
   try {
-    // Load config
     const config = loadConfig();
-
-    // Initialize logger
     const logger = initLogger(config);
 
     logger.info("=== QLCPlus-MCP Server Starting ===");
     logger.info(`Transport: ${config.transport}`);
-    logger.info(`QLC+ Host: ${config.qlcHost}`);
+    logger.info(
+      `QLC+ native endpoint: ${config.qlcNativeHost}:${config.qlcNativePort}`,
+    );
     logger.info(`Log Level: ${config.logLevel}`);
     logger.info(
       runtimeEnvFile
@@ -61,7 +52,6 @@ async function main() {
         : "Runtime env file: default dotenv lookup",
     );
 
-    // QLC+ 5 native-only runtime.
     initNativeClient({
       enabled: config.qlcNativeEnabled,
       host: config.qlcNativeHost,
@@ -74,18 +64,14 @@ async function main() {
       dryRun: config.qlcDryRun,
     });
 
-    // Create tools
-    logger.info("Registering MCP tools...");
     const tools: ToolDefinition[] = [
       createAgentPromptTool(),
       createGetStateTool(),
       createListWidgetsTool(),
       createButtonPressTool(),
     ];
+    logger.info(`Registered ${tools.length} MCP tools`);
 
-    logger.info(`Registered ${tools.length} tools`);
-
-    // Start appropriate transport
     if (config.transport === "http") {
       await startHttpServer(config, tools, runtimeEnvFile);
     } else {
@@ -93,11 +79,10 @@ async function main() {
     }
   } catch (error) {
     const logger = getLogger();
-    if (error instanceof Error) {
-      logger.fatal({ err: error }, "Failed to start server");
-    } else {
-      logger.fatal({ err: String(error) }, "Failed to start server");
-    }
+    logger.fatal(
+      { err: error instanceof Error ? error : String(error) },
+      "Failed to start server",
+    );
     process.exit(1);
   }
 }
