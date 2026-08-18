@@ -1,1 +1,0 @@
-{"version":3,"file":"nativeHost.d.ts","sourceRoot":"","sources":["../../../src/qlc/nativeHost.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,cAAc;IAC7B,IAAI,EAAE,MAAM,CAAC;IACb,YAAY,CAAC,EAAE,MAAM,CAAC;CACvB;AAMD,8EAA8E;AAC9E,wBAAgB,yBAAyB,CAAC,GAAG,EAAE,MAAM,GAAG,MAAM,CAK7D;AAED,wBAAgB,qBAAqB,CACnC,IAAI,EAAE,MAAM,EACZ,GAAG,SAAc,EACjB,QAAQ,kBAAmB,GAC1B,cAAc,CAQhB"}
