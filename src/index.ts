@@ -4,7 +4,7 @@ import path from "node:path";
 import { loadConfig } from "./config.js";
 import { createAgentPromptTool } from "./agentPrompt.js";
 import { initLogger, getLogger } from "./logger.js";
-import { initNativeClient } from "./qlc/nativeClient.js";
+import { initNativeClient, stopNativeClient } from "./qlc/nativeClient.js";
 import { startStdioServer } from "./transports/stdio.js";
 import { startHttpServer } from "./transports/http.js";
 import { createGetStateTool } from "./tools/qlc_get_state.js";
@@ -34,6 +34,17 @@ function loadRuntimeEnv(): string | undefined {
 }
 
 const runtimeEnvFile = loadRuntimeEnv();
+
+let shuttingDown = false;
+function shutdown(exitCode: number): void {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  stopNativeClient();
+  process.exit(exitCode);
+}
+
+process.once("SIGINT", () => shutdown(0));
+process.once("SIGTERM", () => shutdown(0));
 
 async function main(): Promise<void> {
   try {
@@ -83,11 +94,11 @@ async function main(): Promise<void> {
       { err: error instanceof Error ? error : String(error) },
       "Failed to start server",
     );
-    process.exit(1);
+    shutdown(1);
   }
 }
 
 main().catch((error) => {
   console.error("Fatal error:", error);
-  process.exit(1);
+  shutdown(1);
 });

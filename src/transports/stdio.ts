@@ -2,6 +2,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { getLogger } from "../logger.js";
 import { Config } from "../config.js";
 import { createQlcMcpServer } from "../mcpServer.js";
+import { stopNativeClient } from "../qlc/nativeClient.js";
 import type { ToolDefinition } from "../mcpCompat.js";
 
 export async function startStdioServer(
@@ -15,12 +16,20 @@ export async function startStdioServer(
 
   const server = createQlcMcpServer(tools);
   const transport = new StdioServerTransport();
+  let shuttingDown = false;
+  const shutdown = (exitCode: number): void => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    stopNativeClient();
+    process.exit(exitCode);
+  };
   transport.onclose = () => {
     logger.info("STDIO transport closed");
+    shutdown(0);
   };
   transport.onerror = (error) => {
     logger.error({ err: error }, "STDIO transport error");
-    process.exit(1);
+    shutdown(1);
   };
 
   await server.connect(transport);
