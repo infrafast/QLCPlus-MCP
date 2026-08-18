@@ -1,90 +1,195 @@
 # QLCPlus-MCP
 
-QLCPlus-MCP is a TypeScript Model Context Protocol server for controlling QLC+ lighting from an AI agent.
+QLCPlus-MCP is a TypeScript Model Context Protocol server for controlling **QLC+ 5 through its native network protocol**.
 
-The current control transport is the QLC+ 5 native network protocol. QLCPlus-MCP
-authenticates with the localhost Native Server, downloads the active project,
-discovers Virtual Console widgets by caption, and sends native button actions.
+The server connects to the QLC+ Native Server, authenticates, downloads the active project, builds an in-memory Virtual Console inventory, and exposes safe MCP tools for discovery and button control.
 
-The project is migrating directly to the QLC+ 5 native network protocol so
-widget IDs can be discovered from the active project and connection state can be
-verified and recovered cleanly. WebSocket is no longer the migration target.
-Track the native-only migration in [ROADMAP.md](ROADMAP.md).
+OSC, WebSocket, `/vc.json`, static `widgets.json` runtime mappings and QLC+ 4 control are not part of the supported runtime.
 
-## What It Does
+## Features
 
-- Exposes QLC+ lighting controls as MCP tools.
-- Supports local `stdio` clients and remote streamable HTTP clients.
-- Triggers discovered Virtual Console buttons by caption.
-- Lists the live project inventory for agent-side discovery.
-- Reports native authorization, inventory, connection, and reconnect state.
-- Exposes the repository [PROMPT.md](PROMPT.md) as an MCP prompt/resource/tool for lighting-specific agent instructions.
+- QLC+ 5 native TCP control on port `9998`.
+- Automatic authorization/project-download lifecycle.
+- Automatic reconnect and fresh inventory after QLC+ restarts.
+- Runtime discovery of Virtual Console buttons and sliders.
+- Exact button-caption execution with case-insensitive matching only.
+- MCP over local STDIO or Streamable HTTP.
+- Optional HTTP bearer authentication.
+- Native connection/status reporting.
+- Repository `PROMPT.md` exposed as an MCP prompt, resource and tool.
 
-For technical internals, see [ARCHITECTURE.md](ARCHITECTURE.md).
+For implementation details, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Requirements
+
+- Node.js `>=20.20.0` (Node 22 recommended).
+- npm.
+- QLC+ 5 with Native Server enabled.
+- A QLC+ build compatible with upstream commit `984f0e7` or a release containing equivalent grouped native Virtual Console action behavior.
 
 ## Quick Start
-
-Prerequisites:
-
-- Node.js `>=20.20.0`
-- npm
-- QLC+ 4.x currently configured with OSC enabled
-
-Install:
 
 ```bash
 git clone https://github.com/infrafast/QLCPlus-MCP.git
 cd QLCPlus-MCP
 npm ci
 npm run build
+cp .env.example .env
 ```
 
-Create runtime configuration:
+For same-machine QLC+ and local HTTP use, the defaults are intentionally loopback-only:
 
-```bash
-cp .env.example config/.env
+```text
+MCP_TRANSPORT=http
+HTTP_HOST=127.0.0.1
+QLC_NATIVE_ENABLED=true
+QLC_NATIVE_HOST=127.0.0.1
+QLC_NATIVE_PORT=9998
 ```
 
-Edit `config/.env`, then start the server:
+Start the server:
 
 ```bash
 npm run start:http
 ```
 
-The HTTP MCP endpoint defaults to:
+Health endpoint:
 
 ```text
-http://0.0.0.0:8788/mcp
+http://127.0.0.1:8788/health
 ```
 
-Use dry-run mode for first tests:
+MCP endpoint:
+
+```text
+http://127.0.0.1:8788/mcp
+```
+
+QLC+ may display an authorization dialog for `QLCPlus-MCP`. Approve it once when required. The server becomes operational only after native state reaches `ready` and the current project inventory has been validated.
+
+## QLC+ Native Setup
+
+1. Start the supported QLC+ 5 build.
+2. Enable the QLC+ Native Server.
+3. Keep it on localhost whenever QLCPlus-MCP runs on the same machine.
+4. Start QLCPlus-MCP.
+5. Approve `QLCPlus-MCP` if QLC+ asks for authorization.
+6. Check `qlc_get_state` or `/health` until state is `ready`.
+
+On Linux/Raspberry Pi, localhost clients use a per-process address inside `127.0.0.0/8`. This lets QLC+ distinguish concurrent native clients without exposing port `9998` to the LAN.
+
+## Widget Names
+
+QLCPlus-MCP executes buttons by their complete QLC+ caption.
+
+Matching ignores **case only**. Spaces and other characters remain part of the name:
+
+```text
+Blue Speed  == blue speed
+blue speed  != blue_speed
+blue speed  != bluespeed
+```
+
+Therefore a widget named **`blue speed` is fully supported**.
+
+The agent may call:
+
+```json
+{
+  "widgetName": "blue speed"
+}
+```
+
+`qlc_button_press` validates the caption against the current native inventory before sending any QLC+ packet. A separate `qlc_list_widgets` call is not required when the user already supplied a complete caption.
+
+Use `qlc_list_widgets` when discovering available controls, searching by a partial term, or recovering after an exact caption was rejected.
+
+## MCP Tools
+
+### `qlc_get_state`
+
+Reports native lifecycle and runtime information including authorization, inventory generation, reconnect count and last successful action.
+
+Only `ready` means a current project inventory is authorized and usable.
+
+### `qlc_list_widgets`
+
+Lists widgets discovered from the active project. Optional filters include widget type, text query and result limit.
+
+Numeric QLC+ widget IDs are session-only and can change after project reload/reconnect.
+
+### `qlc_button_press`
+
+Executes one complete Virtual Console button caption.
+
+- case-insensitive only;
+- spaces significant;
+- accents significant;
+- punctuation significant;
+- `_` and `-` significant;
+- no substring/fuzzy substitution.
+
+Flash buttons are sent as press/release; normal toggle-style buttons are press-only.
+
+### `get_agent_prompt`
+
+Returns [PROMPT.md](PROMPT.md), the recommended lighting-agent instructions.
+
+The same content is also available as MCP prompt `agent_prompt` and resource `agent://prompt/system`.
+
+## STDIO Mode
+
+For an MCP host running on the same machine:
 
 ```bash
-QLC_DRY_RUN=true npm run start:http
+npm run start:stdio
 ```
 
-## QLC+ Setup
+Example MCP configuration:
 
-Current OSC mode requires QLC+ to accept OSC input.
+```json
+{
+  "mcpServers": {
+    "qlcplus": {
+      "command": "node",
+      "args": ["/absolute/path/to/QLCPlus-MCP/dist/src/index.js"],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "QLC_NATIVE_HOST": "127.0.0.1"
+      }
+    }
+  }
+}
+```
 
-1. Open QLC+.
-2. Enable/configure the OSC plugin in Input/Output.
-3. Use input port `7700` unless you configured another port.
-4. Create Virtual Console buttons/sliders for the show actions you want the agent to trigger.
-5. Map those controls in `config/widgets.json`, or generate a starter mapping from a `.qxw` file.
+Build the project before using `dist/src/index.js`.
 
-On Linux/Raspberry Pi, `oscsend` is useful for teaching QLC+ widget input addresses:
+## HTTP Mode
+
+HTTP defaults to loopback for safety:
+
+```text
+HTTP_HOST=127.0.0.1
+HTTP_PORT=8788
+HTTP_MCP_PATH=/mcp
+```
+
+For network access, explicitly bind to a network interface and enable bearer auth:
 
 ```bash
-sudo apt install liblo-tools
-oscsend 127.0.0.1 7700 /lecture_pause i 1
+HTTP_HOST=0.0.0.0 \
+MCP_AUTH_MODE=bearer \
+MCP_AUTH_TOKEN="$(openssl rand -base64 32)" \
+npm run start:http
 ```
 
-OSC protocol details and implementation notes are documented in [ARCHITECTURE.md](ARCHITECTURE.md).
+The public `/health` endpoint intentionally exposes only minimal service/native readiness information. It never exposes the bearer token, native encryption key, or generated authenticated client configuration.
+
+Authenticated endpoints include `/mcp/status`, `/mcp/logs`, `/mcp/tools`, `/mcp/resources`, and the MCP endpoint itself.
 
 ## Configuration
 
-The server looks for environment files in this order:
+Environment files are searched in this order:
 
 1. `QLCPLUS_MCP_ENV_FILE`
 2. `/etc/qlcplusmcp.env`
@@ -92,262 +197,158 @@ The server looks for environment files in this order:
 4. `config/.env`
 5. `.env`
 
-Common settings:
+The repository does **not** track a machine-specific `config/.env`.
 
-```bash
-MCP_TRANSPORT=http
-HTTP_HOST=0.0.0.0
+Main variables:
+
+```text
+MCP_TRANSPORT=stdio|http
+HTTP_HOST=127.0.0.1
 HTTP_PORT=8788
 HTTP_MCP_PATH=/mcp
+MCP_AUTH_MODE=none|bearer
+MCP_AUTH_TOKEN=...
 
-MCP_AUTH_MODE=none
-# MCP_AUTH_MODE=bearer
-# MCP_AUTH_TOKEN=change-me
-
-QLC_HOST=127.0.0.1
-QLC_OSC_INPUT_PORT=7700
-QLC_OSC_OUTPUT_PORT=9000
-QLC_UNIVERSE=1
-
-QLC_WIDGETS_FILE=config/widgets.json
-QLC_ALLOW_RAW_OSC=false
-QLC_DRY_RUN=false
-
-LOG_LEVEL=info
-NODE_ENV=development
-```
-
-Milestone 1 also provides an opt-in observational QLC+ 5 native client. It does
-not send lighting actions yet:
-
-```bash
 QLC_NATIVE_ENABLED=true
 QLC_NATIVE_HOST=127.0.0.1
 QLC_NATIVE_PORT=9998
+QLC_NATIVE_ENCRYPTION_KEY=
+QLC_NATIVE_RECONNECT_MS=2000
+QLC_NATIVE_CONNECT_TIMEOUT_MS=10000
+QLC_NATIVE_MAX_PROJECT_SIZE=16777216
+QLC_NATIVE_CLIENT_NAME=QLCPlus-MCP
+
+QLC_DRY_RUN=false
+MCP_PROMPT_FILE=/optional/custom/PROMPT.md
+LOG_LEVEL=info
+NODE_ENV=production|development
 ```
 
-On Linux/Raspberry Pi, each STDIO process automatically binds a distinct address inside the local
-`127.0.0.0/8` block. This works around QLC+'s source-IP session key without
-exposing the native server to the LAN. It requires a QLC+ build containing
-commit `984f0e7` or equivalent native
-protocol behavior. QLC+ may ask the operator to authorize `QLCPlus-MCP`. The
-client then downloads the active project, reports its connection/inventory state
-through `qlc_get_state` and `/mcp/status`, and reconnects after QLC+ restarts.
+When `QLC_NATIVE_ENABLED` is omitted, the native client defaults to **enabled**.
 
-The complete configuration reference is maintained in [ARCHITECTURE.md](ARCHITECTURE.md).
+`QLC_DRY_RUN=true` keeps the native network path closed and returns dry-run button results without sending live actions.
 
-## Widget Mapping
+## Raspberry Pi Service
 
-In the current OSC architecture, `config/widgets.json` maps friendly names to OSC paths:
+The `qlcplusmcp_raspi_service_pack` directory contains the systemd service, environment template, installer and helper command.
 
-```json
-{
-  "widgets": [
-    {
-      "id": "28",
-      "name": "Rouge",
-      "path": "/rouge",
-      "type": "button",
-      "description": "QLC+ red look"
-    }
-  ],
-  "generated": true
-}
-```
-
-An agent can then call `qlc_button_press` with:
-
-```json
-{
-  "widgetName": "Rouge"
-}
-```
-
-Generate a mapping from a QLC+ project:
+Typical installation:
 
 ```bash
-npm run generate:widgets intervalPI.qxw config/widgets.json
+cd /home/pi/QLCPlus-MCP
+npm ci
+npm run build
+cd qlcplusmcp_raspi_service_pack
+chmod +x install_qlcplusmcp_service.sh
+./install_qlcplusmcp_service.sh
+qlcplusmcp auto
+qlcplusmcp health
 ```
 
-`widgets.json` will cease to be a runtime requirement after native-only control is
-validated. Until then, keep it as the stable OSC source of truth.
+The installer:
 
-## Usage Scenarios
+- creates `/etc/qlcplusmcp.env` only if it does not already exist;
+- preserves existing runtime configuration on reinstall;
+- stores the environment file with mode `600`;
+- defaults HTTP to `127.0.0.1`;
+- defaults QLC+ native control to `127.0.0.1:9998`.
 
-### Local MCP Client
+Useful commands:
 
-Use `stdio` when the MCP host runs on the same machine:
-
-```bash
-npm run start:stdio
-```
-
-Example client config:
-
-```json
-{
-  "mcpServers": {
-    "qlcplus": {
-      "command": "node",
-      "args": ["/full/path/to/QLCPlus-MCP/dist/src/index.js"]
-    }
-  }
-}
-```
-
-### Remote Or Network Client
-
-Use HTTP when another machine or service connects to the server:
-
-```bash
-npm run start:http
-```
-
-Enable bearer auth on trusted deployments:
-
-```bash
-MCP_AUTH_MODE=bearer MCP_AUTH_TOKEN="$(openssl rand -base64 32)" npm run start:http
-```
-
-### LiveStageAssistant
-
-Use either `stdio` for same-host setups or HTTP for network deployments. The server exposes [PROMPT.md](PROMPT.md) as `agent_prompt`, `agent://prompt/system`, and `get_agent_prompt` so a host can load the lighting guidance automatically.
-
-Example `stdio` MCP configuration:
-
-```json
-{
-  "mcpServers": {
-    "qlcplus": {
-      "command": "node",
-      "args": ["/path/to/QLCPlus-MCP/dist/src/index.js"],
-      "env": {
-        "MCP_TRANSPORT": "stdio",
-        "MCP_PROMPT_FILE": "/path/to/QLCPlus-MCP/PROMPT.md"
-      },
-      "assistantOptions": {
-        "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,couleur"
-      }
-    }
-  }
-}
-```
-
-Example HTTP MCP configuration:
-
-```json
-{
-  "mcpServers": {
-    "qlcplus": {
-      "url": "http://lighting-machine.local:8788/mcp",
-      "auth": {
-        "type": "bearer",
-        "token": "same-token-as-MCP_AUTH_TOKEN"
-      },
-      "assistantOptions": {
-        "routing": "qlc,qlcplus,lumière,light,éclairage,scène,dmx,fixture,projecteur,couleur"
-      }
-    }
-  }
-}
-```
-
-### Raspberry Pi Or Container Deployment
-
-For a Raspberry Pi/service-oriented deployment, keep configuration in `config/.env`, `/config/.env`, or `/etc/qlcplusmcp.env`, run `npm run build`, then start with `npm run start:http`.
-
-The `qlcplusmcp_raspi_service_pack` directory contains systemd/service helper scripts. Typical service commands after installation:
-
-```bash
+```text
 qlcplusmcp start
 qlcplusmcp stop
 qlcplusmcp restart
 qlcplusmcp status
 qlcplusmcp logs
 qlcplusmcp health
+qlcplusmcp endpoint
 qlcplusmcp auto
 qlcplusmcp noauto
+qlcplusmcp config
 ```
 
-The HTTP admin page at `/mcp` includes runtime QLC+ connection controls when accessed from a browser.
+## Docker
 
-## MCP Tools
+Build/run with Docker Compose:
 
-Current tools:
+```bash
+docker compose up --build
+```
 
-- `get_agent_prompt`: returns the recommended lighting-agent prompt.
-- `qlc_get_state`: reports native connection, authorization, inventory, and reconnect state.
-- `qlc_list_widgets`: lists widgets discovered from the active QLC+ project.
-- `qlc_button_press`: presses a discovered Virtual Console button by caption.
+The container exposes only the MCP HTTP TCP port. No OSC UDP port is exposed.
 
-Agents should list widgets before triggering named controls and must not invent widget names.
+By default Docker Compose uses `host.docker.internal` as the QLC+ native target. Override `QLC_NATIVE_HOST` when QLC+ is reachable elsewhere.
+
+If HTTP is published beyond a trusted local host, enable bearer authentication.
 
 ## Development
 
-Build:
-
 ```bash
+npm ci
 npm run build
+npm run test:ci
 ```
 
-Run tests once:
-
-```bash
-npx vitest run
-```
-
-Format TypeScript:
-
-```bash
-npm run format
-```
-
-Start in watch mode:
+Watch mode:
 
 ```bash
 npm run dev
 ```
 
-Documentation ownership rules for future maintainers and Codex agents are in [AGENTS.md](AGENTS.md).
+Formatting:
+
+```bash
+npm run format
+```
+
+GitHub Actions runs build and tests on Node 20.20 and Node 22 for pull requests and `main` pushes.
+
+Generated `dist/` output is not tracked in Git. Build it locally or in the deployment image/service before starting the compiled entry point.
 
 ## Troubleshooting
 
-`Widget not found`
+### Native state never reaches `ready`
 
-Run `qlc_list_widgets`, verify `config/widgets.json`, then regenerate mappings if needed:
+Check:
 
-```bash
-npm run generate:widgets show.qxw config/widgets.json
+- QLC+ 5 Native Server is enabled;
+- `QLC_NATIVE_HOST` and `QLC_NATIVE_PORT` are correct;
+- QLC+ authorization has been approved if prompted;
+- the QLC+ build is compatible with the required native protocol behavior;
+- the project transfer is not rejected by the configured size limit.
+
+### Exact button not found
+
+Call `qlc_list_widgets` and compare the complete caption. Do not remove spaces or replace them with underscores.
+
+For example, if the inventory contains `blue speed`, call exactly `blue speed` (case may differ), not `blue_speed` or `bluespeed`.
+
+### HTTP client receives 401
+
+When `MCP_AUTH_MODE=bearer`, send:
+
+```text
+Authorization: Bearer <MCP_AUTH_TOKEN>
 ```
 
-No visible lighting change
+### QLC+ restarts
 
-- Confirm QLC+ is running.
-- Confirm OSC input is enabled.
-- Confirm host/port in `config/.env`.
-- Try `QLC_DRY_RUN=true` to inspect intended commands without sending.
+QLCPlus-MCP invalidates the old inventory, reconnects, downloads the fresh project and returns to `ready`. Numeric widget IDs from the old session are never treated as persistent identifiers.
 
-No recent QLC+ feedback
+## Documentation
 
-Feedback is useful but not required for sending commands. Check `QLC_OSC_OUTPUT_PORT`, QLC+ output settings, and firewalls.
-
-Bearer token rejected
-
-Check `MCP_AUTH_MODE`, `MCP_AUTH_TOKEN`, and the client `Authorization: Bearer ...` header.
-
-## Documentation Map
-
-- [README.md](README.md): user-facing installation, scenarios, and configuration overview.
-- [ARCHITECTURE.md](ARCHITECTURE.md): technical architecture, modules, tools, and validation.
-- [ROADMAP.md](ROADMAP.md): staged native-protocol migration and rollback anchor.
-- [AGENTS.md](AGENTS.md): documentation and development guidance for Codex/automation agents.
+- [README.md](README.md): installation and operation.
+- [ARCHITECTURE.md](ARCHITECTURE.md): technical design and security boundaries.
+- [ROADMAP.md](ROADMAP.md): migration history and future native work.
+- [AGENTS.md](AGENTS.md): coding-agent maintenance rules.
+- [PROMPT.md](PROMPT.md): runtime AI-agent behavior.
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).
 
 ## References
 
 - [QLC+ Documentation](https://docs.qlcplus.org/)
 - [Model Context Protocol](https://modelcontextprotocol.io/)
-- [Open Sound Control](https://opensoundcontrol.stanford.edu/)
