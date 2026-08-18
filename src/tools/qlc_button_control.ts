@@ -9,7 +9,7 @@ export function createButtonPressTool(): ToolDefinition {
   return {
     name: "qlc_button_press",
     description:
-      "Immediately press a QLC+ 5 Virtual Console button when widgetName is one complete exact caption. Matching ignores case only: internal spaces, accents, punctuation, underscores and hyphens are significant. Exact requested matches require no user confirmation. Legacy oscPath is unsupported.",
+      "Press a QLC+ 5 Virtual Console button identified by one complete exact caption. Matching ignores case only: internal spaces, accents, punctuation, underscores and hyphens are significant. Legacy oscPath is unsupported.",
     schema: ButtonPressInputSchema,
     cb: async (input: any) => {
       logger.debug("Tool: qlc_button_press", input);
