@@ -9,7 +9,7 @@ export function createButtonPressTool(): ToolDefinition {
   return {
     name: "qlc_button_press",
     description:
-      "Immediately press a QLC+ 5 Virtual Console button when widgetName is one complete exact caption from qlc_list_widgets; an exact requested match requires no user confirmation. Matching is case-insensitive but spaces, accents and punctuation must match. Never infer, shorten, expand, or fuzzy-match a caption. Legacy oscPath is unsupported.",
+      "Immediately press a QLC+ 5 Virtual Console button when widgetName is one complete exact caption. Matching ignores case only: internal spaces, accents, punctuation, underscores and hyphens are significant. Exact requested matches require no user confirmation. Legacy oscPath is unsupported.",
     schema: ButtonPressInputSchema,
     cb: async (input: any) => {
       logger.debug("Tool: qlc_button_press", input);
@@ -22,6 +22,7 @@ export function createButtonPressTool(): ToolDefinition {
             : "widgetName is required.",
         );
       }
+
       const client = getNativeClient();
       if (!client) return error("QLC+ native client is not initialized.");
 
