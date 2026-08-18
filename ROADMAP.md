@@ -1,276 +1,210 @@
-# QLC+ 5 Native Protocol Migration Roadmap
+# QLC+ 5 Native Protocol Roadmap
 
 ## Product Decision
 
-QLCPlus-MCP will become a QLC+ 5 native-network-protocol server. The supported
-production control path will use the QLC+ Native Server, not OSC and not the
-QLC+ WebSocket/Web API.
+QLCPlus-MCP is a **QLC+ 5 native-network-protocol-only** MCP server.
 
-This is an intentional breaking migration:
-
-- QLC+ 4 support is not a target for the native-only release;
-- runtime widget discovery comes from the project transferred by QLC+;
-- QLC+ numeric widget IDs remain session-only data;
-- MCP tool names remain stable while their implementation moves to native control;
-- OSC is retained only as a short-lived rollback path and is removed after the
-  native acceptance gate.
-
-## Evidence Reused From OculizerQLC
-
-This plan incorporates the implementation and live-test experience recorded in
-[`OculizerQLC/DEVELOPMENT.md`](https://github.com/infrafast/OculizerQLC/blob/main/DEVELOPMENT.md),
-the [native protocol reference](https://github.com/infrafast/OculizerQLC/blob/main/docs/QLC%2B%205%20native%20network%20protocol%20reference.md),
-and the [early native tests](https://github.com/infrafast/OculizerQLC/blob/main/docs/QLC5%20native%20network%20protocol%20early%20tests%20summary.md).
-
-The following behavior is already proven in OculizerQLC and should be ported,
-not rediscovered from scratch:
-
-- UDP discovery on port `9997` and TCP sessions on port `9998`;
-- QLC+ native authentication and SimpleCrypt compatibility;
-- bounded TCP framing for fragmented and coalesced packets;
-- complete, bounded `NetProjectTransfer` reassembly;
-- safe parsing of the transferred workspace XML;
-- runtime discovery of buttons, sliders, captions, types, actions, ranges,
-  function associations, and Frame/SoloFrame hierarchy;
-- grouped live action codes, notably `VCButtonSetPressed = 0xF200` and
-  `VCSliderSetValue = 0xF300`, for compatible QLC+ builds;
-- asynchronous authorization wait, connection loss detection, bounded retry,
-  fresh project download, atomic inventory replacement, and recovery without
-  restarting the application;
-- bounded/coalesced pending intentions while QLC+ is unavailable;
-- strict framing, decryption, allocation, and required-field checks combined
-  with forward-compatible handling of unknown opcodes and trailing sections.
-
-OculizerQLC validated these behaviors against a QLC+ build containing upstream
-commit [`984f0e7`](https://github.com/mcallegari/qlcplus/commit/984f0e75e48c7c19a56581b82c5e5895285135c7).
-The exact opcode and authentication contract remains a QLC+ version compatibility
-boundary and must be checked against the QLC+ build selected for QLCPlus-MCP.
-
-## Rollback Anchor
-
-- OSC rollback commit: `dc3fc87`
-- Baseline verification: `npm run build` and `npx vitest run` pass with 14 tests.
-- Do not mix native and OSC commands in one runtime session.
-- Do not extend the OSC implementation during migration except for a blocking
-  production defect.
-
-If a native milestone fails for a fundamental protocol reason, restore the whole
-rollback commit instead of keeping a partially mixed transport architecture.
-
-## Target Architecture
+The supported production path is:
 
 ```text
 MCP client
-  -> existing QLCPlus-MCP tools
-  -> QLC+ native client and session state machine
-  -> TCP 9998 authentication and project transfer
-  -> in-memory Virtual Console inventory
-  -> native button/slider/live actions
-  -> QLC+ 5 lighting engine
+  -> QLCPlus-MCP tools
+  -> QLC+ native session
+  -> active project inventory
+  -> validated native Virtual Console actions
+  -> QLC+ 5
 ```
 
-The native session exposes an explicit state such as:
+OSC, WebSocket, `/vc.json`, QLC+ 4 runtime compatibility and static `widgets.json` mappings are no longer product targets.
+
+## Compatibility Boundary
+
+The implementation requires QLC+ native protocol behavior compatible with upstream commit `984f0e7` or a release containing equivalent grouped native Virtual Console action codes and authentication/project-transfer behavior.
+
+Important currently used action code:
 
 ```text
-disabled
-  -> connecting
-  -> waiting-for-authorization
-  -> downloading-project
-  -> ready
-  -> disconnected
-  -> reconnecting
+VCButtonSetPressed = 0xF200
 ```
 
-`qlc_get_state` must distinguish server-process health, TCP connectivity,
-authorization, inventory readiness, last successful native action, last error,
-and reconnect activity. A connected TCP socket alone is not reported as ready.
+The protocol details reused from OculizerQLC include:
 
-## Milestone 0 — Freeze The OSC Baseline
+- TCP native sessions on port `9998`;
+- QLC+ native authentication/SimpleCrypt compatibility;
+- bounded TCP framing for fragmented/coalesced packets;
+- bounded project-transfer reassembly;
+- safe active-project XML parsing;
+- Virtual Console button/slider inventory discovery;
+- reconnect and fresh-project behavior;
+- grouped Virtual Console action codes.
 
-Purpose: preserve a small, verified rollback point before native implementation.
+## Historical Rollback Anchor
 
-Tasks:
+The former OSC implementation remains available only through repository history.
 
-- keep commit `dc3fc87` as the rollback anchor;
-- record the current MCP tool names and schemas as compatibility fixtures;
-- keep `config/widgets.json` and the QXW generator unchanged during native work;
-- add no WebSocket migration layer.
+Rollback anchor:
 
-Automated gate:
+```text
+dc3fc87
+```
 
-- `npm run build`;
-- `npx vitest run`;
-- schema fixtures prove current MCP tools have not changed unexpectedly.
+Do not reintroduce OSC code as an in-tree fallback. If historical comparison is required, inspect the rollback commit/tag instead.
 
-Operator involvement: none.
+## Milestone 0 — Freeze OSC Baseline
 
-## Milestone 1 — Native Client, Inventory, And Connection Lifecycle
+Status: **complete (historical)**
 
-Status: **complete — automated coverage and Raspberry Pi live authorization,
-project inventory, QLC+ restart, reconnect, and fresh inventory accepted**
+Purpose: preserve a known rollback point before native work.
 
-Purpose: replace the former WebSocket Phase 1 with the complete native foundation
-needed by all subsequent work.
+Result:
 
-Implementation scope:
+- OSC baseline preserved in Git history;
+- MCP tool contract recorded before migration;
+- WebSocket migration abandoned in favor of direct native protocol work.
 
-- add isolated packet, section, SimpleCrypt, TCP framing, and session modules;
-- default to a localhost target with a per-process `127/8` source identity on
-  TCP port `9998`, while retaining an explicit-host override;
-- keep UDP discovery optional for diagnostics or non-local deployments rather
-  than making startup depend on broadcast discovery;
-- authenticate and represent authorization wait/refusal explicitly;
-- reassemble `NetProjectTransfer` within a configured maximum size;
-- safely parse only required Virtual Console XML metadata;
-- normalize captions case-insensitively while ignoring spaces, `_`, and `-`;
-- reject duplicate normalized captions and wrong widget kinds explicitly;
-- replace the inventory atomically only after complete validation;
-- invalidate all session IDs immediately on disconnect;
-- reconnect asynchronously with bounded backoff and rate-limited logs;
-- redownload and validate the project before returning to `ready`;
-- enable TCP keepalive and consume socket close/error events for idle connection
-  loss detection; `NetPoll`/`NetPollReply` cannot be used because QLC+ declares
-  but does not implement them;
-- expose the full lifecycle through `qlc_get_state` and the HTTP status page;
-- keep dry-run completely network-free.
+## Milestone 1 — Native Client, Inventory And Lifecycle
 
-Safety requirements:
+Status: **complete**
 
-- bound packet, decrypted payload, project, inventory, and pending-command sizes;
-- never scan encrypted data for an apparent packet header after malformed input;
-- close and reconnect on framing, cryptographic, or required-field failure;
-- reject unsafe XML declarations and external entities while accepting the
-  standard inert `<!DOCTYPE Workspace>` marker used by QLC+;
-- ignore unknown opcodes and trailing extension sections when safe;
-- bind/use the native endpoint only on localhost or a trusted show network.
+Implemented:
 
-Automated gate:
+- native packet/section/SimpleCrypt codec;
+- TCP framing and bounded decoding;
+- authentication lifecycle;
+- active-project transfer/reassembly;
+- safe Virtual Console inventory parsing;
+- explicit `connecting`, `waiting-for-authorization`, `downloading-project`, `ready`, `disconnected` and `stopped` states;
+- atomic inventory replacement;
+- inventory invalidation on disconnect;
+- automatic reconnect and fresh project download;
+- TCP keepalive;
+- Linux per-process `127/8` local source identity for concurrent clients;
+- dry-run with no native socket.
 
-- fixed binary codec vectors;
-- fragmented, coalesced, truncated, malformed, and oversized packet tests;
-- authentication success, refusal, and delayed approval tests;
-- exact-multiple and multi-chunk project-transfer tests;
-- corrupt/oversized/unsafe XML tests;
-- nested inventory, caption normalization, collision, type, action, range, and
-  Frame/SoloFrame tests;
-- disconnect, backoff, log suppression, state reset, inventory invalidation,
-  fresh-project-before-ready, and idle liveness tests;
-- proof that dry-run opens no UDP or TCP socket.
+Accepted live behavior from the migration phase includes Raspberry Pi authorization, inventory discovery, QLC+ restart and reconnect/fresh-inventory recovery.
 
-Critical operator gate — one short session:
+## Milestone 2 — Native MCP Button Control
 
-1. Start the selected production QLC+ 5 build with Native Server enabled.
-2. Approve the QLCPlus-MCP client if QLC+ requests authorization.
-3. Confirm transition to `ready` and confirm that the reported widget inventory
-   matches the currently loaded project.
-4. Restart QLC+ once and confirm automatic recovery to `ready` without restarting
-   QLCPlus-MCP or retaining stale widget IDs.
+Status: **implemented; representative live-lighting acceptance remains the release gate**
 
-No lighting-action validation is required in this milestone.
+Implemented:
 
-## Milestone 2 — Native-Only MCP Control
+- `qlc_list_widgets` reads the native runtime inventory;
+- `qlc_button_press` sends native Virtual Console button actions;
+- Toggle/default buttons use press-only semantics;
+- Flash uses press/release semantics;
+- commands are rejected outside `ready`;
+- numeric widget IDs remain session-only;
+- raw OSC control was removed;
+- exact button identity is validated server-side.
 
-Status: **implemented; critical live QLC+ button-control gate pending**
+### Exact caption policy
 
-Purpose: route the existing MCP contract through the validated native session.
+Matching ignores **case only**.
 
-Tasks:
+```text
+Blue Speed  == blue speed
+blue speed  != blue_speed
+blue speed  != bluespeed
+Été         != Ete
+```
 
-- make `qlc_list_widgets` return the live native inventory;
-- make `qlc_button_press` resolve captions and send native Virtual Console
-  button actions;
-- require one complete caption match (case-insensitive only); do not apply
-  substring, separator-insensitive, semantic, closest, or fuzzy substitution;
-- preserve QLC+ button semantics: press-only for Toggle, Blackout, StopAll,
-  absent/default, and unknown future actions; press/release only for Flash;
-- let QLC+ Frame/SoloFrame behavior own layering and exclusivity;
-- report a command as successful only after it is written through a `ready`
-  native session;
-- keep one bounded discrete-action queue and reject or expire unsafe stale button
-  actions across a disconnect rather than blindly replaying toggles;
-- remove `qlc_send_osc`; do not preserve a raw-OSC-shaped compatibility shim or
-  expose unrestricted native editing/action codes;
-- make native configuration and state available on the HTTP admin page;
-- stop loading `config/widgets.json` in normal runtime;
-- retain QXW parsing only as an offline diagnostic tool.
+Spaces are explicitly supported in widget captions.
 
-Automated gate:
+No substring, separator-insensitive, accent-insensitive, semantic, closest or fuzzy match may authorize a live action.
 
-- all current MCP tool schema compatibility tests, except the explicitly decided
-  raw OSC change;
-- exact lookup, missing caption, collision, wrong kind, and inventory replacement;
-- button-action semantics and no accidental double-toggle;
-- command behavior in every connection state;
-- stale-command suppression across reconnect;
-- HTTP status/config and MCP STDIO/HTTP regressions;
-- `npm run build` and the complete test suite.
+### Efficient agent routing
 
-Critical operator gate — one short lighting session:
+A complete user-supplied caption goes directly to `qlc_button_press`.
 
-1. Trigger representative Toggle, Flash, Blackout/StopAll if present, ordinary
-   Frame, and SoloFrame buttons through MCP.
-2. Reload or switch the QLC+ project and confirm rediscovery before the next action.
-3. Restart QLC+ and confirm the first post-reconnect action targets the new
-   inventory correctly.
+`qlc_list_widgets` is used for discovery, partial search and recovery after an exact-match failure. This removes a redundant MCP round trip from normal commands while keeping the server as the authoritative validator.
 
-This is the only required live lighting-control parity test before native-only
-cutover.
+### Remaining live acceptance gate
 
-## Milestone 3 — Remove OSC And Release Native-Only
+On the target QLC+ production build:
 
-Purpose: ship a simpler QLC+ 5 product rather than maintain two protocol stacks.
+1. trigger representative Toggle buttons;
+2. trigger a Flash button and verify release behavior;
+3. trigger buttons inside ordinary Frame and SoloFrame layouts if present;
+4. verify a button whose caption contains spaces, for example `blue speed`;
+5. reload/switch the QLC+ project and verify rediscovery before the next action;
+6. restart QLC+ and verify the first post-reconnect action uses the fresh inventory.
 
-Tasks:
+## Milestone 3 — Native-Only Cleanup
 
-- make native control the only runtime transport;
-- remove OSC runtime code, dependencies, ports, feedback state, raw OSC tool,
-  OSC admin fields, Docker UDP exposure, and service configuration;
-- remove `config/widgets.json` from runtime requirements;
-- delete transport-selection branches that no longer represent product choices;
-- preserve the rollback commit/tag rather than compatibility code;
-- update README, ARCHITECTURE, PROMPT, Docker, and Raspberry Pi service guidance;
-- document QLC+ Native Server setup, authorization, trusted-network constraint,
-  connection states, project discovery, and recovery behavior.
+Status: **implemented on `cleanup/native-only-consistency`; automated PR CI and final Raspberry Pi release validation pending**
 
-Automated gate:
+The cleanup removes migration-era contradictions and legacy runtime code.
 
-- repository search finds no active OSC/WebSocket runtime path;
-- clean install, build, full tests, STDIO, HTTP, Docker, and service-pack checks;
-- startup without QLC+ remains healthy and reports `reconnecting`;
-- late QLC+ start reaches `ready` without restarting QLCPlus-MCP;
-- malformed or incompatible peers never reach `ready` and never receive actions.
+Implemented on the cleanup branch:
 
-Critical operator release gate:
+- remove OSC runtime module;
+- remove static widget resolver and `config/widgets.json` runtime mapping;
+- remove obsolete QXW-to-OSC generator/parser;
+- remove OSC/DMX runtime types and tests;
+- remove OSC Docker UDP exposure and config volume;
+- make Docker native-only;
+- make Raspberry Pi service configuration native-only;
+- stop tracking machine-specific `config/.env`;
+- stop tracking generated `dist/`;
+- add `.env`, `config/.env`, `dist/` and `.DS_Store` ignore rules;
+- fix `QLC_NATIVE_ENABLED` default handling;
+- bind HTTP to loopback by default;
+- require a token when bearer auth is selected;
+- prevent bearer token exposure through `/health`, generated agent config or logs;
+- replace the stale OSC HTTP admin form with read-only native status;
+- bound HTTP JSON request bodies;
+- preserve spaces/punctuation/accents/separators in exact widget identity;
+- resolve `MCP_PROMPT_FILE` after runtime env loading;
+- add GitHub Actions build/test CI on Node 20.20 and 22;
+- add the repository MIT `LICENSE` file;
+- align README, ARCHITECTURE, ROADMAP, AGENTS and PROMPT with native-only behavior.
 
-- one sustained Raspberry Pi/service session with QLC+ late start or restart,
-  authorization if prompted, inventory refresh, representative MCP button
-  actions, bounded logs, and acceptable CPU/RSS usage.
+### Milestone 3 automated gate
 
-After this gate passes, native-only is the supported release and OSC survives
-only in repository history at the rollback anchor.
+The pull request must pass:
 
-## Decisions Needed Before Milestone 2
+```text
+npm ci
+npm run build
+npm run test:ci
+```
 
-1. **Supported QLC+ build — decided:** require QLC+ commit `984f0e7` or a release
-   containing its grouped native action codes and protocol behavior.
-2. **Raw advanced tool — decided:** remove `qlc_send_osc` at native-only cutover;
-   do not replace it with a raw native editing/action tool in the first release.
-3. **Authorization policy:** confirm whether the production QLC+ deployment retains
-   client authorization across restart. The client must still tolerate a fresh
-   approval request without blocking the MCP server.
-4. **Network scope — decided:** support localhost only in the native-only release.
+on Node 20.20 and Node 22.
 
-## Deferred Work
+Repository review should also confirm there is no active OSC/WebSocket runtime path and no tracked runtime `.env` or `dist/` output.
 
-The first native-only release does not need:
+### Milestone 3 Raspberry Pi release gate
 
-- QLC+ 4 compatibility;
+After CI passes:
+
+1. update/build QLCPlus-MCP on the Raspberry Pi;
+2. verify systemd starts cleanly with `/etc/qlcplusmcp.env`;
+3. confirm `qlcplusmcp health` reports the native lifecycle;
+4. approve QLC+ authorization if required;
+5. reach `ready` with the expected inventory;
+6. execute representative exact captions including at least one caption containing spaces;
+7. restart QLC+ and confirm automatic recovery;
+8. check journal output for bounded reconnect logging and acceptable CPU/RSS usage.
+
+After this live gate, native-only cleanup can be considered production accepted.
+
+## Future Native-Only Work
+
+Candidates after the native button-control release is stable:
+
+- native slider control with a deliberately designed MCP schema;
+- richer inventory search that never changes execution identity rules;
+- native connection telemetry/metrics;
+- additional protocol compatibility fixtures for future QLC+ versions;
+- authorization automation only if QLC+ provides an explicit secure supported mechanism;
+- optional release packaging/artifacts after CI proves reproducible builds.
+
+Not planned unless the product decision changes explicitly:
+
+- OSC fallback;
+- QLC+ 4 support;
 - WebSocket or `/vc.json` fallback;
-- live workspace-edit action tracking while a project is being edited;
-- fixture/function/workspace editing;
-- semantic caption/color/font updates;
-- fuzzy caption matching;
-- direct native DMX control;
-- slider/cue-list expansion unless required by an existing stable MCP tool.
-
-These can be evaluated after the native-only button-control release is stable.
+- raw unrestricted native action tools;
+- fuzzy execution matching;
+- direct native DMX control.

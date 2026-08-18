@@ -12,17 +12,18 @@ RUN npm run build
 FROM node:22-alpine AS runtime
 WORKDIR /app
 
-ENV NODE_ENV=production
-ENV QLCPLUS_MCP_ENV_FILE=/config/.env
+ENV NODE_ENV=production \
+    MCP_TRANSPORT=http \
+    HTTP_HOST=0.0.0.0 \
+    HTTP_PORT=8788 \
+    QLC_NATIVE_ENABLED=true
 
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=build /app/dist ./dist
 COPY PROMPT.md ./PROMPT.md
-COPY config /config
 
 EXPOSE 8788/tcp
-EXPOSE 9000/udp
 
 CMD ["node", "dist/src/index.js"]

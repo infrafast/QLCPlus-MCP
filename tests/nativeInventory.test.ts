@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  exactNativeCaptionKey,
   normalizeNativeCaption,
   parseNativeProjectInventory,
 } from "../src/qlc/nativeInventory.js";
@@ -19,7 +20,7 @@ describe("QLC+ native project inventory", () => {
       </Frame></VirtualConsole></Workspace>`),
     );
     expect(inventory.widgets).toHaveLength(2);
-    expect(inventory.buttons.get("etechaud")).toMatchObject({
+    expect(inventory.buttons.get(exactNativeCaptionKey("Été-chaud"))).toMatchObject({
       id: 71,
       actionType: "toggle",
       functionId: 42,
@@ -37,15 +38,33 @@ describe("QLC+ native project inventory", () => {
     });
   });
 
-  it("normalizes case, accents and common separators", () => {
+  it("keeps spaces and separators significant for runtime identity", async () => {
+    const inventory = await parseNativeProjectInventory(
+      Buffer.from(
+        `<Workspace><VirtualConsole>
+          <Button ID="1" Caption="blue speed"/>
+          <Button ID="2" Caption="blue_speed"/>
+          <Button ID="3" Caption="bluespeed"/>
+        </VirtualConsole></Workspace>`,
+      ),
+    );
+
+    expect(inventory.buttons.get("blue speed")?.id).toBe(1);
+    expect(inventory.buttons.get("blue_speed")?.id).toBe(2);
+    expect(inventory.buttons.get("bluespeed")?.id).toBe(3);
+    expect(inventory.buttons.size).toBe(3);
+    expect(exactNativeCaptionKey("Blue Speed")).toBe("blue speed");
+  });
+
+  it("retains loose normalization only as diagnostic metadata", () => {
     expect(normalizeNativeCaption("  ÉTÉ_chaud-test ")).toBe("etechaudtest");
   });
 
-  it("rejects collisions, unsafe XML and invalid ranges", async () => {
+  it("rejects case-only collisions, unsafe XML and invalid ranges", async () => {
     await expect(
       parseNativeProjectInventory(
         Buffer.from(
-          `<Workspace><VirtualConsole><Button ID="1" Caption="Blue Amber"/><Button ID="2" Caption="blue_amber"/></VirtualConsole></Workspace>`,
+          `<Workspace><VirtualConsole><Button ID="1" Caption="Blue Speed"/><Button ID="2" Caption="blue speed"/></VirtualConsole></Workspace>`,
         ),
       ),
     ).rejects.toThrow(/Duplicate/);

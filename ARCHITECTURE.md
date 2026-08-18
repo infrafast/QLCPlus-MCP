@@ -1,40 +1,39 @@
 # QLCPlus-MCP Architecture
 
-This document describes the technical structure of QLCPlus-MCP. User installation and everyday operation live in [README.md](README.md). Migration planning lives in [ROADMAP.md](ROADMAP.md).
+QLCPlus-MCP is a TypeScript MCP server that controls QLC+ 5 through the QLC+ native network protocol.
 
-## System Overview
+User-facing installation and operation live in [README.md](README.md). Migration history and future work live in [ROADMAP.md](ROADMAP.md).
 
-QLCPlus-MCP is a TypeScript MCP server that lets AI agents control QLC+ lighting.
-
-Current architecture:
+## Product Architecture
 
 ```text
 MCP client
-  -> QLCPlus-MCP tools
-  -> native client / runtime project inventory
-  -> QLC+ 5 Native Server on localhost TCP 9998
-  -> QLC+ Virtual Console / lighting engine
+  -> QLCPlus-MCP tool layer
+  -> QLC+ native session
+  -> authentication
+  -> active-project transfer
+  -> validated in-memory Virtual Console inventory
+  -> exact caption resolution
+  -> native Virtual Console button action
+  -> QLC+ 5 lighting engine
 ```
 
-The runtime server uses the official MCP SDK directly for both STDIO and streamable HTTP transports. It does not depend on `mcp-use` at runtime.
+There is one supported QLC+ runtime transport: **native TCP**.
 
-QLCPlus-MCP now uses the QLC+ 5 native protocol for widget inventory and button
-control. OSC is no longer initialized and `config/widgets.json` is not loaded at
-runtime. Historical OSC code remains only until the final cleanup milestone.
+OSC, WebSocket, `/vc.json`, static runtime `widgets.json`, raw DMX helpers and QLC+ 4 compatibility are intentionally absent from the runtime.
 
-## Entry Point
+## Startup
 
 [src/index.ts](src/index.ts) performs startup orchestration:
 
-1. Load runtime `.env` configuration.
-2. Validate configuration with Zod.
-3. Initialize logging.
-4. Initialize the OSC client.
-5. Load widget mappings.
-6. Register MCP tools.
-7. Start either STDIO or HTTP transport.
+1. load the first available runtime environment file;
+2. validate configuration with Zod;
+3. initialize logging;
+4. initialize the QLC+ native client;
+5. register MCP tools/resources/prompts;
+6. start STDIO or Streamable HTTP MCP transport.
 
-Runtime environment files are searched in this order:
+Environment files are searched in this order:
 
 1. `QLCPLUS_MCP_ENV_FILE`
 2. `/etc/qlcplusmcp.env`
@@ -42,519 +41,319 @@ Runtime environment files are searched in this order:
 4. `config/.env`
 5. `.env`
 
+The repository does not track a machine-specific env file.
+
 ## Core Modules
 
-### Configuration
+### Configuration — `src/config.ts`
 
-[src/config.ts](src/config.ts)
+`ConfigSchema` contains only MCP/HTTP, native QLC+, dry-run and logging settings.
 
-- Defines `ConfigSchema`.
-- Parses environment variables.
-- Validates transport, HTTP, auth, QLC+, widget, dry-run, and logging settings.
-- Supports runtime updates of QLC+ connection settings.
-- Persists runtime QLC+ settings back to the loaded env file when the HTTP admin surface changes them.
-
-### MCP Server Compatibility
-
-[src/mcpServer.ts](src/mcpServer.ts) and [src/mcpCompat.ts](src/mcpCompat.ts)
-
-- Adapt local tool definitions to MCP SDK schemas.
-- Expose tools, prompts, and resources.
-- Validate tool input with Zod before invoking handlers.
-- Expose `PROMPT.md` as:
-  - prompt `agent_prompt`;
-  - resource `agent://prompt/system`;
-  - tool `get_agent_prompt`.
-
-### Logging
-
-[src/logger.ts](src/logger.ts)
-
-- Uses pino.
-- Supports development pretty logs and production JSON logs.
-- Uses the configured `LOG_LEVEL`.
-
-## Transport Modes
-
-### STDIO
-
-[src/transports/stdio.ts](src/transports/stdio.ts)
-
-Use for same-host MCP clients such as local desktop agents.
-
-### HTTP
-
-[src/transports/http.ts](src/transports/http.ts)
-
-Use for networked clients and service deployments.
-
-Responsibilities:
-
-- streamable HTTP MCP endpoint;
-- health/admin surface;
-- optional bearer authentication;
-- browser-visible runtime status and QLC+ connection controls.
-
-## OSC Layer
-
-[src/osc/oscClient.ts](src/osc/oscClient.ts)
-
-Responsibilities:
-
-- initialize the OSC UDP client;
-- send individual OSC messages;
-- send OSC batches;
-- validate OSC paths;
-- normalize internal DMX values;
-- track runtime state and recent feedback;
-- support dry-run mode.
-
-Current OSC mode sends commands to QLC+ input port `QLC_OSC_INPUT_PORT` and listens for feedback on `QLC_OSC_OUTPUT_PORT`.
-
-## QLC+ 5 Native Migration Client
-
-[src/qlc/nativeCodec.ts](src/qlc/nativeCodec.ts),
-[src/qlc/nativeInventory.ts](src/qlc/nativeInventory.ts), and
-[src/qlc/nativeClient.ts](src/qlc/nativeClient.ts)
-
-The native client connects to TCP port `9998`, performs QLC+ native
-authentication, receives the
-current project through `NetProjectTransfer`, atomically builds an in-memory
-Virtual Console inventory, and sends validated `VCButtonSetPressed` actions.
-
-The native client reports `connecting`, `waiting-for-authorization`,
-`downloading-project`, `ready`, `disconnected`, and `stopped`. A TCP connection is
-not ready until authentication and complete project validation succeed. Socket
-closure/error events and TCP keepalive trigger bounded reconnects; QLC+
-`NetPoll`/`NetPollReply` are declared upstream but not implemented.
-
-Button execution uses strict full-caption lookup. Case is ignored, but spaces,
-accents, punctuation, and the complete caption must match the current inventory.
-Partial and fuzzy names are rejected before any native packet is sent.
-
-Enable the migration client with:
+Important defaults:
 
 ```text
+MCP_TRANSPORT=stdio
+HTTP_HOST=127.0.0.1
+HTTP_PORT=8788
 QLC_NATIVE_ENABLED=true
 QLC_NATIVE_HOST=127.0.0.1
 QLC_NATIVE_PORT=9998
+QLC_DRY_RUN=false
 ```
 
-On Linux/Raspberry Pi, for a loopback target, every QLCPlus-MCP process derives a distinct source
-address in `127.0.0.0/8` from its PID and binds the TCP socket to it. QLC+ keys
-native sessions only by source address, so startup probes and concurrent STDIO
-servers no longer replace one another or OculizerQLC at `127.0.0.1`. PID reuse
-is safe after the preceding process has exited. An explicit remote host remains
-supported without forced source binding. macOS uses its normal loopback source
-because undeclared secondary loopback addresses are rejected there. Keep remote native access on a trusted
-LAN because SimpleCrypt is protocol compatibility, not modern network security.
+Boolean environment values are parsed as true booleans rather than forcing absent variables to `false`. Therefore omission of `QLC_NATIVE_ENABLED` correctly keeps the schema default `true`.
 
-This workaround does not suppress QLC+'s authorization dialog for a newly seen
-source address. Permanent unattended operation requires the proposed upstream
-`--allow-all-native` option. That option must remain disabled by default and
-must emit an explicit security warning when enabled.
+Bearer mode requires a non-empty `MCP_AUTH_TOKEN` during configuration validation.
 
-### OSC Protocol Notes
+### MCP server — `src/mcpServer.ts`
 
-Transport: UDP.
-
-Default QLC+ ports:
-
-| Direction | Default | Meaning                                            |
-| --------- | ------- | -------------------------------------------------- |
-| Input     | `7700`  | QLC+ listens for OSC commands.                     |
-| Output    | `9000`  | QLC+ sends OSC feedback; QLCPlus-MCP listens here. |
-
-For additional universes, QLC+ conventionally offsets ports by `universe - 1`.
-
-OSC messages contain:
-
-```text
-OSC address: /path/to/control
-Type tags: data types
-Arguments: values
-```
-
-Examples:
-
-```text
-/black [1]
-/0/dmx/0 [255]
-```
-
-QLC+ 4 Virtual Console widgets are controlled through OSC paths learned with Auto Detect. QLC+ stores the learned path as an internal input hash, so QLCPlus-MCP must use mapped paths from `config/widgets.json` rather than inventing generic `/vc/...` paths.
-
-Generated mapping examples:
-
-```text
-BLACK -> /black
-STOP -> /stop
-ambient blue-yellow -> /ambient_blue-yellow
-```
-
-DMX direct paths are zero-based:
-
-```text
-Universe 1, Channel 1  -> /0/dmx/0
-Universe 1, Channel 12 -> /0/dmx/11
-Universe 2, Channel 5  -> /1/dmx/4
-```
-
-Important OSC limitation: UDP send success only means the local socket accepted the packet. It does not prove QLC+ received or applied the command. Use `qlc_get_state` feedback freshness as the best runtime signal.
-
-## Widget Mapping Layer
-
-[src/qlc/widgetResolver.ts](src/qlc/widgetResolver.ts)
+The official Model Context Protocol SDK is used directly.
 
 Responsibilities:
 
-- load `config/widgets.json`;
-- index widgets by logical name and OSC path;
-- resolve `widgetName` or direct `oscPath`;
-- list available widgets;
-- return closest matches for failed lookups.
+- expose tool JSON schemas generated from Zod;
+- validate tool arguments;
+- expose `PROMPT.md` as prompt `agent_prompt`;
+- expose `PROMPT.md` as resource `agent://prompt/system`;
+- expose `PROMPT.md` through tool `get_agent_prompt`.
 
-Current runtime behavior depends on this mapping. Native-only control will replace
-it with the inventory transferred by the active QLC+ project.
+### Prompt loading — `src/agentPrompt.ts`
 
-### Mapping File Shape
+`MCP_PROMPT_FILE` is resolved when the prompt is read, after runtime environment loading. This prevents a custom prompt path from being missed because of ES module import order.
 
-```json
-{
-  "widgets": [
-    {
-      "id": "unique-id",
-      "name": "logical-name",
-      "path": "/osc/path",
-      "type": "button",
-      "description": "Human readable description",
-      "minValue": 0,
-      "maxValue": 1
-    }
-  ],
-  "generated": false,
-  "generatedAt": "2024-01-01T00:00:00.000Z"
-}
+### Logging — `src/logger.ts`
+
+Pino provides structured logging and an in-memory recent-log buffer for the HTTP diagnostic surface.
+
+STDIO mode sends logs to stderr so stdout remains reserved for MCP framing.
+
+## QLC+ Native Protocol
+
+### Endpoint selection — `src/qlc/nativeHost.ts`
+
+Default target:
+
+```text
+127.0.0.1:9998
 ```
 
-Fields:
+On Linux, a localhost target receives a per-process source identity inside `127.0.0.0/8`.
 
-| Field                   | Required | Notes                                                                             |
-| ----------------------- | -------- | --------------------------------------------------------------------------------- |
-| `id`                    | yes      | Unique mapping identifier.                                                        |
-| `name`                  | yes      | Logical name used by MCP tools.                                                   |
-| `path`                  | yes      | OSC path beginning with `/`.                                                      |
-| `type`                  | yes      | `button`, `slider`, `speed`, `cuelist`, `chaser`, `frame`, `label`, or `unknown`. |
-| `description`           | no       | Human-readable hint for operators/agents.                                         |
-| `minValue` / `maxValue` | no       | Optional range metadata.                                                          |
+Example:
 
-Naming guidance:
+```text
+process A -> 127.x.y.z -> QLC+ :9998
+process B -> 127.a.b.c -> QLC+ :9998
+```
 
-- use descriptive names;
-- prefer lowercase with underscores for hand-written names;
-- keep QLC+ labels and mapping names stable during a show;
-- model reusable lighting actions as Virtual Console widgets rather than raw low-level DMX when possible.
+QLC+ keys native sessions by source address. Distinct loopback source addresses allow concurrent local native clients without exposing QLC+ Native Server to the LAN.
 
-## QXW Parsing
+macOS does not use undeclared secondary loopback source addresses and therefore uses the normal platform source selection.
 
-[src/qlc/qxwParser.ts](src/qlc/qxwParser.ts) and [src/qlc/generateWidgets.ts](src/qlc/generateWidgets.ts)
+### Codec — `src/qlc/nativeCodec.ts`
 
 Responsibilities:
 
-- parse QLC+ project files;
-- support zipped `.qxw` workspaces and plain XML `.qxw` workspaces;
-- support `Workspace` and legacy `QLC` roots;
-- collect Virtual Console widgets recursively;
-- derive names from `Name` or `Caption`;
-- generate `config/widgets.json` starter mappings.
+- native packet headers;
+- SimpleCrypt compatibility;
+- compression/decompression;
+- CRC/SHA integrity handling;
+- typed native sections;
+- fragmented/coalesced TCP frame decoding;
+- protocol and allocation bounds.
 
-This is an offline helper for OSC mode. It becomes an optional diagnostic after
-native runtime discovery is validated.
+Key bounds include:
+
+- native encrypted packet protocol length;
+- bounded decrypted output;
+- bounded section lengths;
+- bounded decompression output.
+
+Malformed framing is treated as a connection failure rather than scanning arbitrary encrypted data for another apparent header.
+
+SimpleCrypt is a QLC+ protocol compatibility mechanism, **not modern transport security**. Native access should remain on localhost or a trusted show network.
+
+### Project inventory — `src/qlc/nativeInventory.ts`
+
+After authorization, QLC+ transfers the active project. The server parses only the metadata required for Virtual Console control.
+
+The parser:
+
+- enforces a configurable maximum project size;
+- rejects XML entities;
+- accepts only the inert standard `<!DOCTYPE Workspace>` form;
+- discovers buttons/sliders recursively inside Virtual Console;
+- records Frame/SoloFrame hierarchy;
+- records button action type and slider metadata;
+- builds a new inventory before replacing the current one.
+
+#### Caption identity
+
+Runtime command identity ignores **case only**.
+
+```text
+Blue Speed  == blue speed
+blue speed  != blue_speed
+blue speed  != bluespeed
+Été         != Ete
+```
+
+Internal spaces, accents, punctuation, underscores and hyphens are significant.
+
+`exactNativeCaptionKey()` is the only identity key used for command lookup and duplicate detection.
+
+`normalizeNativeCaption()` remains diagnostic/search metadata only. Its separator/accent-insensitive form must never authorize an action or collapse two otherwise distinct live captions.
+
+This specifically means widgets such as `blue speed` are supported without renaming.
+
+### Native client — `src/qlc/nativeClient.ts`
+
+The native client implements the lifecycle:
+
+```text
+disabled
+  or
+connecting
+  -> waiting-for-authorization
+  -> downloading-project
+  -> ready
+  -> disconnected
+  -> connecting ...
+```
+
+`ready` requires all of the following:
+
+- TCP connection exists;
+- QLC+ authorization succeeded;
+- the complete current project was received;
+- the project passed validation;
+- the current inventory was installed atomically.
+
+A raw TCP connection is never reported as ready.
+
+On disconnect:
+
+- socket state is cleared;
+- decoder/project-transfer state is reset;
+- the inventory is invalidated immediately;
+- old numeric widget IDs become unusable;
+- reconnect is scheduled with bounded interval/log repetition;
+- a fresh project must be downloaded before returning to `ready`.
+
+TCP keepalive is enabled. QLC+ `NetPoll`/`NetPollReply` are not relied upon.
+
+## Button Execution
+
+`qlc_button_press` calls `QlcNativeClient.pressButton()`.
+
+Execution flow:
+
+```text
+complete caption
+  -> exactNativeCaptionKey(caption)
+  -> current inventory.buttons lookup
+  -> verify native state == ready
+  -> VCButtonSetPressed packet
+```
+
+Current native action code:
+
+```text
+VCButtonSetPressed = 0xF200
+```
+
+Button semantics:
+
+- Toggle/default/ordinary buttons: press-only;
+- Flash: press, wait briefly, release;
+- slider with the same exact caption: explicit wrong-kind error;
+- missing exact caption: explicit error; no fuzzy fallback is executed.
+
+A command is counted successful only after the packet write completes.
 
 ## MCP Tools
 
-Current registered tools:
+| Tool | Purpose |
+| --- | --- |
+| `get_agent_prompt` | Return runtime agent guidance. |
+| `qlc_get_state` | Report native lifecycle/inventory/reconnect/action state. |
+| `qlc_list_widgets` | Discover the current native project inventory. |
+| `qlc_button_press` | Execute one complete exact button caption. |
 
-| Tool               | Purpose                                                               |
-| ------------------ | --------------------------------------------------------------------- |
-| `get_agent_prompt` | Return the recommended lighting-agent prompt from `PROMPT.md`.        |
-| `qlc_get_state`    | Report OSC runtime state, connection details, and feedback freshness. |
-| `qlc_list_widgets` | List mapped widgets from `config/widgets.json`.                       |
-| `qlc_send_osc`     | Send raw OSC when `QLC_ALLOW_RAW_OSC=true`.                           |
-| `qlc_button_press` | Trigger a mapped widget by `widgetName` or direct `oscPath`.          |
+### Efficient agent flow
 
-Tool implementations live in [src/tools](src/tools).
+If the user already supplies a complete caption, the agent should call `qlc_button_press` directly. The server performs the authoritative inventory check.
 
-Design constraint: MCP tool names and input schemas should remain stable while the transport layer migrates underneath them.
+`qlc_list_widgets` is intended for:
 
-## Data Flow
+- inventory questions;
+- partial searches;
+- user discovery;
+- recovery after an exact caption fails.
 
-Mapped button press in current OSC mode:
+This removes an unnecessary MCP round trip from normal live commands without weakening validation.
 
-```text
-Agent calls qlc_button_press({ widgetName: "Rouge" })
-  -> tool validates input
-  -> widgetResolver resolves "Rouge"
-  -> OSC client sends the mapped path/value
-  -> QLC+ receives OSC input
-  -> QLC+ Virtual Console performs the show action
-```
+## STDIO Transport
 
-Raw OSC flow:
+`src/transports/stdio.ts` uses `StdioServerTransport`.
 
-```text
-Agent calls qlc_send_osc({ path, args })
-  -> tool checks QLC_ALLOW_RAW_OSC
-  -> OSC path and args are validated
-  -> OSC client sends the message or logs dry-run intent
-```
+It is preferred when the MCP host and QLCPlus-MCP run on the same machine because it avoids an HTTP listener entirely.
 
-## Configuration Surface
+## HTTP Transport
 
-All configuration is environment based. Variables can be set in the shell or in the runtime env file found at startup.
+`src/transports/http.ts` implements:
 
-### Transport
+- Streamable HTTP MCP sessions;
+- `/health`;
+- authenticated `/mcp/status`;
+- authenticated log/tool/resource diagnostics;
+- optional bearer authentication;
+- a read-only native status page.
 
-| Variable        | Default | Purpose                                                    |
-| --------------- | ------- | ---------------------------------------------------------- |
-| `MCP_TRANSPORT` | `stdio` | `stdio` for local MCP clients, `http` for network clients. |
+There is no runtime QLC+ reconfiguration form and no OSC configuration endpoint.
 
-### HTTP
+### Public health boundary
 
-| Variable        | Default   | Purpose                                          |
-| --------------- | --------- | ------------------------------------------------ |
-| `HTTP_HOST`     | `0.0.0.0` | Address to bind. Use `127.0.0.1` for local-only. |
-| `HTTP_PORT`     | `8788`    | HTTP server port.                                |
-| `HTTP_MCP_PATH` | `/mcp`    | MCP endpoint path.                               |
+`/health` intentionally precedes bearer authorization so infrastructure can test liveness. It returns only minimal information:
 
-### Authentication
+- service identity;
+- version;
+- native enabled/state/ready;
+- current widget count.
 
-| Variable         | Default | Purpose                               |
-| ---------------- | ------- | ------------------------------------- |
-| `MCP_AUTH_MODE`  | `none`  | `none` or `bearer`.                   |
-| `MCP_AUTH_TOKEN` | unset   | Required when `MCP_AUTH_MODE=bearer`. |
+It does not return:
 
-Bearer auth should be used for network deployments. Generate a token with:
+- bearer tokens;
+- native encryption keys;
+- authenticated client headers;
+- full runtime config;
+- runtime logs.
 
-```bash
-openssl rand -base64 32
-```
+### Bearer token handling
 
-### QLC+ OSC
+When bearer mode is enabled:
 
-| Variable              | Default     | Purpose                                       |
-| --------------------- | ----------- | --------------------------------------------- |
-| `QLC_HOST`            | `127.0.0.1` | QLC+ host reachable from this server.         |
-| `QLC_OSC_INPUT_PORT`  | `7700`      | QLC+ OSC input port.                          |
-| `QLC_OSC_OUTPUT_PORT` | `9000`      | Feedback/listen port used by `qlc_get_state`. |
-| `QLC_UNIVERSE`        | `1`         | Default universe for internal helpers.        |
+- `MCP_AUTH_TOKEN` is required at startup;
+- incoming tokens are compared with `timingSafeEqual` after equal-length validation;
+- generated agent configuration displays a `<MCP_AUTH_TOKEN>` placeholder rather than the real secret;
+- the real token is not logged.
 
-### Widget And Advanced Options
+HTTP request bodies are bounded to 1 MiB before JSON parsing.
 
-| Variable            | Default               | Purpose                                   |
-| ------------------- | --------------------- | ----------------------------------------- |
-| `QLC_WIDGETS_FILE`  | `config/widgets.json` | Widget mapping path.                      |
-| `QLC_ALLOW_RAW_OSC` | `false`               | Enables the advanced `qlc_send_osc` tool. |
-| `QLC_DRY_RUN`       | `false`               | Logs OSC writes without sending.          |
-| `MCP_PROMPT_FILE`   | `PROMPT.md`           | Optional custom prompt file.              |
+Default HTTP binding is `127.0.0.1`. Network exposure is therefore explicit.
 
-### Logging
+## Dry Run
 
-| Variable    | Default       | Purpose                                                |
-| ----------- | ------------- | ------------------------------------------------------ |
-| `LOG_LEVEL` | `info`        | `trace`, `debug`, `info`, `warn`, `error`, or `fatal`. |
-| `NODE_ENV`  | `development` | Controls log formatting.                               |
-
-Outgoing OSC writes log as `[WRITE_OSC] ...`; dry-run writes use `[WRITE_OSC_DRY_RUN]`; feedback reads log as `[READ_OSC] ...` when debug logging is enabled.
-
-## Integration Patterns
-
-### Local STDIO
-
-Use for a same-machine MCP host:
-
-```json
-{
-  "mcpServers": {
-    "qlcplus": {
-      "command": "node",
-      "args": ["/opt/QLCPlus-MCP/dist/src/index.js"],
-      "env": {
-        "MCP_TRANSPORT": "stdio",
-        "QLC_HOST": "127.0.0.1",
-        "LOG_LEVEL": "info"
-      }
-    }
-  }
-}
-```
-
-### Remote HTTP
-
-Run QLCPlus-MCP on the lighting machine:
-
-```bash
-MCP_TRANSPORT=http \
-MCP_AUTH_MODE=bearer \
-MCP_AUTH_TOKEN=my-secure-token \
-npm run start:http
-```
-
-Connect a client to:
+With:
 
 ```text
-http://lighting-machine.local:8788/mcp
+QLC_DRY_RUN=true
 ```
 
-### LiveStageAssistant
+the native client opens no TCP socket. Button calls return dry-run results without transmitting live actions.
 
-LiveStageAssistant can use either STDIO or HTTP. Suggested routing keywords:
+This is suitable for integration testing but does not represent a `ready` live native session.
+
+## Packaging
+
+### Git repository
+
+Generated `dist/` output is ignored and not tracked. A deployment must run `npm run build` before starting `dist/src/index.js`.
+
+Machine-specific `.env` files and `config/.env` are ignored.
+
+### Docker
+
+The Docker build compiles TypeScript in a build stage and copies only compiled output plus `PROMPT.md` into the runtime image.
+
+Only the HTTP TCP port is exposed. No OSC UDP port or widget/config volume is required.
+
+### Raspberry Pi service
+
+The service pack uses `/etc/qlcplusmcp.env`.
+
+The installer preserves an existing environment file and sets mode `600`, preventing accidental destruction/exposure of bearer tokens or future secrets during reinstall.
+
+## Automated Validation
+
+GitHub Actions runs on pull requests and `main` pushes with Node 20.20 and Node 22:
 
 ```text
-qlc, qlcplus, lumière, light, éclairage, scène, dmx, fixture, projecteur, couleur
-```
-
-When LiveStageAssistant asks whether QLC+ is connected, call `qlc_get_state`. The tool reports initialization, configured host/ports, last command sent, and recent feedback.
-
-If LiveStageAssistant also loads a large MCP server, enable MCP tool routing in that host so lighting-related turns expose only relevant tools and avoid tool-count limits.
-
-### Raspberry Pi Service Pack
-
-The `qlcplusmcp_raspi_service_pack` directory contains service helper files:
-
-| File                            | Installed target                         |
-| ------------------------------- | ---------------------------------------- |
-| `qlcplusmcp.env`                | `/etc/qlcplusmcp.env`                    |
-| `qlcplusmcp.service`            | `/etc/systemd/system/qlcplusmcp.service` |
-| `qlcplusmcp`                    | `/usr/local/bin/qlcplusmcp`              |
-| `install_qlcplusmcp_service.sh` | installer script                         |
-
-Expected repository path on Raspberry Pi:
-
-```text
-/home/pi/QLCPlus-MCP
-```
-
-Build before installing:
-
-```bash
-cd /home/pi/QLCPlus-MCP
-npm ci --no-audit --no-fund
+npm ci
 npm run build
+npm run test:ci
 ```
 
-Runtime-only deployments with prebuilt `dist/src/index.js` can use:
+The tests cover native codec framing, native host selection, project inventory/security, connection/reconnect behavior, button semantics, nullable MCP schemas, prompt behavior and native configuration defaults.
 
-```bash
-npm ci --omit=dev --omit=optional --no-audit --no-fund
-```
+Live QLC+ validation remains necessary for protocol compatibility and actual lighting behavior because unit tests cannot prove a specific QLC+ build accepts and applies native actions.
 
-Install from the service pack directory:
+## Security Boundaries
 
-```bash
-chmod +x install_qlcplusmcp_service.sh
-./install_qlcplusmcp_service.sh
-```
-
-Service helper commands:
-
-```bash
-qlcplusmcp start
-qlcplusmcp stop
-qlcplusmcp restart
-qlcplusmcp status
-qlcplusmcp logs
-qlcplusmcp health
-qlcplusmcp test-remote
-qlcplusmcp last-state
-qlcplusmcp auto
-qlcplusmcp noauto
-qlcplusmcp config
-```
-
-The HTTP admin page at `/mcp` can persist QLC+ connection changes back to `/etc/qlcplusmcp.env` when that file is the loaded runtime config.
-
-## Native Protocol Migration Target
-
-The intended future architecture:
-
-```text
-MCP client
-  -> QLCPlus-MCP tools
-  -> QLC transport abstraction
-  -> QLC+ 5 native TCP session / transferred project inventory
-  -> QLC+ Virtual Console / lighting engine
-```
-
-Discovery strategy:
-
-- authenticate with the QLC+ Native Server on localhost TCP `9998`;
-- reassemble and validate the bounded `NetProjectTransfer` workspace XML;
-- resolve widgets by normalized QLC+ caption;
-- keep IDs in memory only and invalidate them after every disconnect;
-- redownload the current project before returning to `ready` after reconnect;
-- provide no WebSocket fallback.
-
-The staged migration plan and validation gates are in [ROADMAP.md](ROADMAP.md).
-
-## Testing
-
-Run the current test suite with:
-
-```bash
-npx vitest run
-```
-
-Current tests cover:
-
-- OSC utility behavior;
-- DMX path/value utilities used by OSC internals;
-- QXW parser behavior for plain XML workspaces with nested Virtual Console widgets.
-
-Expected validation before merging transport changes:
-
-- `npm run build`
-- `npx vitest run`
-- targeted unit tests for new transport behavior;
-- manual QLC+ validation for protocol changes when a real QLC+ instance is required.
-
-## Project Structure
-
-```text
-QLCPlus-MCP/
-├── src/
-│   ├── agentPrompt.ts
-│   ├── config.ts
-│   ├── index.ts
-│   ├── logger.ts
-│   ├── mcpCompat.ts
-│   ├── mcpServer.ts
-│   ├── osc/
-│   │   └── oscClient.ts
-│   ├── qlc/
-│   │   ├── generateWidgets.ts
-│   │   ├── qxwParser.ts
-│   │   └── widgetResolver.ts
-│   ├── tools/
-│   │   ├── qlc_button_control.ts
-│   │   ├── qlc_get_state.ts
-│   │   ├── qlc_list_widgets.ts
-│   │   └── qlc_send_osc.ts
-│   └── transports/
-│       ├── http.ts
-│       └── stdio.ts
-├── config/
-│   └── widgets.json
-├── tests/
-├── AGENTS.md
-├── ARCHITECTURE.md
-├── README.md
-└── ROADMAP.md
-```
-
-## Documentation Ownership
-
-- User-facing setup and scenarios: [README.md](README.md).
-- Technical architecture and module behavior: this file.
-- Staged implementation plans and validation milestones: [ROADMAP.md](ROADMAP.md).
-- Agent/developer documentation rules: [AGENTS.md](AGENTS.md).
+1. Never expose HTTP secrets through `/health`, status payloads, generated config or logs.
+2. Prefer STDIO or loopback HTTP for same-host operation.
+3. Use bearer authentication for non-loopback HTTP.
+4. Keep QLC+ native TCP on localhost/trusted show networks.
+5. Treat project data received from QLC+ as untrusted input and preserve allocation/XML bounds.
+6. Never execute fuzzy/partial widget matches.
+7. Never persist session-only numeric QLC+ widget IDs.
