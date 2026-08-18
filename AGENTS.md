@@ -30,6 +30,67 @@ Keep documentation non-redundant and consistent.
 
 Do not recreate `docs/`, `QUICKSTART.md`, `PROJECT-SUMMARY.md`, or parallel documentation unless explicitly requested.
 
+## Prompt Policy vs Tool Contract Boundary
+
+Treat prompt policy, MCP contracts and deterministic runtime enforcement as three different layers. Do not blur them.
+
+### `PROMPT.md` is the runtime-agent policy source of truth
+
+Rules that tell the LLM **how to behave** belong in `PROMPT.md`. Examples include:
+
+- when to call a tool;
+- whether to call one tool before another;
+- whether a complete exact caption needs confirmation;
+- whether discovery/listing is required before execution;
+- what to do after an exact-match failure;
+- how the assistant should phrase a successful response;
+- routing or fallback policy between exposed MCP tools.
+
+Do not duplicate those behavioral rules in TypeScript tool descriptions, Zod field descriptions, error strings, comments or other runtime code merely to influence the model. In particular, avoid policy wording such as `immediately`, `without confirmation`, `ask the user`, `call X first`, `call X next`, or required assistant response phrasing in tool metadata unless it is literally part of the technical operation being described.
+
+When runtime-agent behavior changes, update `PROMPT.md` first and test that policy through prompt-focused tests.
+
+### Tool and schema descriptions define only the technical MCP contract
+
+Tool descriptions and input-schema descriptions are visible to the model, so keep them precise, minimal and declarative. They may document:
+
+- what technical operation the tool performs;
+- accepted inputs and their exact semantics;
+- identifier/matching rules enforced by the server;
+- supported widget kinds;
+- value/range constraints;
+- session-scoped identifiers;
+- deprecated or unsupported compatibility fields;
+- technical preconditions such as native `ready` state when relevant to the contract.
+
+They must not become a second prompt or a shadow copy of `PROMPT.md`.
+
+### Code enforces safety and invariants deterministically
+
+Anything that must remain true even if the LLM ignores its prompt belongs in code and tests. Examples include:
+
+- exact caption lookup;
+- case-only matching rules;
+- preserving internal spaces such as `blue speed`;
+- rejecting sliders in a button-only tool;
+- refusing actions unless the native session is `ready`;
+- refusing nonexistent captions instead of guessing;
+- protocol framing, size limits and secret handling.
+
+Never rely on prompt text or tool descriptions as the only enforcement mechanism for a safety or correctness invariant.
+
+### Review checklist for coding agents
+
+Before merging any change that touches prompts, tools or schemas:
+
+1. Classify each new sentence as **agent policy**, **technical MCP contract**, or **deterministic runtime invariant**.
+2. Put agent policy only in `PROMPT.md`.
+3. Put technical contract text only in tool/schema descriptions.
+4. Put mandatory correctness and safety guarantees in executable code.
+5. Keep tests separated by layer: prompt-policy tests must not depend on tool-description wording, and tool-contract tests must not require behavioral policy text.
+6. Search changed tool/schema descriptions for accidental policy duplication before finishing the change.
+7. Do not put runtime-agent instructions in `AGENTS.md`; this file instructs coding agents only.
+
 ## Development Rules
 
 - Read the existing code and docs before changing behavior.
@@ -65,6 +126,8 @@ Loose normalization may exist only as diagnostic/search metadata and must not de
 If the user supplies a complete caption, the runtime agent should call `qlc_button_press` directly. The server validates the caption against the current native inventory, so pre-calling `qlc_list_widgets` is unnecessary.
 
 Use `qlc_list_widgets` for discovery, partial searches, or recovery after an exact caption was rejected.
+
+This section documents the current product policy for maintainers. The executable runtime-agent version of this policy must remain in `PROMPT.md`; do not copy this wording into tool descriptions.
 
 ## Native Compatibility Boundary
 
