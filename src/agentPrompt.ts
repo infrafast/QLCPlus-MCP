@@ -6,12 +6,15 @@ import { z } from "zod";
 export const PROMPT_RESOURCE_URI = "agent://prompt/system";
 export const PROMPT_NAME = "agent_prompt";
 export const PROMPT_TOOL_NAME = "get_agent_prompt";
-export const PROMPT_FILE = process.env.MCP_PROMPT_FILE
-  ? path.resolve(process.env.MCP_PROMPT_FILE)
-  : path.resolve(process.cwd(), "PROMPT.md");
+
+function promptFilePath(): string {
+  return process.env.MCP_PROMPT_FILE
+    ? path.resolve(process.env.MCP_PROMPT_FILE)
+    : path.resolve(process.cwd(), "PROMPT.md");
+}
 
 export async function readAgentPrompt(): Promise<string> {
-  return readFile(PROMPT_FILE, "utf8");
+  return readFile(promptFilePath(), "utf8");
 }
 
 function registerPromptName(server: any, name: string): void {
@@ -19,23 +22,19 @@ function registerPromptName(server: any, name: string): void {
     {
       name,
       title: "QLCPlus Lighting Assistant",
-      description: "Recommended system prompt for agents controlling QLC+ lighting through this MCP server.",
+      description:
+        "Recommended system prompt for agents controlling QLC+ through its native protocol.",
     },
-    async () => {
-      const prompt = await readAgentPrompt();
-      return {
-        description: "Recommended system prompt for agents controlling QLC+ lighting through this MCP server.",
-        messages: [
-          {
-            role: "user",
-            content: {
-              type: "text",
-              text: prompt,
-            },
-          },
-        ],
-      };
-    }
+    async () => ({
+      description:
+        "Recommended system prompt for agents controlling QLC+ through its native protocol.",
+      messages: [
+        {
+          role: "user",
+          content: { type: "text", text: await readAgentPrompt() },
+        },
+      ],
+    }),
   );
 }
 
@@ -45,21 +44,18 @@ function registerPromptResource(server: any, uri: string): void {
       name: "QLCPlus MCP Agent Prompt",
       title: "QLCPlus Lighting Assistant Prompt",
       uri,
-      description: "Contents of PROMPT.md for agents that inject MCP resources into model instructions.",
+      description: "Contents of PROMPT.md for QLCPlus-MCP agents.",
       mimeType: "text/markdown",
     },
-    async () => {
-      const prompt = await readAgentPrompt();
-      return {
-        contents: [
-          {
-            uri,
-            mimeType: "text/markdown",
-            text: prompt,
-          },
-        ],
-      };
-    }
+    async () => ({
+      contents: [
+        {
+          uri,
+          mimeType: "text/markdown",
+          text: await readAgentPrompt(),
+        },
+      ],
+    }),
   );
 }
 
@@ -72,7 +68,7 @@ export function createAgentPromptTool(): ToolDefinition {
   return {
     name: PROMPT_TOOL_NAME,
     description:
-      "Return the recommended system prompt for agents using QLCPlus-MCP. Use it to inject QLC+ lighting-specific safety rules, widget/scene guidance, and OSC/DMX constraints into the LLM context when the host supports that workflow.",
+      "Return the recommended system prompt for agents using QLCPlus-MCP native QLC+ control.",
     schema: z.object({}),
     cb: async () => text(await readAgentPrompt()),
   };
