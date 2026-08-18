@@ -24,6 +24,10 @@ export interface NativeInventory {
   widgets: NativeWidget[];
 }
 
+/**
+ * Loose normalization retained only as diagnostic metadata. It must never be
+ * used to authorize a live command or decide whether two captions collide.
+ */
 export function normalizeNativeCaption(value: string): string {
   return value
     .normalize("NFKD")
@@ -32,6 +36,11 @@ export function normalizeNativeCaption(value: string): string {
     .replace(/[\s_-]+/g, "");
 }
 
+/**
+ * Runtime identity for QLC+ captions: ignore case only. Leading/trailing
+ * whitespace from transport/user input is ignored, but internal spaces,
+ * accents, punctuation, underscores and hyphens are significant.
+ */
 export function exactNativeCaptionKey(value: string): string {
   return value.trim().normalize("NFC").toLowerCase();
 }
@@ -65,11 +74,14 @@ export async function parseNativeProjectInventory(
   xml: Buffer,
   maximumSize = 16 * 1024 * 1024,
 ): Promise<NativeInventory> {
-  if (xml.length > maximumSize)
+  if (xml.length > maximumSize) {
     throw new Error("QLC+ project exceeds native inventory limit");
+  }
+
   const source = xml.toString("utf8");
-  if (/<!ENTITY/i.test(source))
+  if (/<!ENTITY/i.test(source)) {
     throw new Error("QLC+ project XML entities are not allowed");
+  }
   const doctypes = source.match(/<!DOCTYPE\b[^>]*>/gi) ?? [];
   if (
     (/<!DOCTYPE/i.test(source) && doctypes.length === 0) ||
@@ -77,6 +89,7 @@ export async function parseNativeProjectInventory(
   ) {
     throw new Error("QLC+ project external or extended DTD is not allowed");
   }
+
   const parsed = await parseStringPromise(source, {
     explicitArray: true,
     explicitRoot: true,
@@ -92,20 +105,24 @@ export async function parseNativeProjectInventory(
     framePath: string[] = [],
   ): void => {
     if (!value || typeof value !== "object") return;
+
     for (const [rawTag, rawChildren] of Object.entries(
       value as Record<string, unknown>,
     )) {
       if (rawTag === "$" || rawTag === "_") continue;
       const tag = localName(rawTag);
       const children = Array.isArray(rawChildren) ? rawChildren : [rawChildren];
+
       for (const child of children) {
         if (!child || typeof child !== "object") continue;
         const attrs = ((child as any).$ ?? {}) as Record<string, string>;
         const inVc = insideVirtualConsole || tag === "virtualconsole";
+
         if (!inVc) {
           visit(child, false, undefined, []);
           continue;
         }
+
         if (tag === "frame" || tag === "soloframe") {
           const caption = attrs.Caption?.trim() || attrs.Name?.trim();
           visit(
@@ -116,24 +133,23 @@ export async function parseNativeProjectInventory(
           );
           continue;
         }
+
         if (tag === "button" || tag === "slider") {
           const id = optionalUint(attrs.ID);
           const caption = attrs.Caption?.trim() || attrs.Name?.trim();
           if (id === undefined || !caption) continue;
-          const normalizedCaption = normalizeNativeCaption(caption);
-          const map = tag === "button" ? buttons : sliders;
-          if (
-            buttons.has(normalizedCaption) ||
-            sliders.has(normalizedCaption)
-          ) {
+
+          const exactKey = exactNativeCaptionKey(caption);
+          if (buttons.has(exactKey) || sliders.has(exactKey)) {
             throw new Error(
-              `Duplicate normalized QLC+ widget caption: ${caption}`,
+              `Duplicate case-insensitive QLC+ widget caption: ${caption}`,
             );
           }
+
           const widget: NativeWidget = {
             id,
             caption,
-            normalizedCaption,
+            normalizedCaption: normalizeNativeCaption(caption),
             kind: tag,
             framePath: [...framePath],
           };
@@ -141,6 +157,7 @@ export async function parseNativeProjectInventory(
             widget.parentFrameKind = parentFrame.kind;
             widget.parentFrameId = parentFrame.id;
           }
+
           for (const [rawChildTag, nestedValues] of Object.entries(
             child as Record<string, unknown>,
           )) {
@@ -152,14 +169,18 @@ export async function parseNativeProjectInventory(
                 (nested && typeof nested === "object"
                   ? (nested as any).$
                   : {}) ?? {};
-              if (tag === "button" && childTag === "action")
+              if (tag === "button" && childTag === "action") {
                 widget.actionType = textValue(nested)?.toLowerCase();
-              if (tag === "button" && childTag === "function")
+              }
+              if (tag === "button" && childTag === "function") {
                 widget.functionId = optionalUint(nestedAttrs.ID);
-              if (tag === "slider" && childTag === "slidermode")
+              }
+              if (tag === "slider" && childTag === "slidermode") {
                 widget.sliderMode = textValue(nested)?.toLowerCase();
-              if (tag === "slider" && childTag === "adjust")
+              }
+              if (tag === "slider" && childTag === "adjust") {
                 widget.functionId = optionalUint(nestedAttrs.Function);
+              }
               if (
                 tag === "slider" &&
                 (childTag === "level" || childTag === "value")
@@ -167,25 +188,31 @@ export async function parseNativeProjectInventory(
                 const low = Number(nestedAttrs.LowLimit ?? nestedAttrs.Low);
                 const high = Number(nestedAttrs.HighLimit ?? nestedAttrs.High);
                 if (Number.isFinite(low) && Number.isFinite(high)) {
-                  if (low >= high)
+                  if (low >= high) {
                     throw new Error(`Invalid QLC+ slider range: ${caption}`);
+                  }
                   widget.low = low;
                   widget.high = high;
                 }
               }
             }
           }
-          if (tag === "button" && !widget.actionType)
+
+          if (tag === "button" && !widget.actionType) {
             widget.actionType = "toggle";
+          }
           if (tag === "slider") {
             widget.low ??= 0;
             widget.high ??= 255;
             widget.widgetStyle = attrs.WidgetStyle;
           }
-          map.set(normalizedCaption, widget);
+
+          const map = tag === "button" ? buttons : sliders;
+          map.set(exactKey, widget);
           widgets.push(widget);
           continue;
         }
+
         visit(child, true, parentFrame, framePath);
       }
     }
