@@ -47,33 +47,41 @@ export const ConfigSchema = z.object({
 
 export type Config = z.infer<typeof ConfigSchema>;
 
+function optionalString(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : undefined;
+}
+
 function optionalBoolean(value: string | undefined): boolean | undefined {
-  if (value === undefined || value === "") return undefined;
-  if (value === "true") return true;
-  if (value === "false") return false;
+  const normalized = optionalString(value);
+  if (normalized === undefined) return undefined;
+  if (normalized === "true") return true;
+  if (normalized === "false") return false;
   throw new Error(`Invalid boolean environment value '${value}'`);
 }
 
 function optionalInteger(value: string | undefined): number | undefined {
-  if (value === undefined || value === "") return undefined;
-  if (!/^\d+$/.test(value)) {
+  const normalized = optionalString(value);
+  if (normalized === undefined) return undefined;
+  if (!/^\d+$/.test(normalized)) {
     throw new Error(`Invalid integer environment value '${value}'`);
   }
-  return Number(value);
+  return Number(normalized);
 }
 
 export function loadConfig(): Config {
   const env = {
-    transport: process.env.MCP_TRANSPORT,
-    httpHost: process.env.HTTP_HOST,
+    transport: optionalString(process.env.MCP_TRANSPORT),
+    httpHost: optionalString(process.env.HTTP_HOST),
     httpPort: optionalInteger(process.env.HTTP_PORT),
-    httpMcpPath: process.env.HTTP_MCP_PATH,
-    authMode: process.env.MCP_AUTH_MODE,
-    authToken: process.env.MCP_AUTH_TOKEN || undefined,
+    httpMcpPath: optionalString(process.env.HTTP_MCP_PATH),
+    authMode: optionalString(process.env.MCP_AUTH_MODE),
+    authToken: optionalString(process.env.MCP_AUTH_TOKEN),
     qlcNativeEnabled: optionalBoolean(process.env.QLC_NATIVE_ENABLED),
-    qlcNativeHost: process.env.QLC_NATIVE_HOST,
+    qlcNativeHost: optionalString(process.env.QLC_NATIVE_HOST),
     qlcNativePort: optionalInteger(process.env.QLC_NATIVE_PORT),
-    qlcNativeEncryptionKey: process.env.QLC_NATIVE_ENCRYPTION_KEY,
+    qlcNativeEncryptionKey: process.env.QLC_NATIVE_ENCRYPTION_KEY ?? undefined,
     qlcNativeReconnectMs: optionalInteger(process.env.QLC_NATIVE_RECONNECT_MS),
     qlcNativeConnectTimeoutMs: optionalInteger(
       process.env.QLC_NATIVE_CONNECT_TIMEOUT_MS,
@@ -81,10 +89,10 @@ export function loadConfig(): Config {
     qlcNativeMaximumProjectSize: optionalInteger(
       process.env.QLC_NATIVE_MAX_PROJECT_SIZE,
     ),
-    qlcNativeClientName: process.env.QLC_NATIVE_CLIENT_NAME,
+    qlcNativeClientName: optionalString(process.env.QLC_NATIVE_CLIENT_NAME),
     qlcDryRun: optionalBoolean(process.env.QLC_DRY_RUN),
-    logLevel: process.env.LOG_LEVEL,
-    nodeEnv: process.env.NODE_ENV,
+    logLevel: optionalString(process.env.LOG_LEVEL),
+    nodeEnv: optionalString(process.env.NODE_ENV),
   };
 
   const cleanEnv = Object.fromEntries(
