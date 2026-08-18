@@ -452,6 +452,11 @@ export function initNativeClient(options: NativeClientOptions): QlcNativeClient 
   return nativeClient;
 }
 
+export function stopNativeClient(): void {
+  nativeClient?.stop();
+  nativeClient = null;
+}
+
 export function getNativeClient(): QlcNativeClient | null {
   return nativeClient;
 }
