@@ -96,9 +96,7 @@ export class QlcNativeClient {
   private stateLogTimes = new Map<NativeConnectionState, number>();
 
   constructor(private readonly options: NativeClientOptions) {
-    this.decoder = new NativeFrameDecoder(
-      nativeSessionKey(options.encryptionKey),
-    );
+    this.decoder = new NativeFrameDecoder(nativeSessionKey(options.encryptionKey));
     this.state = {
       enabled: options.enabled,
       state: options.enabled ? "disconnected" : "disabled",
@@ -164,31 +162,25 @@ export class QlcNativeClient {
         framePath: [],
       };
     }
+
     const socket = this.socket;
     if (this.state.state !== "ready" || !socket || socket.destroyed) {
       throw new Error(
         `QLC+ native session is not ready (state: ${this.state.state})`,
       );
     }
-    const exactCaption = exactNativeCaptionKey(caption);
-    const widget = this.inventory.widgets.find(
-      (candidate) =>
-        candidate.kind === "button" &&
-        exactNativeCaptionKey(candidate.caption) === exactCaption,
-    );
+
+    const exactKey = exactNativeCaptionKey(caption);
+    const widget = this.inventory.buttons.get(exactKey);
     if (!widget) {
-      const wrongKind = this.inventory.widgets.some(
-        (candidate) =>
-          candidate.kind === "slider" &&
-          exactNativeCaptionKey(candidate.caption) === exactCaption,
-      );
-      if (wrongKind) {
+      if (this.inventory.sliders.has(exactKey)) {
         throw new Error(`QLC+ widget '${caption}' is a slider, not a button`);
       }
       throw new Error(
-        `Exact QLC+ button caption '${caption}' was not found in the current project. Call qlc_list_widgets and use one complete caption exactly; partial and fuzzy matches are not allowed.`,
+        `Exact QLC+ button caption '${caption}' was not found in the current project. Spaces, accents, punctuation, underscores and hyphens are significant; matching ignores case only.`,
       );
     }
+
     await this.writePacket(socket, widget, true);
     if (widget.actionType === "flash") {
       await new Promise<void>((resolve) => setTimeout(resolve, 100));
@@ -201,6 +193,7 @@ export class QlcNativeClient {
       }
       await this.writePacket(socket, widget, false);
     }
+
     this.state.sentCount += 1;
     this.state.lastSentAt = isoNow();
     this.state.lastSentWidgetId = widget.id;
@@ -229,6 +222,7 @@ export class QlcNativeClient {
     this.setConnectionState("connecting");
     this.decoder.reset();
     this.resetProjectTransfer();
+
     let endpoint;
     try {
       endpoint = resolveNativeEndpoint(this.options.host);
@@ -243,14 +237,10 @@ export class QlcNativeClient {
       }
     } catch (error) {
       this.recordError(error);
-      this.setConnectionState("disconnected");
-      this.state.reconnectCount += 1;
-      this.reconnectTimer = setTimeout(() => {
-        this.reconnectTimer = null;
-        this.connect();
-      }, this.options.reconnectMs);
+      this.scheduleReconnect();
       return;
     }
+
     const socket = net.createConnection({
       host: endpoint.host,
       port: this.options.port,
@@ -262,6 +252,7 @@ export class QlcNativeClient {
     this.connectTimer = setTimeout(() => {
       socket.destroy(new Error("QLC+ native connection timed out"));
     }, this.options.connectTimeoutMs);
+
     socket.once("connect", () => {
       if (this.connectTimer) clearTimeout(this.connectTimer);
       this.connectTimer = null;
@@ -281,6 +272,16 @@ export class QlcNativeClient {
     socket.once("close", () => this.onClose(socket));
   }
 
+  private scheduleReconnect(): void {
+    if (this.stopped || this.reconnectTimer) return;
+    this.setConnectionState("disconnected");
+    this.state.reconnectCount += 1;
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.connect();
+    }, this.options.reconnectMs);
+  }
+
   private onData(chunk: Buffer): void {
     try {
       for (const frame of this.decoder.push(chunk)) this.handleFrame(frame);
@@ -297,12 +298,14 @@ export class QlcNativeClient {
         Math.min(frame.sectionCount, 2),
         true,
       );
-      if (fields[0] !== "Success")
+      if (fields[0] !== "Success") {
         throw new Error("QLC+ native authorization was refused");
+      }
       this.state.authorizedAt = isoNow();
       this.setConnectionState("downloading-project");
       return;
     }
+
     if (frame.opcode === NET_PROJECT_TRANSFER) {
       void this.handleProjectFrame(frame).catch((error) => {
         this.recordError(error);
@@ -310,6 +313,7 @@ export class QlcNativeClient {
       });
       return;
     }
+
     getLogger().debug(
       { opcode: frame.opcode },
       "Ignoring unsupported QLC+ native opcode",
@@ -323,8 +327,10 @@ export class QlcNativeClient {
       true,
     );
     const sequence = fields[0];
-    if (typeof sequence !== "number")
+    if (typeof sequence !== "number") {
       throw new Error("Invalid QLC+ project sequence");
+    }
+
     if (sequence === 0) {
       if (this.projectStarted || typeof fields[1] !== "number") {
         throw new Error("Invalid QLC+ project transfer start");
@@ -343,6 +349,7 @@ export class QlcNativeClient {
     } else {
       throw new Error(`Invalid QLC+ project sequence ${sequence}`);
     }
+
     if (sequence === 2 || this.projectLength === this.expectedProjectSize) {
       if (this.projectLength !== this.expectedProjectSize) {
         throw new Error("QLC+ project ended before its declared size");
@@ -352,6 +359,7 @@ export class QlcNativeClient {
         this.options.maximumProjectSize,
       );
       if (!this.socket || this.socket.destroyed) return;
+
       this.inventory = nextInventory;
       this.state.inventoryGeneration += 1;
       this.state.inventoryLoadedAt = isoNow();
@@ -389,12 +397,7 @@ export class QlcNativeClient {
     this.invalidateInventory();
     this.state.lastDisconnectedAt = isoNow();
     if (this.stopped) return;
-    this.setConnectionState("disconnected");
-    this.state.reconnectCount += 1;
-    this.reconnectTimer = setTimeout(() => {
-      this.reconnectTimer = null;
-      this.connect();
-    }, this.options.reconnectMs);
+    this.scheduleReconnect();
   }
 
   private invalidateInventory(): void {
@@ -442,9 +445,7 @@ export class QlcNativeClient {
 
 let nativeClient: QlcNativeClient | null = null;
 
-export function initNativeClient(
-  options: NativeClientOptions,
-): QlcNativeClient {
+export function initNativeClient(options: NativeClientOptions): QlcNativeClient {
   nativeClient?.stop();
   nativeClient = new QlcNativeClient(options);
   nativeClient.start();
