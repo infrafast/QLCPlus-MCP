@@ -1,49 +1,54 @@
 import { z } from "zod";
 
-export const ConfigSchema = z.object({
-  transport: z.enum(["stdio", "http"]).default("stdio"),
+export const ConfigSchema = z
+  .object({
+    transport: z.enum(["stdio", "http"]).default("stdio"),
 
-  httpHost: z.string().default("127.0.0.1"),
-  httpPort: z.number().int().min(1).max(65535).default(8788),
-  httpMcpPath: z.string().default("/mcp"),
+    httpHost: z.string().default("127.0.0.1"),
+    httpPort: z.number().int().min(1).max(65535).default(8788),
+    httpMcpPath: z.string().default("/mcp"),
 
-  authMode: z.enum(["none", "bearer"]).default("none"),
-  authToken: z.string().optional(),
+    authMode: z.enum(["none", "bearer"]).default("none"),
+    authToken: z.string().optional(),
 
-  qlcNativeEnabled: z.boolean().default(true),
-  qlcNativeHost: z.string().min(1).default("127.0.0.1"),
-  qlcNativePort: z.number().int().min(1).max(65535).default(9998),
-  qlcNativeEncryptionKey: z.string().default(""),
-  qlcNativeReconnectMs: z.number().int().min(100).max(60_000).default(2_000),
-  qlcNativeConnectTimeoutMs: z
-    .number()
-    .int()
-    .min(100)
-    .max(60_000)
-    .default(10_000),
-  qlcNativeMaximumProjectSize: z
-    .number()
-    .int()
-    .min(1024)
-    .max(128 * 1024 * 1024)
-    .default(16 * 1024 * 1024),
-  qlcNativeClientName: z.string().min(1).max(100).default("QLCPlus-MCP"),
+    qlcNativeHost: z.string().min(1).default("127.0.0.1"),
+    qlcNativePort: z.number().int().min(1).max(65535).default(9998),
+    qlcNativeEncryptionKey: z.string().default(""),
+    qlcNativeReconnectMs: z.number().int().min(100).max(60_000).default(2_000),
+    qlcNativeConnectTimeoutMs: z
+      .number()
+      .int()
+      .min(100)
+      .max(60_000)
+      .default(10_000),
+    qlcNativeMaximumProjectSize: z
+      .number()
+      .int()
+      .min(1024)
+      .max(128 * 1024 * 1024)
+      .default(16 * 1024 * 1024),
+    qlcNativeClientName: z.string().min(1).max(100).default("QLCPlus-MCP"),
 
-  qlcDryRun: z.boolean().default(false),
+    qlcDryRun: z.boolean().default(false),
 
-  logLevel: z
-    .enum(["trace", "debug", "info", "warn", "error", "fatal"])
-    .default("info"),
-  nodeEnv: z.enum(["development", "production"]).default("development"),
-}).superRefine((config, ctx) => {
-  if (config.transport === "http" && config.authMode === "bearer" && !config.authToken) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["authToken"],
-      message: "MCP_AUTH_TOKEN is required when MCP_AUTH_MODE=bearer",
-    });
-  }
-});
+    logLevel: z
+      .enum(["trace", "debug", "info", "warn", "error", "fatal"])
+      .default("info"),
+    nodeEnv: z.enum(["development", "production"]).default("development"),
+  })
+  .superRefine((config, ctx) => {
+    if (
+      config.transport === "http" &&
+      config.authMode === "bearer" &&
+      !config.authToken
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["authToken"],
+        message: "MCP_AUTH_TOKEN is required when MCP_AUTH_MODE=bearer",
+      });
+    }
+  });
 
 export type Config = z.infer<typeof ConfigSchema>;
 
@@ -78,7 +83,6 @@ export function loadConfig(): Config {
     httpMcpPath: optionalString(process.env.HTTP_MCP_PATH),
     authMode: optionalString(process.env.MCP_AUTH_MODE),
     authToken: optionalString(process.env.MCP_AUTH_TOKEN),
-    qlcNativeEnabled: optionalBoolean(process.env.QLC_NATIVE_ENABLED),
     qlcNativeHost: optionalString(process.env.QLC_NATIVE_HOST),
     qlcNativePort: optionalInteger(process.env.QLC_NATIVE_PORT),
     qlcNativeEncryptionKey: process.env.QLC_NATIVE_ENCRYPTION_KEY ?? undefined,
