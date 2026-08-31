@@ -5,8 +5,12 @@ import { createButtonPressTool } from "../src/tools/qlc_button_control.js";
 describe("QLC+ runtime agent policy", () => {
   it("keeps command-routing behavior in PROMPT.md", async () => {
     const prompt = await readAgentPrompt();
+    expect(prompt).toContain("direct button-execution request");
+    expect(prompt).toContain("complete widget caption is everything after `qlc`");
     expect(prompt).toContain("call `qlc_button_press` directly");
-    expect(prompt).toContain("separate `qlc_list_widgets` call is not required");
+    expect(prompt).toContain("Do not call `qlc_list_widgets` merely to verify a complete caption");
+    expect(prompt).toContain("returns the exact requested button caption");
+    expect(prompt).toContain("Do not ask the user for confirmation");
     expect(prompt).toContain("`blue speed`, `blue_speed`, and `bluespeed`");
     expect(prompt).toContain("requires no user confirmation");
   });
