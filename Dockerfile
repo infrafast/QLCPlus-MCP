@@ -15,8 +15,7 @@ WORKDIR /app
 ENV NODE_ENV=production \
     MCP_TRANSPORT=http \
     HTTP_HOST=0.0.0.0 \
-    HTTP_PORT=8788 \
-    QLC_NATIVE_ENABLED=true
+    HTTP_PORT=8788
 
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
