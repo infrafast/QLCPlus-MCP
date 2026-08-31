@@ -64,6 +64,7 @@ async function main(): Promise<void> {
     );
 
     initNativeClient({
+      enabled: true,
       host: config.qlcNativeHost,
       port: config.qlcNativePort,
       encryptionKey: config.qlcNativeEncryptionKey,
