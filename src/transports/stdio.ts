@@ -5,9 +5,17 @@ import { createQlcMcpServer } from "../mcpServer.js";
 import { stopNativeClient } from "../qlc/nativeClient.js";
 import type { ToolDefinition } from "../mcpCompat.js";
 
+export function shutdownStdioRuntime(
+  exitCode: number,
+  exit: (code: number) => void = (code) => process.exit(code),
+): void {
+  stopNativeClient();
+  exit(exitCode);
+}
+
 export async function startStdioServer(
   config: Config,
-  tools: ToolDefinition[]
+  tools: ToolDefinition[],
 ): Promise<void> {
   const logger = getLogger();
 
@@ -20,8 +28,7 @@ export async function startStdioServer(
   const shutdown = (exitCode: number): void => {
     if (shuttingDown) return;
     shuttingDown = true;
-    stopNativeClient();
-    process.exit(exitCode);
+    shutdownStdioRuntime(exitCode);
   };
   transport.onclose = () => {
     logger.info("STDIO transport closed");
