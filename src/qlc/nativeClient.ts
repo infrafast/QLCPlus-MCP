@@ -90,6 +90,7 @@ export class QlcNativeClient {
   private projectLength = 0;
   private expectedProjectSize: number | null = null;
   private projectStarted = false;
+  private projectTransferGeneration = 0;
   private state: NativeRuntimeState;
   private lastLoggedError: string | null = null;
   private lastLoggedEndpoint: string | null = null;
@@ -136,6 +137,8 @@ export class QlcNativeClient {
     this.connectTimer = null;
     this.socket?.destroy();
     this.socket = null;
+    this.projectTransferGeneration += 1;
+    this.resetProjectTransfer();
     this.invalidateInventory();
     this.setConnectionState("stopped");
   }
@@ -254,6 +257,7 @@ export class QlcNativeClient {
     }, this.options.connectTimeoutMs);
 
     socket.once("connect", () => {
+      if (this.socket !== socket || socket.destroyed) return;
       if (this.connectTimer) clearTimeout(this.connectTimer);
       this.connectTimer = null;
       this.state.connectedAt = isoNow();
@@ -267,8 +271,10 @@ export class QlcNativeClient {
       );
       logger.warn(`Authorize '${this.options.clientName}' in QLC+ if prompted`);
     });
-    socket.on("data", (chunk) => this.onData(chunk));
-    socket.once("error", (error) => this.recordError(error));
+    socket.on("data", (chunk) => this.onData(socket, chunk));
+    socket.once("error", (error) => {
+      if (this.socket === socket) this.recordError(error);
+    });
     socket.once("close", () => this.onClose(socket));
   }
 
@@ -282,16 +288,20 @@ export class QlcNativeClient {
     }, this.options.reconnectMs);
   }
 
-  private onData(chunk: Buffer): void {
+  private onData(socket: Socket, chunk: Buffer): void {
+    if (this.socket !== socket || socket.destroyed) return;
     try {
-      for (const frame of this.decoder.push(chunk)) this.handleFrame(frame);
+      for (const frame of this.decoder.push(chunk)) this.handleFrame(socket, frame);
     } catch (error) {
+      if (this.socket !== socket) return;
       this.recordError(error);
-      this.socket?.destroy();
+      socket.destroy();
     }
   }
 
-  private handleFrame(frame: NativeFrame): void {
+  private handleFrame(socket: Socket, frame: NativeFrame): void {
+    if (this.socket !== socket || socket.destroyed) return;
+
     if (frame.opcode === NET_AUTHENTICATION_REPLY) {
       const fields = parseNativeSections(
         frame.payload,
@@ -307,9 +317,10 @@ export class QlcNativeClient {
     }
 
     if (frame.opcode === NET_PROJECT_TRANSFER) {
-      void this.handleProjectFrame(frame).catch((error) => {
+      void this.handleProjectFrame(socket, frame).catch((error) => {
+        if (this.socket !== socket) return;
         this.recordError(error);
-        this.socket?.destroy();
+        socket.destroy();
       });
       return;
     }
@@ -320,7 +331,12 @@ export class QlcNativeClient {
     );
   }
 
-  private async handleProjectFrame(frame: NativeFrame): Promise<void> {
+  private async handleProjectFrame(
+    socket: Socket,
+    frame: NativeFrame,
+  ): Promise<void> {
+    if (this.socket !== socket || socket.destroyed) return;
+
     const fields = parseNativeSections(
       frame.payload,
       Math.min(frame.sectionCount, 3),
@@ -335,11 +351,19 @@ export class QlcNativeClient {
       if (this.projectStarted || typeof fields[1] !== "number") {
         throw new Error("Invalid QLC+ project transfer start");
       }
-      this.projectStarted = true;
-      this.expectedProjectSize = fields[1];
-      if (this.expectedProjectSize > this.options.maximumProjectSize) {
+      if (
+        !Number.isSafeInteger(fields[1]) ||
+        fields[1] < 0 ||
+        fields[1] > this.options.maximumProjectSize
+      ) {
         throw new Error("QLC+ native project exceeds configured limit");
       }
+
+      this.projectTransferGeneration += 1;
+      this.invalidateInventory();
+      this.setConnectionState("downloading-project");
+      this.projectStarted = true;
+      this.expectedProjectSize = fields[1];
       if (Buffer.isBuffer(fields[2])) this.appendProjectChunk(fields[2]);
     } else if (sequence === 1 || sequence === 2) {
       if (!this.projectStarted || !Buffer.isBuffer(fields[1])) {
@@ -354,11 +378,22 @@ export class QlcNativeClient {
       if (this.projectLength !== this.expectedProjectSize) {
         throw new Error("QLC+ project ended before its declared size");
       }
+
+      const transferGeneration = this.projectTransferGeneration;
+      const project = Buffer.concat(this.projectChunks, this.projectLength);
+      this.resetProjectTransfer();
+
       const nextInventory = await parseNativeProjectInventory(
-        Buffer.concat(this.projectChunks, this.projectLength),
+        project,
         this.options.maximumProjectSize,
       );
-      if (!this.socket || this.socket.destroyed) return;
+      if (
+        this.socket !== socket ||
+        socket.destroyed ||
+        this.projectTransferGeneration !== transferGeneration
+      ) {
+        return;
+      }
 
       this.inventory = nextInventory;
       this.state.inventoryGeneration += 1;
@@ -371,7 +406,6 @@ export class QlcNativeClient {
       this.stateLogTimes.delete("connecting");
       this.stateLogTimes.delete("disconnected");
       this.setConnectionState("ready");
-      this.resetProjectTransfer();
     }
   }
 
@@ -392,6 +426,7 @@ export class QlcNativeClient {
     if (this.connectTimer) clearTimeout(this.connectTimer);
     this.connectTimer = null;
     this.socket = null;
+    this.projectTransferGeneration += 1;
     this.decoder.reset();
     this.resetProjectTransfer();
     this.invalidateInventory();
@@ -403,6 +438,7 @@ export class QlcNativeClient {
   private invalidateInventory(): void {
     this.inventory = EMPTY_INVENTORY;
     this.state.ready = false;
+    this.state.inventoryLoadedAt = null;
     this.state.widgetCount = 0;
     this.state.buttonCount = 0;
     this.state.sliderCount = 0;

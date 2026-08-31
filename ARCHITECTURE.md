@@ -191,9 +191,22 @@ connecting
 
 A raw TCP connection is never reported as ready.
 
+Each native receive callback is bound to the exact socket that delivered the bytes. Frames arriving from a socket that is no longer the current session are ignored, including errors or project data that race with reconnect.
+
+When a new project transfer starts with sequence `0`:
+
+- the previous inventory is invalidated immediately;
+- `inventoryLoadedAt` is cleared;
+- state changes to `downloading-project` before the new project can be used;
+- button actions are therefore rejected until the replacement inventory has been completely parsed and validated;
+- a project-transfer generation counter identifies which asynchronous parse is still current.
+
+Once all bytes for a project have been assembled, the transfer buffer is detached and reset before XML parsing begins. If a newer transfer starts on the same socket while the older XML parse is still running, only the newest transfer generation may install an inventory. Likewise, a parse from an old socket can never install into a replacement connection.
+
 On disconnect:
 
 - socket state is cleared;
+- the current project-transfer generation is invalidated;
 - decoder/project-transfer state is reset;
 - the inventory is invalidated immediately;
 - old numeric widget IDs become unusable;
@@ -258,6 +271,8 @@ This removes an unnecessary MCP round trip from normal live commands without wea
 `src/transports/stdio.ts` uses `StdioServerTransport`.
 
 It is preferred when the MCP host and QLCPlus-MCP run on the same machine because it avoids an HTTP listener entirely.
+
+Closing or failing the STDIO transport goes through the same native-client cleanup path before process exit. The cleanup helper is directly behavior-tested so a regression cannot leave the native socket/reconnect lifecycle alive after the MCP parent disappears.
 
 ## HTTP Transport
 
@@ -344,7 +359,7 @@ npm run build
 npm run test:ci
 ```
 
-The tests cover native codec framing, native host selection, project inventory/security, connection/reconnect behavior, button semantics, nullable MCP schemas, prompt behavior and native configuration defaults.
+The tests cover native codec framing, native host selection, project inventory/security, connection/reconnect behavior, project/session race handling, button semantics, STDIO cleanup behavior, nullable MCP schemas, prompt behavior and native configuration defaults.
 
 Live QLC+ validation remains necessary for protocol compatibility and actual lighting behavior because unit tests cannot prove a specific QLC+ build accepts and applies native actions.
 
@@ -357,3 +372,4 @@ Live QLC+ validation remains necessary for protocol compatibility and actual lig
 5. Treat project data received from QLC+ as untrusted input and preserve allocation/XML bounds.
 6. Never execute fuzzy/partial widget matches.
 7. Never persist session-only numeric QLC+ widget IDs.
+8. Never allow project data from an obsolete socket or obsolete transfer generation to replace the current inventory.
