@@ -11,6 +11,9 @@ export const ConfigSchema = z
     authMode: z.enum(["none", "bearer"]).default("none"),
     authToken: z.string().optional(),
 
+    // Native protocol is the only supported QLC+ runtime path and is therefore
+    // an invariant, not a user-configurable feature flag.
+    qlcNativeEnabled: z.literal(true).default(true),
     qlcNativeHost: z.string().min(1).default("127.0.0.1"),
     qlcNativePort: z.number().int().min(1).max(65535).default(9998),
     qlcNativeEncryptionKey: z.string().default(""),
