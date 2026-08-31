@@ -130,13 +130,15 @@ On the target QLC+ production build:
 5. reload/switch the QLC+ project and verify rediscovery before the next action;
 6. restart QLC+ and verify the first post-reconnect action uses the fresh inventory.
 
+The Raspberry Pi / LiveStageAssistant STDIO validation already confirmed exact captions containing spaces such as `blue speed`.
+
 ## Milestone 3 — Native-Only Cleanup
 
-Status: **implemented on `cleanup/native-only-consistency`; automated PR CI and final Raspberry Pi release validation pending**
+Status: **complete on `main`**
 
-The cleanup removes migration-era contradictions and legacy runtime code.
+The cleanup removed migration-era contradictions and legacy runtime code. The cleanup PR was merged on 18 August 2026 and subsequent `main` CI passed on Node 20.20 and Node 22.
 
-Implemented on the cleanup branch:
+Implemented:
 
 - remove OSC runtime module;
 - remove static widget resolver and `config/widgets.json` runtime mapping;
@@ -158,11 +160,12 @@ Implemented on the cleanup branch:
 - resolve `MCP_PROMPT_FILE` after runtime env loading;
 - add GitHub Actions build/test CI on Node 20.20 and 22;
 - add the repository MIT `LICENSE` file;
-- align README, ARCHITECTURE, ROADMAP, AGENTS and PROMPT with native-only behavior.
+- align README, ARCHITECTURE, ROADMAP, AGENTS and PROMPT with native-only behavior;
+- terminate native resources cleanly when a STDIO parent disconnects.
 
-### Milestone 3 automated gate
+### Validation status
 
-The pull request must pass:
+Automated validation is enforced by GitHub Actions:
 
 ```text
 npm ci
@@ -170,24 +173,30 @@ npm run build
 npm run test:ci
 ```
 
-on Node 20.20 and Node 22.
+The production usage path through LiveStageAssistant STDIO was validated on Raspberry Pi after the cleanup, including native button execution with captions containing spaces.
 
-Repository review should also confirm there is no active OSC/WebSocket runtime path and no tracked runtime `.env` or `dist/` output.
+The optional systemd/HTTP service-pack path remains available for deployments that need it, but it is not required when LiveStageAssistant launches QLCPlus-MCP directly over STDIO.
 
-### Milestone 3 Raspberry Pi release gate
+## Milestone 4 — Project And Session Safety Hardening
 
-After CI passes:
+Status: **implemented**
 
-1. update/build QLCPlus-MCP on the Raspberry Pi;
-2. verify systemd starts cleanly with `/etc/qlcplusmcp.env`;
-3. confirm `qlcplusmcp health` reports the native lifecycle;
-4. approve QLC+ authorization if required;
-5. reach `ready` with the expected inventory;
-6. execute representative exact captions including at least one caption containing spaces;
-7. restart QLC+ and confirm automatic recovery;
-8. check journal output for bounded reconnect logging and acceptable CPU/RSS usage.
+Purpose: guarantee that a button can never be executed from an inventory that belongs to a project or native connection which has already been superseded.
 
-After this live gate, native-only cleanup can be considered production accepted.
+Implemented:
+
+- bind incoming frames to the exact socket that delivered them;
+- ignore stale data/errors from obsolete sockets after reconnect;
+- invalidate the current inventory immediately when a replacement project transfer starts;
+- leave `ready` and enter `downloading-project` before accepting commands against the replacement project;
+- clear the current inventory timestamp during invalidation;
+- use a project-transfer generation counter so an older asynchronous XML parse cannot overwrite a newer transfer on the same socket;
+- invalidate the generation on disconnect/stop;
+- detach completed project bytes from transfer state before asynchronous parsing;
+- add regression tests for project reload, stale socket parsing and overlapping project generations;
+- replace the former source-text-only STDIO cleanup check with a direct behavioral cleanup test while retaining signal wiring coverage.
+
+This hardening does not change caption identity. Names such as `blue speed` remain supported exactly as before.
 
 ## Future Native-Only Work
 
