@@ -3,16 +3,16 @@ import { readAgentPrompt } from "../src/agentPrompt.js";
 import { createButtonPressTool } from "../src/tools/qlc_button_control.js";
 
 describe("QLC+ runtime agent policy", () => {
-  it("keeps command-routing behavior in PROMPT.md", async () => {
+  it("keeps verify-then-execute routing behavior in PROMPT.md", async () => {
     const prompt = await readAgentPrompt();
-    expect(prompt).toContain("direct button-execution request");
-    expect(prompt).toContain("complete widget caption is everything after `qlc`");
-    expect(prompt).toContain("call `qlc_button_press` directly");
-    expect(prompt).toContain("Do not call `qlc_list_widgets` merely to verify a complete caption");
-    expect(prompt).toContain("returns the exact requested button caption");
-    expect(prompt).toContain("Do not ask the user for confirmation");
+    expect(prompt).toContain("button-execution request");
+    expect(prompt).toContain("requested complete widget caption is everything after `qlc`");
+    expect(prompt).toContain("verify it against the current native Virtual Console inventory with `qlc_list_widgets`");
+    expect(prompt).toContain("exact match to the requested complete caption");
+    expect(prompt).toContain("immediately call `qlc_button_press`");
+    expect(prompt).toContain("do not ask for confirmation");
+    expect(prompt).toContain("do not press any widget and do not substitute another caption");
     expect(prompt).toContain("`blue speed`, `blue_speed`, and `bluespeed`");
-    expect(prompt).toContain("requires no user confirmation");
   });
 });
 
