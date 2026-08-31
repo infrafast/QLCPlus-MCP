@@ -24,12 +24,12 @@ function loadRuntimeEnv(): string | undefined {
   for (const candidate of candidates) {
     const envPath = path.resolve(candidate);
     if (fs.existsSync(envPath)) {
-      dotenv.config({ path: envPath });
+      dotenv.config({ path: envPath, quiet: true });
       return envPath;
     }
   }
 
-  dotenv.config();
+  dotenv.config({ quiet: true });
   return undefined;
 }
 
@@ -64,7 +64,7 @@ async function main(): Promise<void> {
     );
 
     initNativeClient({
-      enabled: config.qlcNativeEnabled,
+      enabled: true,
       host: config.qlcNativeHost,
       port: config.qlcNativePort,
       encryptionKey: config.qlcNativeEncryptionKey,

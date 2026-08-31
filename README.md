@@ -42,7 +42,6 @@ For same-machine QLC+ and local HTTP use, the defaults are intentionally loopbac
 ```text
 MCP_TRANSPORT=http
 HTTP_HOST=127.0.0.1
-QLC_NATIVE_ENABLED=true
 QLC_NATIVE_HOST=127.0.0.1
 QLC_NATIVE_PORT=9998
 ```
@@ -162,6 +161,8 @@ Example MCP configuration:
 }
 ```
 
+`PROMPT.md` is discovered automatically from the QLCPlus-MCP installation, even when the MCP process is launched with another working directory. `MCP_PROMPT_FILE` is needed only to deliberately override the bundled prompt.
+
 Build the project before using `dist/src/index.js`.
 
 ## HTTP Mode
@@ -209,7 +210,6 @@ HTTP_MCP_PATH=/mcp
 MCP_AUTH_MODE=none|bearer
 MCP_AUTH_TOKEN=...
 
-QLC_NATIVE_ENABLED=true
 QLC_NATIVE_HOST=127.0.0.1
 QLC_NATIVE_PORT=9998
 QLC_NATIVE_ENCRYPTION_KEY=
@@ -224,9 +224,13 @@ LOG_LEVEL=info
 NODE_ENV=production|development
 ```
 
-When `QLC_NATIVE_ENABLED` is omitted, the native client defaults to **enabled**.
+Native QLC+ control is always enabled because it is the only supported QLC+ runtime path. There is no `QLC_NATIVE_ENABLED` setting. Use `QLC_DRY_RUN=true` when you intentionally want the MCP to open no QLC+ socket and send no live action.
 
-`QLC_DRY_RUN=true` keeps the native network path closed and returns dry-run button results without sending live actions.
+Legacy OSC-era variables such as `QLC_ALLOW_RAW_OSC`, `QLC_HOST`, `QLC_OSC_INPUT_PORT`, `QLC_OSC_OUTPUT_PORT`, `QLC_UNIVERSE` and `QLC_WIDGETS_FILE` are not read and should be removed from deployment configuration.
+
+`dotenv` is configured quietly by the application, so `DOTENV_CONFIG_QUIET` is not required.
+
+`MCP_PROMPT_FILE` is optional and normally unnecessary; it exists only for a deliberate custom prompt override.
 
 ## Raspberry Pi Service
 

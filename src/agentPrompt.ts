@@ -1,5 +1,6 @@
-import { readFile } from "fs/promises";
+import { access, readFile } from "fs/promises";
 import path from "path";
+import { fileURLToPath } from "url";
 import { text, type ToolDefinition } from "./mcpCompat.js";
 import { z } from "zod";
 
@@ -7,14 +8,32 @@ export const PROMPT_RESOURCE_URI = "agent://prompt/system";
 export const PROMPT_NAME = "agent_prompt";
 export const PROMPT_TOOL_NAME = "get_agent_prompt";
 
-function promptFilePath(): string {
-  return process.env.MCP_PROMPT_FILE
-    ? path.resolve(process.env.MCP_PROMPT_FILE)
-    : path.resolve(process.cwd(), "PROMPT.md");
+async function promptFilePath(): Promise<string> {
+  if (process.env.MCP_PROMPT_FILE) {
+    return path.resolve(process.env.MCP_PROMPT_FILE);
+  }
+
+  const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+  const candidates = [
+    path.resolve(process.cwd(), "PROMPT.md"),
+    path.resolve(moduleDir, "../PROMPT.md"),
+    path.resolve(moduleDir, "../../PROMPT.md"),
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      await access(candidate);
+      return candidate;
+    } catch {
+      // Try the next standard source/dev/deployment location.
+    }
+  }
+
+  return candidates[0];
 }
 
 export async function readAgentPrompt(): Promise<string> {
-  return readFile(promptFilePath(), "utf8");
+  return readFile(await promptFilePath(), "utf8");
 }
 
 function registerPromptName(server: any, name: string): void {
