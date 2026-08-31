@@ -123,9 +123,14 @@ Loose normalization may exist only as diagnostic/search metadata and must not de
 
 ## Agent Command Routing
 
-If the user supplies a complete caption, the runtime agent should call `qlc_button_press` directly. The server validates the caption against the current native inventory, so pre-calling `qlc_list_widgets` is unnecessary.
+For a user command that supplies a complete QLC+ caption, the runtime agent must use a verify-then-execute flow against the current native inventory:
 
-Use `qlc_list_widgets` for discovery, partial searches, or recovery after an exact caption was rejected.
+1. call `qlc_list_widgets` with the requested complete caption;
+2. compare returned button captions using the execution identity rule (case-insensitive only; spaces, accents, punctuation, `_` and `-` significant);
+3. if exactly one returned button is an exact match, call `qlc_button_press` immediately with that caption and do not ask the user for confirmation;
+4. if there is no exact button match, do not execute any alternative or approximate result.
+
+`qlc_list_widgets` search output is discovery data, not execution authorization by itself. Substring, prefix, fuzzy, semantic or separator-normalized matches must never be promoted to a live action.
 
 This section documents the current product policy for maintainers. The executable runtime-agent version of this policy must remain in `PROMPT.md`; do not copy this wording into tool descriptions.
 
