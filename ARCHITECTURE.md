@@ -137,7 +137,15 @@ SimpleCrypt is a QLC+ protocol compatibility mechanism, **not modern transport s
 
 After authorization, QLC+ transfers the active project. The server parses only the metadata required for Virtual Console control.
 
-The parser enforces a configurable maximum project size, rejects XML entities, accepts only the inert standard `<!DOCTYPE Workspace>` form, discovers buttons/sliders recursively inside Virtual Console, records Frame/SoloFrame hierarchy and builds a new inventory before replacing the current one.
+The parser:
+
+- enforces a configurable maximum project size;
+- rejects XML entities;
+- accepts only the inert standard `<!DOCTYPE Workspace>` form;
+- discovers buttons/sliders recursively inside Virtual Console;
+- records Frame/SoloFrame hierarchy;
+- records button action type and slider metadata;
+- builds a new inventory before replacing the current one.
 
 #### Caption identity
 
@@ -150,7 +158,13 @@ blue speed  != bluespeed
 Été         != Ete
 ```
 
-Internal spaces, accents, punctuation, underscores and hyphens are significant. `exactNativeCaptionKey()` is the only identity key used for command lookup and duplicate detection. `normalizeNativeCaption()` remains diagnostic/search metadata only and must never authorize a live action.
+Internal spaces, accents, punctuation, underscores and hyphens are significant.
+
+`exactNativeCaptionKey()` is the only identity key used for command lookup and duplicate detection.
+
+`normalizeNativeCaption()` remains diagnostic/search metadata only. Its separator/accent-insensitive form must never authorize an action or collapse two otherwise distinct live captions.
+
+This specifically means widgets such as `blue speed` are supported without renaming.
 
 ### Native client — `src/qlc/nativeClient.ts`
 
@@ -167,13 +181,53 @@ connecting
   -> connecting ...
 ```
 
-`ready` requires an active TCP connection, successful authorization and a complete validated current project inventory. On disconnect or project replacement, the inventory is invalidated immediately and a fresh project must be downloaded before returning to `ready`.
+`ready` requires all of the following:
 
-Each receive callback is bound to the exact socket that delivered the bytes. Stale socket data and obsolete project-transfer generations cannot replace the current inventory.
+- TCP connection exists;
+- QLC+ authorization succeeded;
+- the complete current project was received;
+- the project passed validation;
+- the current inventory was installed atomically.
+
+A raw TCP connection is never reported as ready.
+
+Each native receive callback is bound to the exact socket that delivered the bytes. Frames arriving from a socket that is no longer the current session are ignored, including errors or project data that race with reconnect.
+
+When a new project transfer starts with sequence `0`:
+
+- the previous inventory is invalidated immediately;
+- `inventoryLoadedAt` is cleared;
+- state changes to `downloading-project` before the new project can be used;
+- button actions are therefore rejected until the replacement inventory has been completely parsed and validated;
+- a project-transfer generation counter identifies which asynchronous parse is still current.
+
+Once all bytes for a project have been assembled, the transfer buffer is detached and reset before XML parsing begins. If a newer transfer starts on the same socket while the older XML parse is still running, only the newest transfer generation may install an inventory. Likewise, a parse from an old socket can never install into a replacement connection.
+
+On disconnect:
+
+- socket state is cleared;
+- the current project-transfer generation is invalidated;
+- decoder/project-transfer state is reset;
+- the inventory is invalidated immediately;
+- old numeric widget IDs become unusable;
+- reconnect is scheduled with bounded interval/log repetition;
+- a fresh project must be downloaded before returning to `ready`.
+
+TCP keepalive is enabled. QLC+ `NetPoll`/`NetPollReply` are not relied upon.
 
 ## Button Execution
 
-`qlc_button_press` resolves one complete caption through the current inventory and sends the native Virtual Console action only while state is `ready`.
+`qlc_button_press` calls `QlcNativeClient.pressButton()`.
+
+Execution flow:
+
+```text
+complete caption
+  -> exactNativeCaptionKey(caption)
+  -> current inventory.buttons lookup
+  -> verify native state == ready
+  -> VCButtonSetPressed packet
+```
 
 Current native action code:
 
@@ -181,7 +235,14 @@ Current native action code:
 VCButtonSetPressed = 0xF200
 ```
 
-Toggle/default buttons use press-only semantics; Flash uses press/release. Missing captions and wrong widget kinds are rejected without fuzzy fallback.
+Button semantics:
+
+- Toggle/default/ordinary buttons: press-only;
+- Flash: press, wait briefly, release;
+- slider with the same exact caption: explicit wrong-kind error;
+- missing exact caption: explicit error; no fuzzy fallback is executed.
+
+A command is counted successful only after the packet write completes.
 
 ## MCP Tools
 
@@ -192,11 +253,26 @@ Toggle/default buttons use press-only semantics; Flash uses press/release. Missi
 | `qlc_list_widgets` | Discover the current native project inventory. |
 | `qlc_button_press` | Execute one complete exact button caption. |
 
+### Efficient agent flow
+
+If the user already supplies a complete caption, the agent should call `qlc_button_press` directly. The server performs the authoritative inventory check.
+
+`qlc_list_widgets` is intended for:
+
+- inventory questions;
+- partial searches;
+- user discovery;
+- recovery after an exact caption fails.
+
+This removes an unnecessary MCP round trip from normal live commands without weakening validation.
+
 ## STDIO Transport
 
-`src/transports/stdio.ts` uses `StdioServerTransport` and is preferred when the MCP host and QLCPlus-MCP run on the same machine.
+`src/transports/stdio.ts` uses `StdioServerTransport`.
 
-Closing or failing the STDIO transport goes through the same native-client cleanup path before process exit.
+It is preferred when the MCP host and QLCPlus-MCP run on the same machine because it avoids an HTTP listener entirely.
+
+Closing or failing the STDIO transport goes through the same native-client cleanup path before process exit. The cleanup helper is directly behavior-tested so a regression cannot leave the native socket/reconnect lifecycle alive after the MCP parent disappears.
 
 ## HTTP Transport
 
@@ -209,33 +285,75 @@ Closing or failing the STDIO transport goes through the same native-client clean
 - optional bearer authentication;
 - a read-only native status page.
 
-The MCP endpoint intentionally does **not** allocate or retain `Mcp-Session-Id` values. A fresh `StreamableHTTPServerTransport` and MCP server binding are created for each protocol request with `sessionIdGenerator: undefined` and JSON responses enabled. Mixer/QLC runtime state remains global in the QLC+ native client, not in the MCP transport.
+The MCP endpoint intentionally does not allocate or retain `Mcp-Session-Id` values. A fresh `StreamableHTTPServerTransport` and MCP server binding are created for each MCP protocol request with `sessionIdGenerator: undefined` and JSON responses enabled. The QLC+ native client and current project inventory remain process-global runtime state, not MCP transport-session state.
 
-This makes HTTP clients resilient to a QLCPlus-MCP or Raspberry Pi restart: after the endpoint is reachable again, the next MCP request does not depend on a transport session that existed before the restart. It also avoids an in-memory HTTP session table and is suitable for multiple independent MCP clients such as Claude, ChatGPT/OpenAI-compatible clients and LiveStageAssistant.
+This means an HTTP client can continue using the same `/mcp` URL after QLCPlus-MCP or the Raspberry Pi restarts, once the service is reachable again, without depending on an in-memory MCP session created before the restart. Client configuration remains `type: "streamable-http"`.
 
-The browser admin page remains available on `GET /mcp` when the request accepts HTML. MCP protocol requests continue to use the same `/mcp` URL and `type: "streamable-http"`; client configuration does not change.
+The browser admin page remains available on `GET /mcp` when the request accepts HTML. Stateless MCP protocol traffic uses the same `/mcp` endpoint.
 
 There is no runtime QLC+ reconfiguration form and no OSC configuration endpoint.
 
 ### Public health boundary
 
-`/health` intentionally precedes bearer authorization so infrastructure can test liveness. It returns only minimal service/native readiness information and never returns bearer tokens, native encryption keys, authenticated headers, full runtime config or logs.
+`/health` intentionally precedes bearer authorization so infrastructure can test liveness. It returns only minimal information:
+
+- service identity;
+- version;
+- native enabled/state/ready;
+- current widget count.
+
+It does not return:
+
+- bearer tokens;
+- native encryption keys;
+- authenticated client headers;
+- full runtime config;
+- runtime logs.
 
 ### Bearer token handling
 
-When bearer mode is enabled, `MCP_AUTH_TOKEN` is required at startup, incoming tokens are compared with `timingSafeEqual`, generated agent configuration displays a placeholder instead of the real secret, and the real token is not logged.
+When bearer mode is enabled:
 
-HTTP request bodies are bounded to 1 MiB before JSON parsing. Default HTTP binding is `127.0.0.1`; network exposure is explicit.
+- `MCP_AUTH_TOKEN` is required at startup;
+- incoming tokens are compared with `timingSafeEqual` after equal-length validation;
+- generated agent configuration displays a `<MCP_AUTH_TOKEN>` placeholder rather than the real secret;
+- the real token is not logged.
+
+HTTP request bodies are bounded to 1 MiB before JSON parsing.
+
+Default HTTP binding is `127.0.0.1`. Network exposure is therefore explicit.
 
 ## Dry Run
 
-With `QLC_DRY_RUN=true`, the native client opens no TCP socket. Button calls return dry-run results without transmitting live actions.
+With:
+
+```text
+QLC_DRY_RUN=true
+```
+
+the native client opens no TCP socket. Button calls return dry-run results without transmitting live actions.
+
+This is suitable for integration testing but does not represent a `ready` live native session.
 
 ## Packaging
 
+### Git repository
+
 Generated `dist/` output is ignored and not tracked. A deployment must run `npm run build` before starting `dist/src/index.js`.
 
-The Docker build compiles TypeScript in a build stage and exposes only the MCP HTTP TCP port. The Raspberry Pi service pack uses `/etc/qlcplusmcp.env`; its installer preserves existing configuration and mode `600`.
+Machine-specific `.env` files and `config/.env` are ignored.
+
+### Docker
+
+The Docker build compiles TypeScript in a build stage and copies only compiled output plus `PROMPT.md` into the runtime image.
+
+Only the HTTP TCP port is exposed. No OSC UDP port or widget/config volume is required.
+
+### Raspberry Pi service
+
+The service pack uses `/etc/qlcplusmcp.env`.
+
+The installer preserves an existing environment file and sets mode `600`, preventing accidental destruction/exposure of bearer tokens or future secrets during reinstall.
 
 ## Automated Validation
 
@@ -249,7 +367,7 @@ npm run test:ci
 
 The tests cover native codec framing, native host selection, project inventory/security, connection/reconnect behavior, project/session race handling, button semantics, STDIO cleanup behavior, nullable MCP schemas, prompt behavior and native configuration defaults.
 
-Live QLC+ validation remains necessary for protocol compatibility and actual lighting behavior.
+Live QLC+ validation remains necessary for protocol compatibility and actual lighting behavior because unit tests cannot prove a specific QLC+ build accepts and applies native actions.
 
 ## Security Boundaries
 
@@ -261,4 +379,4 @@ Live QLC+ validation remains necessary for protocol compatibility and actual lig
 6. Never execute fuzzy/partial widget matches.
 7. Never persist session-only numeric QLC+ widget IDs.
 8. Never allow project data from an obsolete socket or obsolete transfer generation to replace the current inventory.
-9. Keep Streamable HTTP stateless unless a future feature truly requires server-to-client session state; do not add an in-memory `Mcp-Session-Id` table merely for client continuity.
+9. Keep Streamable HTTP stateless unless a future feature truly requires transport-level server-to-client session state.
