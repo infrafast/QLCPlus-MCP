@@ -3,9 +3,8 @@ import {
   type IncomingMessage,
   type ServerResponse,
 } from "node:http";
-import { randomUUID, timingSafeEqual } from "node:crypto";
+import { timingSafeEqual } from "node:crypto";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { getLogger, getRecentLogLines, subscribeLogLines } from "../logger.js";
 import type { Config } from "../config.js";
 import {
@@ -202,9 +201,8 @@ export async function startHttpServer(
   runtimeEnvFile?: string,
 ): Promise<void> {
   const logger = getLogger();
-  const transports: Record<string, StreamableHTTPServerTransport> = {};
 
-  logger.info("Starting MCP server in HTTP mode");
+  logger.info("Starting MCP server in stateless HTTP mode");
   logger.debug({ tools: tools.map((tool) => tool.name) }, "Tools registered");
 
   const httpServer = createServer(async (req, res) => {
@@ -247,7 +245,7 @@ export async function startHttpServer(
         return;
       }
 
-      if (req.method === "GET" && !req.headers["mcp-session-id"]) {
+      if (req.method === "GET") {
         const accept = Array.isArray(req.headers.accept)
           ? req.headers.accept.join(",")
           : req.headers.accept || "";
@@ -257,38 +255,22 @@ export async function startHttpServer(
         }
       }
 
-      const sessionId = Array.isArray(req.headers["mcp-session-id"])
-        ? req.headers["mcp-session-id"][0]
-        : req.headers["mcp-session-id"];
       const parsedBody = req.method === "POST" ? await readJsonBody(req) : undefined;
+      const transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: undefined,
+        enableJsonResponse: true,
+      });
+      transport.onerror = (error) => {
+        logger.error({ err: error }, "HTTP MCP transport error");
+      };
 
-      let transport = sessionId ? transports[sessionId] : undefined;
-      if (!transport) {
-        if (!sessionId && isInitializeRequest(parsedBody)) {
-          transport = new StreamableHTTPServerTransport({
-            sessionIdGenerator: () => randomUUID(),
-            enableJsonResponse: true,
-            onsessioninitialized: (sid) => {
-              transports[sid] = transport!;
-            },
-          });
-          transport.onclose = () => {
-            if (transport?.sessionId) delete transports[transport.sessionId];
-          };
-          transport.onerror = (error) => {
-            logger.error({ err: error }, "HTTP MCP transport error");
-          };
-          const mcpServer = createQlcMcpServer(tools);
-          await mcpServer.connect(transport);
-        } else {
-          sendJson(res, 400, {
-            error: "Bad Request: missing or invalid MCP session",
-          });
-          return;
-        }
+      const mcpServer = createQlcMcpServer(tools);
+      await mcpServer.connect(transport);
+      try {
+        await transport.handleRequest(req, res, parsedBody);
+      } finally {
+        await transport.close();
       }
-
-      await transport.handleRequest(req, res, parsedBody);
     } catch (error) {
       logger.error({ err: error }, "HTTP request failed");
       if (!res.headersSent) {
@@ -309,6 +291,7 @@ export async function startHttpServer(
   const mcpUrl = `http://${connectableHost}:${config.httpPort}${config.httpMcpPath}`;
   logger.info(`MCP server listening on ${mcpUrl}`);
   logger.info(`Health endpoint: http://${connectableHost}:${config.httpPort}/health`);
+  logger.info("Streamable HTTP sessions: stateless (no Mcp-Session-Id)");
   logger.info(`HTTP auth: ${config.authMode}`);
   logger.debug({ agentConfig: buildAgentConfig(config) }, "Agent HTTP MCP config");
 }
