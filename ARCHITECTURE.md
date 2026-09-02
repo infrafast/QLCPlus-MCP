@@ -278,12 +278,18 @@ Closing or failing the STDIO transport goes through the same native-client clean
 
 `src/transports/http.ts` implements:
 
-- Streamable HTTP MCP sessions;
+- **stateless Streamable HTTP MCP**;
 - `/health`;
 - authenticated `/mcp/status`;
 - authenticated log/tool/resource diagnostics;
 - optional bearer authentication;
 - a read-only native status page.
+
+The MCP endpoint intentionally does not allocate or retain `Mcp-Session-Id` values. A fresh `StreamableHTTPServerTransport` and MCP server binding are created for each MCP protocol request with `sessionIdGenerator: undefined` and JSON responses enabled. The QLC+ native client and current project inventory remain process-global runtime state, not MCP transport-session state.
+
+This means an HTTP client can continue using the same `/mcp` URL after QLCPlus-MCP or the Raspberry Pi restarts, once the service is reachable again, without depending on an in-memory MCP session created before the restart. Client configuration remains `type: "streamable-http"`.
+
+The browser admin page remains available on `GET /mcp` when the request accepts HTML. Stateless MCP protocol traffic uses the same `/mcp` endpoint.
 
 There is no runtime QLC+ reconfiguration form and no OSC configuration endpoint.
 
@@ -373,3 +379,4 @@ Live QLC+ validation remains necessary for protocol compatibility and actual lig
 6. Never execute fuzzy/partial widget matches.
 7. Never persist session-only numeric QLC+ widget IDs.
 8. Never allow project data from an obsolete socket or obsolete transfer generation to replace the current inventory.
+9. Keep Streamable HTTP stateless unless a future feature truly requires transport-level server-to-client session state.
