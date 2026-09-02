@@ -180,16 +180,17 @@ function renderAdminPage(config: Config): string {
 </style>
 </head>
 <body><main>
-<div><h1>QLCPlus-MCP</h1><div class="muted">QLC+ 5 native-protocol MCP server · ${mcpUrl}</div></div>
+<div><h1>QLCPlus-MCP</h1><div class="muted">QLC+ 5 native-protocol MCP server · <span id="mcp-url">${mcpUrl}</span></div></div>
 <section class="panel"><div class="row"><h2>Native connection</h2><span id="pill" class="pill">Loading</span></div><pre id="native">Loading...</pre></section>
 <div class="grid"><section class="panel"><h2>Agent config</h2><pre id="agent"></pre></section><section class="panel"><h2>Runtime</h2><pre id="runtime"></pre></section></div>
 <section class="panel"><h2>Runtime log</h2><textarea id="log" readonly></textarea></section>
 <script>
-const nativeEl=document.getElementById("native"),runtimeEl=document.getElementById("runtime"),agentEl=document.getElementById("agent"),pill=document.getElementById("pill"),logEl=document.getElementById("log");
-const mcpBase=new URL(".",window.location.href).pathname.replace(/\/$/,"");
+const nativeEl=document.getElementById("native"),runtimeEl=document.getElementById("runtime"),agentEl=document.getElementById("agent"),pill=document.getElementById("pill"),logEl=document.getElementById("log"),mcpUrlEl=document.getElementById("mcp-url");
+const mcpBase=window.location.pathname.replace(/\/$/,"");
 const mcpRelative=(path="")=>mcpBase+path;
+mcpUrlEl.textContent=window.location.origin+mcpBase;
 function appendLog(line){logEl.value+=(logEl.value?"\\n":"")+line;logEl.scrollTop=logEl.scrollHeight}
-async function load(){const r=await fetch(mcpRelative("/status"),{headers:{accept:"application/json"},cache:"no-store"});const d=await r.json();if(!r.ok)throw new Error(d.error||"Unable to read status");nativeEl.textContent=JSON.stringify(d.native,null,2);runtimeEl.textContent=JSON.stringify(d.runtimeConfig,null,2);agentEl.textContent=JSON.stringify({...d.agentConfig,mcpServers:{...d.agentConfig?.mcpServers,qlcplus:{...d.agentConfig?.mcpServers?.qlcplus,url:window.location.origin+window.location.pathname}}},null,2);const n=d.native||{};pill.textContent=n.state||"not initialized";pill.className="pill "+(n.ready?"ok":n.enabled?"warn":"bad")}
+async function load(){const r=await fetch(mcpRelative("/status"),{headers:{accept:"application/json"},cache:"no-store"});const d=await r.json();if(!r.ok)throw new Error(d.error||"Unable to read status");nativeEl.textContent=JSON.stringify(d.native,null,2);runtimeEl.textContent=JSON.stringify(d.runtimeConfig,null,2);agentEl.textContent=JSON.stringify({...d.agentConfig,mcpServers:{...d.agentConfig?.mcpServers,qlcplus:{...d.agentConfig?.mcpServers?.qlcplus,url:window.location.origin+mcpBase}}},null,2);const n=d.native||{};pill.textContent=n.state||"not initialized";pill.className="pill "+(n.ready?"ok":n.enabled?"warn":"bad")}
 async function logs(){const r=await fetch(mcpRelative("/logs"),{headers:{accept:"application/json"},cache:"no-store"});if(r.ok){const d=await r.json();logEl.value=(d.lines||[]).join("\\n")}}
 function stream(){const e=new EventSource(mcpRelative("/logs/stream"));e.onmessage=x=>appendLog(JSON.parse(x.data))}
 load().catch(e=>nativeEl.textContent=e.message);logs().then(stream).catch(()=>{});setInterval(()=>load().catch(()=>{}),3000);
