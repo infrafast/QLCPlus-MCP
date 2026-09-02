@@ -16,6 +16,22 @@ import type { ToolDefinition } from "../mcpCompat.js";
 import { getNativeRuntimeState } from "../qlc/nativeClient.js";
 
 const MAX_REQUEST_BODY_BYTES = 1024 * 1024;
+const MODERN_PROTOCOL_VERSION = "2026-07-28";
+const LEGACY_PROTOCOL_VERSION = "2025-11-25";
+
+function normalizeUnsupportedModernProtocol(req: IncomingMessage): boolean {
+  const header = req.headers["mcp-protocol-version"];
+  const protocolVersion = Array.isArray(header) ? header[0] : header;
+  if (protocolVersion !== MODERN_PROTOCOL_VERSION) return false;
+
+  // This server intentionally remains on the stable v1 SDK for now so older
+  // clients such as LiveStageAssistant keep their existing 2025-era behavior.
+  // Rewriting only the unsupported modern probe lets 2026-capable clients
+  // discover that this endpoint is legacy and fall back cleanly instead of
+  // tripping the v1 transport's protocol-version validator.
+  req.headers["mcp-protocol-version"] = LEGACY_PROTOCOL_VERSION;
+  return true;
+}
 
 function getConnectableHost(host: string): string {
   if (host === "0.0.0.0" || host === "::") return "127.0.0.1";
@@ -260,6 +276,13 @@ export async function startHttpServer(
       }
 
       const parsedBody = req.method === "POST" ? await readJsonBody(req) : undefined;
+      const downgradedModernProbe = normalizeUnsupportedModernProtocol(req);
+      if (downgradedModernProbe) {
+        logger.debug(
+          "Received MCP 2026-07-28 request; exposing legacy 2025 compatibility for client fallback",
+        );
+      }
+
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined,
         enableJsonResponse: true,
