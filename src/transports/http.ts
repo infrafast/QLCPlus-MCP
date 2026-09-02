@@ -186,7 +186,8 @@ function renderAdminPage(config: Config): string {
 <section class="panel"><h2>Runtime log</h2><textarea id="log" readonly></textarea></section>
 <script>
 const nativeEl=document.getElementById("native"),runtimeEl=document.getElementById("runtime"),agentEl=document.getElementById("agent"),pill=document.getElementById("pill"),logEl=document.getElementById("log"),mcpUrlEl=document.getElementById("mcp-url");
-const mcpBase=window.location.pathname.replace(/\/$/,"");
+const currentPath=window.location.pathname;
+const mcpBase=currentPath.endsWith("/")?currentPath.slice(0,-1):currentPath;
 const mcpRelative=(path="")=>mcpBase+path;
 mcpUrlEl.textContent=window.location.origin+mcpBase;
 function appendLog(line){logEl.value+=(logEl.value?"\\n":"")+line;logEl.scrollTop=logEl.scrollHeight}
