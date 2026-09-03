@@ -175,7 +175,7 @@ HTTP_PORT=8788
 HTTP_MCP_PATH=/mcp
 ```
 
-For network access, explicitly bind to a network interface and enable bearer auth:
+For direct network access, explicitly bind to a network interface and enable bearer auth:
 
 ```bash
 HTTP_HOST=0.0.0.0 \
@@ -183,6 +183,34 @@ MCP_AUTH_MODE=bearer \
 MCP_AUTH_TOKEN="$(openssl rand -base64 32)" \
 npm run start:http
 ```
+
+For the validated Raspberry Pi rack deployment, direct network binding is not required: keep `HTTP_HOST=127.0.0.1` and publish the service through Tailscale Funnel instead.
+
+### Validated Tailscale Funnel endpoint
+
+The rack setup exposes QLCPlus-MCP through the Raspberry Pi's stable Tailscale hostname under `/qlc`:
+
+```text
+Local MCP    : http://127.0.0.1:8788/mcp
+Public MCP   : https://raspberrypi-1.tail70348.ts.net/qlc/mcp
+Public health: https://raspberrypi-1.tail70348.ts.net/qlc/health
+```
+
+Configure Funnel with:
+
+```bash
+sudo tailscale funnel --https=443 --set-path=/qlc --bg 8788
+```
+
+Expected proxy path:
+
+```text
+https://raspberrypi-1.tail70348.ts.net/qlc
+        ↓
+http://127.0.0.1:8788
+```
+
+Keeping QLCPlus-MCP bound to loopback means port `8788` is not exposed directly on the LAN while Funnel provides the public HTTPS endpoint.
 
 The public `/health` endpoint intentionally exposes only minimal service/native readiness information. It never exposes the bearer token, native encryption key, or generated authenticated client configuration.
 
@@ -255,7 +283,8 @@ The installer:
 - preserves existing runtime configuration on reinstall;
 - stores the environment file with mode `600`;
 - defaults HTTP to `127.0.0.1`;
-- defaults QLC+ native control to `127.0.0.1:9998`.
+- defaults QLC+ native control to `127.0.0.1:9998`;
+- documents the validated public Funnel endpoint `https://raspberrypi-1.tail70348.ts.net/qlc/mcp`.
 
 Useful commands:
 
@@ -267,10 +296,13 @@ qlcplusmcp status
 qlcplusmcp logs
 qlcplusmcp health
 qlcplusmcp endpoint
+qlcplusmcp test-remote
 qlcplusmcp auto
 qlcplusmcp noauto
 qlcplusmcp config
 ```
+
+`qlcplusmcp endpoint` prints both the local and validated public MCP URLs. `qlcplusmcp test-remote` checks the Funnel health endpoint.
 
 ## Docker
 
