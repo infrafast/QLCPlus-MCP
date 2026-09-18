@@ -296,4 +296,4 @@ LiveStageAssistant OR4B3 is now in implementation on `or4b3-deterministic-local-
 
 ## OR4C pin alignment
 
-QLCPlus-MCP now targets the same validated StageCommandCore commit as XMSeries-MCP: `fa9f8baef06a668efb18b1bfc50060335689f287`. This removes cross-gateway core-pin drift while keeping the wire protocol at `lsa-command-gateway/v1`.
+QLCPlus-MCP and XMSeries-MCP now target the same validated StageCommandCore commit: `fa9f8baef06a668efb18b1bfc50060335689f287`. QLCPlus-MCP PR #8 merged as `b46f0c5d9aa859281976bec48090dd9a8f0bfffe`; PR and post-merge Node 20.20/22 CI are green. The wire protocol remains `lsa-command-gateway/v1`.
