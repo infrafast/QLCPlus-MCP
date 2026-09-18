@@ -292,3 +292,8 @@ QLCPlus-MCP OR4B1 and XMSeries-MCP OR4B2 are both merged and CI-validated. XMSer
 ## Cross-repository OR4B3 status
 
 LiveStageAssistant OR4B3 is now in implementation on `or4b3-deterministic-local-engine`: the Local runtime no longer routes conceptually through an LLM planner and is being wired to the generic `lsa-command-gateway/v1` contract used by QLCPlus OR4B1 and XMSeries OR4B2. Automated CI and Pi acceptance remain pending.
+
+
+## OR4C pin alignment
+
+QLCPlus-MCP now targets the same validated StageCommandCore commit as XMSeries-MCP: `fa9f8baef06a668efb18b1bfc50060335689f287`. This removes cross-gateway core-pin drift while keeping the wire protocol at `lsa-command-gateway/v1`.
