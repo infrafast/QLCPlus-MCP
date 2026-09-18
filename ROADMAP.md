@@ -221,7 +221,7 @@ Not planned unless the product decision changes explicitly:
 
 ## Milestone 5 — Deterministic Local Command Gateway
 
-Status: **OR4B1 implementation and automated CI validated; LiveStageAssistant/Pi live acceptance pending**
+Status: **OR4B1 implementation, automated CI, and LiveStageAssistant/Pi exact-button live write acceptance validated**
 
 Purpose: add a fast Local-engine-only natural-command path without changing the existing cloud/LLM MCP contract.
 
@@ -274,9 +274,9 @@ Product boundary:
 
 ### 5E — LiveStageAssistant Local acceptance
 
-- [ ] STDIO Local integration first;
-- [ ] list controls;
-- [ ] exact Toggle button;
+- [x] STDIO Local integration first;
+- [x] list controls;
+- [x] exact Toggle button;
 - [ ] Flash button;
 - [ ] clarification/no-match path;
 - [ ] project reload between commands;
@@ -301,4 +301,4 @@ QLCPlus-MCP and XMSeries-MCP now target the same validated StageCommandCore comm
 
 ## OR4C live acceptance readiness
 
-LiveStageAssistant now includes the domain-neutral Raspberry Pi/rack acceptance harness, merged into `realtime-voice-architecture` as `63019ba4089b7b9c6d06ac5b307914fca8645a5e`. PR and post-merge Python 3.11/3.12 CI are green. The harness exercises `lsa-command-gateway/v1`, records per-command latency evidence, blocks live writes unless explicitly enabled, and checks for newly spawned known local-LLM processes. Real Raspberry Pi/rack read-path acceptance was completed on 18 September 2026. LiveStageAssistant discovered the QLCPlus gateway under `lsa-command-gateway/v1`; QLC state and inventory reads executed successfully, and the exact `qlc wave` command produced a ready/write plan without execution because `--allow-writes` was intentionally omitted. The complete 4-case cross-repo corpus passed with analysis p50 3.0 ms / p95 6.4 ms and total p50 5.9 ms / p95 11.7 ms. Controlled live button execution remains pending.
+LiveStageAssistant now includes the domain-neutral Raspberry Pi/rack acceptance harness, merged into `realtime-voice-architecture` as `63019ba4089b7b9c6d06ac5b307914fca8645a5e`. PR and post-merge Python 3.11/3.12 CI are green. The harness exercises `lsa-command-gateway/v1`, records per-command latency evidence, blocks live writes unless explicitly enabled, and checks for newly spawned known local-LLM processes. Real Raspberry Pi/rack read-path acceptance was completed on 18 September 2026. LiveStageAssistant discovered the QLCPlus gateway under `lsa-command-gateway/v1`; QLC state and inventory reads executed successfully, and the exact `qlc wave` command produced a ready/write plan without execution because `--allow-writes` was intentionally omitted. The complete 4-case cross-repo corpus passed with analysis p50 3.0 ms / p95 6.4 ms and total p50 5.9 ms / p95 11.7 ms. A second Pi run with `--allow-writes` executed the exact `qlc wave` write plan; the harness reported `PASS ready/write ... executed`, and the operator confirmed that the `wave` Virtual Console button was physically pressed. That live-write run measured analysis p50 2.9 ms / p95 6.6 ms and total p50 6.4 ms / p95 12.3 ms. Flash-button, clarification/no-match, and project-reload acceptance remain pending.
