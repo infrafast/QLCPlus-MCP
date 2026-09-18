@@ -282,3 +282,8 @@ Product boundary:
 - [ ] project reload between commands;
 - [ ] target deterministic gateway overhead <100 ms typical on Pi5 excluding QLC+ native action;
 - [ ] verify no LLM process or inference dependency is started.
+
+
+## Cross-repository OR4 status
+
+QLCPlus-MCP OR4B1 is merged and CI-validated. XMSeries-MCP OR4B2 is now being implemented in PR #11 using the same `lsa-command-gateway/v1` contract and the shared pinned StageCommandCore package. LiveStageAssistant/Pi end-to-end acceptance remains a later cross-repository gate.
