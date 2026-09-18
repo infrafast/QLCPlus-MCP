@@ -136,6 +136,23 @@ Returns [PROMPT.md](PROMPT.md), the recommended lighting-agent instructions.
 
 The same content is also available as MCP prompt `agent_prompt` and resource `agent://prompt/system`.
 
+## Local deterministic gateway
+
+OR4B1 adds an optional deterministic command gateway for the LiveStageAssistant Local engine. It is **disabled by default** so ordinary/cloud MCP clients keep the existing tool inventory and behavior.
+
+Enable it only for a dedicated Local LSA process/instance:
+
+```text
+LSA_LOCAL_COMMAND_GATEWAY=1
+```
+
+When enabled, two additional reserved tools are exposed:
+
+- `lsa_local_analyze_command`: read-only analysis of QLC state/list/button commands;
+- `lsa_local_execute_command`: execution of a previously analyzed plan token.
+
+The gateway uses `lsa-command-gateway/v1` from the pinned `@infrafast/stage-command-core` dependency. QLC button identity still ignores case only; accents, spaces, punctuation, underscores and hyphens remain significant. Write plans are short-lived and one-shot, and a button plan is rejected if the native inventory generation changed between analyze and execute.
+
 ## STDIO Mode
 
 For an MCP host running on the same machine:
