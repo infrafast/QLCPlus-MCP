@@ -266,6 +266,23 @@ If the user already supplies a complete caption, the agent should call `qlc_butt
 
 This removes an unnecessary MCP round trip from normal live commands without weakening validation.
 
+## Local deterministic command gateway
+
+OR4B1 adds a Local-engine-only adapter around the existing native client. The adapter does not implement another QLC protocol or inventory.
+
+```text
+Local transcript
+  -> lsa_local_analyze_command   [read-only]
+  -> exact QLC caption/current inventory resolution
+  -> opaque short-lived plan token
+  -> lsa_local_execute_command
+  -> existing QlcNativeClient methods
+```
+
+The gateway is registered only when `LSA_LOCAL_COMMAND_GATEWAY=1`. Without that flag, the ordinary/cloud tool inventory remains `get_agent_prompt`, `qlc_get_state`, `qlc_list_widgets`, and `qlc_button_press`.
+
+State/list plans are reads. Button plans are writes and bind the exact resolved caption plus the current `inventoryGeneration`. Execution rejects stale generations before calling `pressButton()`. Exact caption authorization always uses the existing case-only identity rule; partial matches are suggestions/clarification only and can never create a write plan directly.
+
 ## STDIO Transport
 
 `src/transports/stdio.ts` uses `StdioServerTransport`.
