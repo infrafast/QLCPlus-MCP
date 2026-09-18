@@ -217,3 +217,67 @@ Not planned unless the product decision changes explicitly:
 - raw unrestricted native action tools;
 - fuzzy execution matching;
 - direct native DMX control.
+
+
+## Milestone 5 — Deterministic Local Command Gateway
+
+Status: **planned; coordinated with LiveStageAssistant OR4**
+
+Purpose: add a fast Local-engine-only natural-command path without changing the existing cloud/LLM MCP contract.
+
+Product boundary:
+
+- existing `qlc_get_state`, `qlc_list_widgets`, `qlc_button_press`, `PROMPT.md` and native QLC+ behavior remain unchanged for ordinary MCP/cloud clients;
+- the Local deterministic gateway is disabled by default and is registered only when explicitly enabled for a dedicated Local LiveStageAssistant session/instance;
+- no LLM, embedding model or inference service is added to QLCPlus-MCP;
+- consume the planned versioned `@infrafast/stage-command-core` library and pin an exact compatible version/commit.
+
+### 5A — Shared gateway contract
+
+- [ ] register reserved `lsa_local_analyze_command` / `lsa_local_execute_command` only when Local gateway enablement is active;
+- [ ] implement `lsa-command-gateway/v1`;
+- [ ] analysis is read-only and may inspect connection state/current inventory;
+- [ ] execution uses a short-lived opaque one-shot plan token;
+- [ ] return deterministic localized `responseText`;
+- [ ] classify list/state requests as reads and button presses as writes;
+- [ ] incompatible protocol/core versions fail closed.
+
+### 5B — QLC local deterministic grammar
+
+- [ ] recognize Local state/list commands;
+- [ ] recognize explicit QLC button commands while preserving the raw caption span;
+- [ ] command-prefix normalization must never alter the execution caption;
+- [ ] exact caption authorization remains **case-insensitive only**;
+- [ ] spaces, accents, punctuation, underscores and hyphens remain significant;
+- [ ] no fuzzy, substring, semantic or separator-normalized result may authorize execution;
+- [ ] no-match/ambiguous discovery returns deterministic clarification or suggestions, never a write plan.
+
+### 5C — Project/inventory generation safety
+
+- [ ] bind each executable plan to the current project/inventory generation;
+- [ ] project transfer/reconnect/inventory replacement invalidates outstanding plans;
+- [ ] execution of a stale token returns a deterministic stale-plan error and performs no button action;
+- [ ] preserve existing `ready` state requirement and current stale-socket/project safety guarantees.
+
+### 5D — Regression corpus
+
+- [ ] exact caption with spaces;
+- [ ] case-only variant;
+- [ ] accent mismatch;
+- [ ] underscore/hyphen mismatch;
+- [ ] list-all and filtered discovery;
+- [ ] not-ready state;
+- [ ] project generation change between analyze and execute;
+- [ ] token expiry / duplicate execution;
+- [ ] gateway-disabled tool inventory remains identical to ordinary/cloud MCP behavior.
+
+### 5E — LiveStageAssistant Local acceptance
+
+- [ ] STDIO Local integration first;
+- [ ] list controls;
+- [ ] exact Toggle button;
+- [ ] Flash button;
+- [ ] clarification/no-match path;
+- [ ] project reload between commands;
+- [ ] target deterministic gateway overhead <100 ms typical on Pi5 excluding QLC+ native action;
+- [ ] verify no LLM process or inference dependency is started.
