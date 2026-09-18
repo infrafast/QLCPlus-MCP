@@ -74,6 +74,26 @@ function makeClient(options: {
 }
 
 describe("QLC Local deterministic gateway", () => {
+  it("accepts and ignores generic host context", () => {
+    const fake = makeClient({});
+    const gateway = new QlcLocalCommandGateway(() => fake.client);
+
+    const state = gateway.analyze({
+      protocol: GATEWAY_PROTOCOL,
+      text: "qlc état",
+      context: {
+        speaker: {
+          name: "Laurent",
+          confidence: 0.9,
+          backend: "resemblyzer",
+        },
+      },
+    });
+
+    expect(state.status).toBe("ready");
+    expect(state.effect).toBe("read");
+  });
+
   it("recognizes state and list as read plans", () => {
     const fake = makeClient({});
     const gateway = new QlcLocalCommandGateway(() => fake.client);
