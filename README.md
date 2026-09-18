@@ -153,6 +153,35 @@ When enabled, two additional reserved tools are exposed:
 
 The gateway uses `lsa-command-gateway/v1` from the pinned `@infrafast/stage-command-core` dependency. QLC button identity still ignores case only; accents, spaces, punctuation, underscores and hyphens remain significant. Write plans are short-lived and one-shot, and a button plan is rejected if the native inventory generation changed between analyze and execute.
 
+### How to speak or type deterministic QLC commands
+
+The deterministic parser is intentionally narrow. Prefer the canonical formulations below in voice mode or chat when using the Local parsing gateway:
+
+| Intent | Canonical example |
+|---|---|
+| Native/session state | `qlc état` |
+| List current controls | `liste tous les contrôles qlc` |
+| Press an exact Virtual Console button | `qlc wave` |
+
+For a button command, replace `wave` with the **complete current QLC+ caption**. Execution identity is case-insensitive only:
+
+```text
+qlc Blue Speed   == qlc blue speed
+qlc blue speed   != qlc blue_speed
+qlc blue speed   != qlc bluespeed
+```
+
+Spaces, accents, punctuation, underscores and hyphens therefore remain significant. A partial/search result may help discovery, but it never authorizes a write. If the parser cannot identify exactly one safe button caption from the current native inventory, it asks for clarification or refuses the action rather than guessing.
+
+The deterministic grammar is not arbitrary natural-language understanding. Commands not documented here and not covered by parser tests should be treated as unsupported until the parser is explicitly extended.
+
+### Cloud/LLM mode versus deterministic parsing
+
+In normal MCP/LLM mode, the model selects tools such as `qlc_get_state`, `qlc_list_widgets`, and `qlc_button_press`.
+
+In deterministic Local mode, the client only uses `lsa_local_analyze_command` and `lsa_local_execute_command`. QLCPlus-MCP parses the text, validates it against the current native inventory, creates an opaque short-lived plan, and executes that plan through the same native QLC+ implementation. No LLM chooses the underlying QLC tool.
+
+
 ## STDIO Mode
 
 For an MCP host running on the same machine:
