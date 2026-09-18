@@ -2,15 +2,11 @@ import dotenv from "dotenv";
 import fs from "node:fs";
 import path from "node:path";
 import { loadConfig } from "./config.js";
-import { createAgentPromptTool } from "./agentPrompt.js";
 import { initLogger, getLogger } from "./logger.js";
 import { initNativeClient, stopNativeClient } from "./qlc/nativeClient.js";
 import { startStdioServer } from "./transports/stdio.js";
 import { startHttpServer } from "./transports/http.js";
-import { createGetStateTool } from "./tools/qlc_get_state.js";
-import { createListWidgetsTool } from "./tools/qlc_list_widgets.js";
-import { createButtonPressTool } from "./tools/qlc_button_control.js";
-import type { ToolDefinition } from "./mcpCompat.js";
+import { createRuntimeTools } from "./tools/runtimeTools.js";
 
 function loadRuntimeEnv(): string | undefined {
   const candidates = [
@@ -75,12 +71,7 @@ async function main(): Promise<void> {
       dryRun: config.qlcDryRun,
     });
 
-    const tools: ToolDefinition[] = [
-      createAgentPromptTool(),
-      createGetStateTool(),
-      createListWidgetsTool(),
-      createButtonPressTool(),
-    ];
+    const tools = createRuntimeTools();
     logger.info(`Registered ${tools.length} MCP tools`);
 
     if (config.transport === "http") {
