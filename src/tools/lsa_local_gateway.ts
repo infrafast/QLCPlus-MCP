@@ -35,6 +35,7 @@ const AnalyzeInputSchema = z.object({
   text: z.string().min(1).max(500),
   locale: z.string().optional(),
   continuationToken: z.string().optional(),
+  context: z.object({}).passthrough().optional(),
 });
 
 const ExecuteInputSchema = z.object({
