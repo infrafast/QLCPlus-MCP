@@ -170,7 +170,7 @@ describe("gateway tool inventory", () => {
   it("keeps cloud/ordinary inventory unchanged when gateway is disabled", () => {
     const names = createRuntimeTools({}).map((tool) => tool.name);
     expect(names).toEqual([
-      "qlc_agent_prompt",
+      "get_agent_prompt",
       "qlc_get_state",
       "qlc_list_widgets",
       "qlc_button_press",
