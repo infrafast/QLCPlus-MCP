@@ -93,6 +93,26 @@ Before merging any change that touches prompts, tools or schemas:
 
 ## Development Rules
 
+### Capability symmetry: MCP tools and deterministic Local parser
+
+Every new end-user QLC capability must be implemented and documented symmetrically across both supported interaction surfaces:
+
+1. the normal typed MCP tool surface used by LLM/cloud agents;
+2. the deterministic Local parser exposed through `lsa_local_analyze_command` / `lsa_local_execute_command`.
+
+A capability is not complete and must not be merged as finished until all applicable parts are present:
+
+- add or extend the normal typed MCP tool contract;
+- add the equivalent deterministic Local parsing/planning/execution path;
+- factor both surfaces through the same native inventory/business/action implementation rather than duplicating QLC behavior;
+- add/update tests for both the tool contract and Local parser semantics;
+- update `README.md` with canonical deterministic phrases users can speak/type and any exact-name/matching constraints;
+- update `PROMPT.md` whenever the cloud/LLM agent requires new behavior or tool-routing guidance;
+- preserve exact-caption identity, native `ready` gating, one-shot plans, inventory-generation stale checks and fail-closed ambiguity behavior.
+
+The rule is bidirectional: a Local-only business capability or a tool-only business capability is an incomplete implementation. Only an explicit repository-owner decision may scope a feature out of one surface; such an exception must be stated in both `README.md` and `ROADMAP.md`.
+
+
 - Read the existing code and docs before changing behavior.
 - Keep changes scoped and add/update tests for behavior changes.
 - Preserve MCP tool names and schemas unless a deliberate compatibility change is requested.
