@@ -287,3 +287,8 @@ Product boundary:
 ## Cross-repository OR4 status
 
 QLCPlus-MCP OR4B1 and XMSeries-MCP OR4B2 are both merged and CI-validated. XMSeries OR4B2 is on `main` as `0256b3d66dcdf6594f25e8aa0b6fe7ecec07bfed`, using the same `lsa-command-gateway/v1` contract and a pinned StageCommandCore dependency. LiveStageAssistant/Pi end-to-end acceptance remains a later cross-repository gate.
+
+
+## Cross-repository OR4B3 status
+
+LiveStageAssistant OR4B3 is now in implementation on `or4b3-deterministic-local-engine`: the Local runtime no longer routes conceptually through an LLM planner and is being wired to the generic `lsa-command-gateway/v1` contract used by QLCPlus OR4B1 and XMSeries OR4B2. Automated CI and Pi acceptance remain pending.
