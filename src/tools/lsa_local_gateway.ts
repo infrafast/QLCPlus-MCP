@@ -53,14 +53,45 @@ function jsonResult(value: AnalyzeCommandResult | ExecuteCommandResult) {
 
 function rawCaptionAfterPrefix(raw: string): string | null {
   const patterns = [
-    /^\s*qlc\s+(?:appuie\s+sur\s+(?:le\s+bouton\s+)?|presse\s+(?:le\s+bouton\s+)?|bouton\s+)?(.+?)\s*$/iu,
-    /^\s*(?:appuie\s+sur|presse)\s+(?:le\s+bouton\s+)?qlc\s+(.+?)\s*$/iu,
+    /^\s*qlc\s*[,;:]?\s+(?:appuie\s+sur\s+(?:le\s+bouton\s+)?|presse\s+(?:le\s+bouton\s+)?|bouton\s+)?(.+?)\s*$/iu,
+    /^\s*(?:appuie\s+sur|presse)\s+(?:le\s+bouton\s+)?qlc\s*[,;:]?\s+(.+?)\s*$/iu,
   ];
   for (const pattern of patterns) {
     const match = raw.match(pattern);
     if (match?.[1]) return match[1];
   }
   return null;
+}
+
+function spokenCaptionVariants(raw: string): string[] {
+  const exact = raw.trim();
+  if (!exact) return [];
+
+  const variants = [exact];
+  const withoutSentencePunctuation = exact.replace(/[.!?…]+$/u, "").trim();
+  if (
+    withoutSentencePunctuation &&
+    exactNativeCaptionKey(withoutSentencePunctuation) !== exactNativeCaptionKey(exact)
+  ) {
+    variants.push(withoutSentencePunctuation);
+  }
+  return variants;
+}
+
+function findExactSpokenButton(
+  client: QlcNativeClient,
+  rawCaption: string,
+): { widget: NativeWidget | null; requested: string } {
+  const buttons = client.listWidgets().filter((widget) => widget.kind === "button");
+  for (const requested of spokenCaptionVariants(rawCaption)) {
+    const key = exactNativeCaptionKey(requested);
+    const widget = buttons.find(
+      (candidate) => exactNativeCaptionKey(candidate.caption) === key,
+    );
+    if (widget) return { widget, requested };
+  }
+  const variants = spokenCaptionVariants(rawCaption);
+  return { widget: null, requested: variants.at(-1) ?? rawCaption.trim() };
 }
 
 function normalizedWords(value: string): string {
@@ -173,14 +204,8 @@ export class QlcLocalCommandGateway {
       };
     }
 
-    const exactKey = exactNativeCaptionKey(requestedCaption);
-    const exactButton = client
-      .listWidgets()
-      .find(
-        (widget) =>
-          widget.kind === "button" &&
-          exactNativeCaptionKey(widget.caption) === exactKey,
-      );
+    const exactResolution = findExactSpokenButton(client, requestedCaption);
+    const exactButton = exactResolution.widget;
 
     if (exactButton) {
       const stored = this.store.createPlan(
@@ -202,11 +227,11 @@ export class QlcLocalCommandGateway {
       };
     }
 
-    const candidates = candidateCaptions(client, requestedCaption);
+    const candidates = candidateCaptions(client, exactResolution.requested);
     const message =
       candidates.length === 0
-        ? `Aucun bouton QLC+ ne correspond exactement à « ${requestedCaption} ».`
-        : `Aucun bouton exact « ${requestedCaption} ». Correspondances possibles : ${candidates.join(", ")}. Lequel veux-tu utiliser ?`;
+        ? `Aucun bouton QLC+ ne correspond exactement à « ${exactResolution.requested} ».`
+        : `Aucun bouton exact « ${exactResolution.requested} ». Correspondances possibles : ${candidates.join(", ")}. Lequel veux-tu utiliser ?`;
 
     return {
       protocol: GATEWAY_PROTOCOL,
@@ -344,7 +369,6 @@ export class QlcLocalCommandGateway {
       };
     }
 
-    const replyKey = exactNativeCaptionKey(rawReply);
     const allowed =
       continuation.value.candidates.length > 0
         ? continuation.value.candidates
@@ -352,9 +376,14 @@ export class QlcLocalCommandGateway {
             .listWidgets()
             .filter((widget) => widget.kind === "button")
             .map((widget) => widget.caption);
-    const caption = allowed.find(
-      (candidate) => exactNativeCaptionKey(candidate) === replyKey,
-    );
+    const caption = spokenCaptionVariants(rawReply)
+      .map((reply) =>
+        allowed.find(
+          (candidate) =>
+            exactNativeCaptionKey(candidate) === exactNativeCaptionKey(reply),
+        ),
+      )
+      .find((candidate): candidate is string => Boolean(candidate));
 
     if (!caption) {
       return {
