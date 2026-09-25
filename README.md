@@ -171,7 +171,9 @@ qlc blue speed   != qlc blue_speed
 qlc blue speed   != qlc bluespeed
 ```
 
-Spaces, accents, punctuation, underscores and hyphens therefore remain significant. A partial/search result may help discovery, but it never authorizes a write. If the parser cannot identify exactly one safe button caption from the current native inventory, it asks for clarification or refuses the action rather than guessing.
+Spaces, accents, punctuation, underscores and hyphens therefore remain significant. In the **Local spoken-command wrapper only**, a literal exact caption is tried first; if that fails, trailing sentence punctuation added by STT (`.`, `?`, `!`, `…`) is removed and the exact lookup is retried. Thus `QLC rouge.` can safely execute a button captioned `Rouge`, while a real caption `Alert!` still wins before any stripping. Optional comma/colon punctuation immediately after the spoken `QLC` prefix is also treated as command syntax. The normal `qlc_button_press` MCP tool keeps punctuation fully significant.
+
+A partial/search result may help discovery, but it never authorizes a write. If the parser cannot identify exactly one safe button caption from the current native inventory, it asks for clarification or refuses the action rather than guessing.
 
 The deterministic grammar is not arbitrary natural-language understanding. Commands not documented here and not covered by parser tests should be treated as unsupported until the parser is explicitly extended.
 
