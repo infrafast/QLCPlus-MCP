@@ -131,6 +131,44 @@ describe("QLC Local deterministic gateway", () => {
     expect(fake.pressButton).toHaveBeenCalledWith("Été");
   });
 
+  it("treats trailing sentence punctuation as STT syntax, not button identity", async () => {
+    const fake = makeClient({
+      widgets: [makeButton("Rouge"), makeButton("Blanc", 2), makeButton("Violet", 3)],
+    });
+    const gateway = new QlcLocalCommandGateway(() => fake.client);
+
+    for (const utterance of ["QLC rouge.", "QLC blanc?", "QLC, violet."]) {
+      const analyzed = gateway.analyze({
+        protocol: GATEWAY_PROTOCOL,
+        text: utterance,
+      });
+      expect(analyzed.status).toBe("ready");
+      if (analyzed.status !== "ready") throw new Error("expected ready");
+      expect((await gateway.execute(analyzed.planToken)).ok).toBe(true);
+    }
+
+    expect(fake.pressButton).toHaveBeenNthCalledWith(1, "Rouge");
+    expect(fake.pressButton).toHaveBeenNthCalledWith(2, "Blanc");
+    expect(fake.pressButton).toHaveBeenNthCalledWith(3, "Violet");
+  });
+
+  it("prefers a literal punctuation-bearing caption before stripping sentence punctuation", async () => {
+    const fake = makeClient({
+      widgets: [makeButton("Alert!"), makeButton("Alert", 2)],
+    });
+    const gateway = new QlcLocalCommandGateway(() => fake.client);
+
+    const analyzed = gateway.analyze({
+      protocol: GATEWAY_PROTOCOL,
+      text: "QLC Alert!",
+    });
+    expect(analyzed.status).toBe("ready");
+    if (analyzed.status !== "ready") throw new Error("expected ready");
+
+    expect((await gateway.execute(analyzed.planToken)).ok).toBe(true);
+    expect(fake.pressButton).toHaveBeenCalledWith("Alert!");
+  });
+
   it("does not authorize accent or separator mismatches", () => {
     const fake = makeClient({
       widgets: [makeButton("Été"), makeButton("Blue Speed", 2)],
